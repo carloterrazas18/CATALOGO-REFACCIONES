@@ -87,7 +87,9 @@
   .prod-price{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--price-color);}
   .prod-currency{font-size:11px;font-weight:500;color:var(--card-text-muted);margin-left:3px;}
   .prod-compat-hint{font-size:11px;color:var(--card-text-muted);overflow-wrap:anywhere;}
-  .prod-year-hint{font-size:11.5px;font-weight:600;color:var(--card-text);overflow-wrap:anywhere;}
+  .prod-year-block{display:flex;flex-direction:column;gap:1px;}
+  .prod-year-label{font-size:9.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--card-text-muted);font-weight:700;}
+  .prod-year-value{font-size:12.5px;font-weight:600;color:var(--card-text);overflow-wrap:anywhere;}
   .estado-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;font-family:var(--font-body);padding:2px 0;}
   .estado-dot{width:7px;height:7px;border-radius:50%;flex:none;}
 
@@ -145,6 +147,7 @@
   .lightbox-price{font-family:var(--font-display);font-weight:700;font-size:28px;color:var(--price-color);}
   .lightbox-compat-label{font-size:11px;color:var(--card-text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px;}
   .lightbox-compat-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .lightbox-year-value{font-size:13.5px;font-weight:600;color:var(--card-text);overflow-wrap:anywhere;}
   .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);overflow-wrap:anywhere;max-width:100%;}
   .lightbox-notes{font-size:13px;line-height:1.55;color:var(--card-text-muted);margin-top:6px;white-space:pre-line;overflow-wrap:anywhere;max-height:220px;overflow-y:auto;padding-right:6px;}
   .how-to-buy{margin-top:14px;padding:12px 14px;border:1.5px dashed var(--accent);border-radius:12px;background:rgba(255,106,61,0.06);}
@@ -569,7 +572,7 @@ function runApp(){
       const compatHtml = (piece.compatibilidad||[]).length
         ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
       const anio = anioLabel(piece);
-      const anioHtml = anio ? `<div class="prod-year-hint">📅 ${escapeHtml(anio)}</div>` : '';
+      const anioHtml = anio ? `<div class="prod-year-block"><span class="prod-year-label">Modelos</span><span class="prod-year-value">${escapeHtml(anio)}</span></div>` : '';
       const estado = config.estados[piece.estado] || config.estados.disponible;
       const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
       card.innerHTML = `
@@ -651,7 +654,8 @@ function runApp(){
               ${estadoHtml}
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
-              ${(piece.vehiculo || anioLabel(piece)) ? `<div class="lightbox-pills">${piece.vehiculo?`<span class="compat-pill">${escapeHtml(piece.vehiculo)}</span>`:''}${anioLabel(piece)?`<span class="compat-pill">📅 ${escapeHtml(anioLabel(piece))}</span>`:''}</div>` : ''}
+              ${piece.vehiculo ? `<div class="lightbox-pills"><span class="compat-pill">${escapeHtml(piece.vehiculo)}</span></div>` : ''}
+              ${anioLabel(piece) ? `<div class="lightbox-compat-label" style="margin-top:6px;">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
               ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
               ${howToBuyHtml()}
