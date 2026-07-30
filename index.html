@@ -47,6 +47,7 @@
     justify-content:center;text-align:left;
   }
   .header-social{grid-column:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .comprar-msg{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--subtitle-color);white-space:nowrap;}
   .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
   .social-link:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px);}
   .social-link svg{width:17px;height:17px;fill:currentColor;}
@@ -86,6 +87,8 @@
   .prod-price{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--price-color);}
   .prod-currency{font-size:11px;font-weight:500;color:var(--card-text-muted);margin-left:3px;}
   .prod-compat-hint{font-size:11px;color:var(--card-text-muted);}
+  .estado-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;font-family:var(--font-body);padding:2px 0;}
+  .estado-dot{width:7px;height:7px;border-radius:50%;flex:none;}
 
   .admin-fab{position:fixed;bottom:22px;right:22px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4);z-index:20;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
   .admin-fab:hover{transform:scale(1.08);}
@@ -150,6 +153,17 @@
   .about-text{font-size:14px;line-height:1.65;color:var(--subtitle-color);white-space:pre-line;}
   @media (max-width:720px){
     .about-section{margin:20px 14px 0;padding:22px 16px;}
+  }
+
+  .policies-bar{margin:16px 24px 0;padding:14px 20px;background:rgba(255,106,61,0.06);border:1.5px dashed var(--accent);border-radius:14px;color:var(--accent);font-family:var(--font-body);font-weight:600;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .15s,transform .15s;}
+  .policies-bar:hover{background:rgba(255,106,61,0.13);transform:translateY(-1px);}
+  .policies-bar .p-icon{font-size:16px;}
+  .policies-bar .p-arrow{transition:transform .15s;}
+  .policies-bar:hover .p-arrow{transform:translateX(3px);}
+  .policies-modal{max-width:640px;}
+  .policies-text{font-size:13.5px;line-height:1.7;color:var(--input-text);white-space:pre-line;}
+  @media (max-width:720px){
+    .policies-bar{margin:14px 14px 0;padding:12px 14px;font-size:12.5px;}
   }
 
   .setup-screen{max-width:640px;margin:60px auto;padding:0 20px;font-family:var(--font-body);color:var(--input-text);line-height:1.6;}
@@ -218,6 +232,9 @@
       <p class="about-text" id="aboutText"></p>
     </div>
   </div>
+  <div class="policies-bar" id="policiesBar" style="display:none;">
+    <span class="p-icon">📄</span><span>Políticas de Compra</span><span class="p-arrow">→</span>
+  </div>
   <div id="catGrid" class="cat-grid"></div>
 </div>
 
@@ -268,6 +285,7 @@ function runApp(){
     logo:null,
     banner:null,
     quienesSomos:'En Refaccionaria ARCO nos especializamos en la venta de refacciones usadas para automóviles, camionetas y camiones de diversas marcas. Ofrecemos atención personalizada, fotografías reales de cada pieza, precios competitivos y envíos a todo México para que puedas comprar con mayor confianza.\n\nAdemás de nuestro inventario disponible, también te ayudamos a conseguir algunas refacciones bajo pedido cuando es posible, brindándote una solución más completa.\n\nRealizamos envíos a todo México y entregas personales en Puebla.',
+    politicasCompra:'En Refaccionaria ARCO nos esforzamos por brindar información clara y transparente sobre cada una de nuestras refacciones. Antes de realizar cualquier compra, te pedimos leer detenidamente las siguientes políticas.\n\nAl concretar una compra, realizar un pago o confirmar un pedido por cualquier medio (WhatsApp, llamada telefónica, Facebook, Instagram u otro canal de comunicación), el comprador manifiesta haber leído, comprendido y aceptado las presentes Políticas de Compra.\n\n1. Sobre nuestras refacciones\n\n• Todas las refacciones comercializadas por Refaccionaria ARCO son usadas, salvo que expresamente se indique lo contrario.\n• Al tratarse de piezas usadas, es normal que presenten desgaste, rayones, suciedad, decoloración, marcas de uso u otros detalles estéticos propios de su condición.\n• Dichas características forman parte de la naturaleza del producto y no constituyen un defecto.\n\n2. Compatibilidad\n\n• Es responsabilidad exclusiva del comprador verificar que la refacción sea compatible con su vehículo.\n• Recomendamos verificar año, versión, motor, transmisión, número de parte, serie (VIN), medidas y cualquier otra especificación técnica antes de realizar la compra.\n• Refaccionaria ARCO puede brindar orientación basada en la información proporcionada por el comprador; sin embargo, dicha orientación no sustituye la verificación técnica que corresponde al cliente.\n• No aceptamos reclamaciones por incompatibilidad cuando ésta pudo verificarse antes de la compra.\n\n3. Fotografías\n\n• Todas las fotografías publicadas corresponden a la refacción disponible, salvo que expresamente se indique lo contrario.\n• Las imágenes forman parte de la descripción del producto.\n• Si el comprador requiere fotografías adicionales, videos, medidas o información complementaria, deberá solicitarlos antes de efectuar el pago.\n\n4. Estado de la refacción\n\n• Todas las refacciones se venden en el estado físico y funcional en que se encuentran al momento de la venta.\n• Es responsabilidad exclusiva del comprador solicitar, antes de realizar cualquier pago, toda la información que considere necesaria respecto al estado, funcionamiento, desgaste, detalles estéticos, medidas, números de parte o cualquier otra característica de la refacción.\n• Una vez realizado el pago, se entenderá que el comprador recibió la información que consideró suficiente para tomar su decisión y acepta el estado de la pieza adquirida.\n• La falta de preguntas o de solicitudes de información antes de la compra no genera responsabilidad para Refaccionaria ARCO.\n\n5. Pagos\n\n• Toda compra deberá liquidarse en su totalidad antes de ser enviada o entregada, salvo acuerdo distinto.\n• Una pieza únicamente se considerará apartada una vez confirmado el pago.\n• Los precios están sujetos a cambio sin previo aviso mientras la compra no haya sido confirmada.\n\n6. Envíos\n\n• Realizamos envíos a toda la República Mexicana.\n• El costo del envío corre por cuenta del comprador, salvo acuerdo distinto.\n• Los tiempos de entrega dependen exclusivamente de la empresa de paquetería.\n• Una vez entregado el paquete a la empresa transportista, se proporcionará la guía de rastreo correspondiente.\n• Refaccionaria ARCO no es responsable por retrasos ocasionados por la empresa de paquetería, condiciones climatológicas, bloqueos, desastres naturales o cualquier circunstancia ajena a nuestro control.\n\n7. Entregas personales\n\n• Las entregas personales se realizan únicamente en Puebla, previo acuerdo entre ambas partes.\n• El comprador deberá presentarse en el lugar y horario acordados.\n• En caso de no asistir, la entrega deberá ser reprogramada.\n\n8. Cambios, devoluciones y reembolsos\n\n• Todas las ventas realizadas por Refaccionaria ARCO son consideradas finales.\n• No realizamos cambios, devoluciones ni reembolsos por incompatibilidad, error del comprador, diagnóstico incorrecto, instalación incorrecta, cambio de opinión, falta de conocimientos técnicos o por no haber solicitado la información necesaria antes de efectuar la compra.\n• Antes de realizar cualquier pago, el comprador es responsable de verificar que la refacción corresponda exactamente a sus necesidades y resolver todas sus dudas.\n• Al concretar la compra, el comprador reconoce que revisó las fotografías, tuvo la oportunidad de solicitar información adicional y acepta las condiciones de venta de la refacción adquirida.\n• Lo anterior se entiende sin perjuicio de los derechos que, en su caso, otorgue la legislación mexicana aplicable.\n\n9. Instalación\n\n• Recomendamos que todas las refacciones sean instaladas por personal técnico calificado.\n• Refaccionaria ARCO no será responsable por daños derivados de instalaciones incorrectas, adaptaciones, modificaciones, diagnósticos erróneos, uso inadecuado o manipulación posterior a la entrega de la pieza.\n• Los gastos de instalación, desmontaje, mano de obra, diagnósticos, grúas o cualquier otro gasto relacionado son responsabilidad exclusiva del comprador.\n\n10. Responsabilidad del comprador\n\nEl comprador reconoce y acepta que es su responsabilidad:\n\n• Verificar la compatibilidad de la refacción con su vehículo.\n• Revisar cuidadosamente las fotografías publicadas.\n• Solicitar información adicional antes de efectuar el pago.\n• Verificar números de parte, medidas, versiones, motor, transmisión, serie (VIN) y demás especificaciones técnicas.\n• Resolver cualquier duda antes de concretar la compra.\n\nLa omisión de cualquiera de estas verificaciones no genera responsabilidad para Refaccionaria ARCO.\n\n11. Disponibilidad\n\n• Todo el inventario se encuentra sujeto a disponibilidad.\n• Una refacción puede venderse por otro medio antes de que el pago sea confirmado.\n• La publicación de una pieza en el catálogo no constituye una reserva de la misma.\n\n12. Aceptación de las políticas\n\nAl realizar una compra con Refaccionaria ARCO por cualquier medio de comunicación, el comprador declara que:\n\n• Leyó las presentes Políticas de Compra.\n• Comprendió el contenido de las mismas.\n• Tuvo oportunidad de resolver todas sus dudas antes de realizar el pago.\n• Acepta voluntariamente las condiciones aquí establecidas como parte de la operación comercial.',
     colores:{
       bg:'#0c0e10', titleColor:'#f6f6f2', subtitleColor:'#8b9096',
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
@@ -277,7 +295,13 @@ function runApp(){
       tiktokUrl:'', tiktokIcono:null,
       instagramUrl:'', instagramIcono:null,
       whatsappNumero:'', whatsappIcono:null,
-      telefono:'', telefonoIcono:null
+      telefono:'', telefonoIcono:null,
+      comprarMensaje:'Haz tu compra por aquí'
+    },
+    estados:{
+      disponible:{label:'Disponible', color:'#3ba55d'},
+      apartada:{label:'Apartada', color:'#e0a527'},
+      revision:{label:'En revisión', color:'#8b9096'}
     },
     categorias:[
       {id:'motor', label:'Motor', color:'#b5502f'},
@@ -307,6 +331,7 @@ function runApp(){
   const searchEl = document.getElementById('catSearch');
   const aboutSectionEl = document.getElementById('aboutSection');
   const aboutTextEl = document.getElementById('aboutText');
+  const policiesBarEl = document.getElementById('policiesBar');
   const headerSocialEl = document.getElementById('headerSocial');
   const modalRoot = document.getElementById('modalRoot');
   const lightboxRoot = document.getElementById('lightboxRoot');
@@ -360,11 +385,14 @@ function runApp(){
     if(s.instagramUrl) items.push({href:s.instagramUrl, icon:s.instagramIcono, svg:SOCIAL_ICONS.instagram, label:'Instagram'});
     if(s.whatsappNumero) items.push({href:'https://wa.me/'+s.whatsappNumero.replace(/\D/g,''), icon:s.whatsappIcono, svg:SOCIAL_ICONS.whatsapp, label:'WhatsApp: '+s.whatsappNumero});
     if(s.telefono) items.push({href:'tel:'+s.telefono.replace(/\s+/g,''), icon:s.telefonoIcono, svg:SOCIAL_ICONS.telefono, label:'Llamar: '+s.telefono});
-    headerSocialEl.innerHTML = items.map(it=>{
+    const iconsHtml = items.map(it=>{
       const inner = it.icon ? `<img src="${escapeAttr(it.icon)}" alt="${escapeAttr(it.label)}">` : it.svg;
       const isHttp = /^https?:\/\//.test(it.href);
       return `<a class="social-link" href="${escapeAttr(it.href)}" ${isHttp?'target="_blank" rel="noopener"':''} title="${escapeAttr(it.label)}">${inner}</a>`;
     }).join('');
+    const msg = (s.comprarMensaje||'').trim();
+    const msgHtml = (msg && items.length) ? `<span class="comprar-msg">${escapeHtml(msg)}</span>` : '';
+    headerSocialEl.innerHTML = msgHtml + iconsHtml;
   }
 
   const configRef = doc(db, 'configuracion', 'admin');
@@ -373,7 +401,12 @@ function runApp(){
       const loaded = snap.data();
       config = Object.assign({}, config, loaded, {
         colores: Object.assign({}, config.colores, loaded.colores||{}),
-        social: Object.assign({}, config.social, loaded.social||{})
+        social: Object.assign({}, config.social, loaded.social||{}),
+        estados: {
+          disponible: Object.assign({}, config.estados.disponible, (loaded.estados||{}).disponible||{}),
+          apartada: Object.assign({}, config.estados.apartada, (loaded.estados||{}).apartada||{}),
+          revision: Object.assign({}, config.estados.revision, (loaded.estados||{}).revision||{})
+        }
       });
     }
     applyTheme();
@@ -384,6 +417,11 @@ function runApp(){
       aboutSectionEl.style.display = 'block';
     }else{
       aboutSectionEl.style.display = 'none';
+    }
+    if((config.politicasCompra||'').trim()){
+      policiesBarEl.style.display = 'flex';
+    }else{
+      policiesBarEl.style.display = 'none';
     }
     renderChips();
     renderVehChips();
@@ -441,7 +479,7 @@ function runApp(){
     const list = pieces.filter(matchesFilter);
     grid.innerHTML = '';
     if(list.length===0){
-      grid.innerHTML = '<div class="empty-state">No hay existencias, De Momento.. Si quieres que te consigamos tu pieza, contactanos directamente.</div>';
+      grid.innerHTML = '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
       return;
     }
     list.forEach(piece=>{
@@ -456,6 +494,8 @@ function runApp(){
         ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
       const compatHtml = (piece.compatibilidad||[]).length
         ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
+      const estado = config.estados[piece.estado] || config.estados.disponible;
+      const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
       card.innerHTML = `
         <div class="prod-photo-wrap">
           ${photoHtml}
@@ -464,6 +504,7 @@ function runApp(){
           ${dotsHtml}
         </div>
         <div class="prod-body">
+          ${estadoHtml}
           <div class="prod-name">${escapeHtml(piece.nombre)}</div>
           ${compatHtml}
           <div class="prod-price-row">
@@ -493,6 +534,8 @@ function runApp(){
     let idx = 0;
     function draw(){
       const compatHtml = (piece.compatibilidad||[]).map(c=>`<span class="compat-pill">${escapeHtml(c)}</span>`).join('');
+      const estado = config.estados[piece.estado] || config.estados.disponible;
+      const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
       lightboxRoot.innerHTML = `
         <div class="lightbox-overlay" id="lbOv">
           <div class="lightbox">
@@ -507,11 +550,12 @@ function runApp(){
             </div>
             <div class="lightbox-info">
               <div class="prod-cat-pill" style="position:static;display:inline-flex;width:fit-content;"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
+              ${estadoHtml}
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
               ${piece.vehiculo ? `<div class="lightbox-pills"><span class="compat-pill">${escapeHtml(piece.vehiculo)}</span></div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
-              ${piece.notas ? `<div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
+              ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
             </div>
           </div>
         </div>
@@ -534,6 +578,18 @@ function runApp(){
   }
   function escapeAttr(str){ return escapeHtml(str); }
   searchEl.addEventListener('input', (e)=>{ searchTerm = e.target.value; renderGrid(); });
+  policiesBarEl.addEventListener('click', openPoliciesModal);
+
+  function openPoliciesModal(){
+    modalRoot.innerHTML = `
+      <div class="modal-overlay"><div class="modal policies-modal">
+        <h3>📄 Políticas de Compra</h3>
+        <div class="policies-text">${escapeHtml(config.politicasCompra||'')}</div>
+        <div class="modal-actions"><button class="btn btn-primary" id="closePolicies">Cerrar</button></div>
+      </div></div>`;
+    document.getElementById('closePolicies').onclick = closeModal;
+    document.querySelector('.modal-overlay').addEventListener('click', (e)=>{ if(e.target.classList.contains('modal-overlay')) closeModal(); });
+  }
 
   document.getElementById('adminFab').onclick = ()=>{ adminUnlocked ? openAdminPanel() : openPinModal(); };
   function closeModal(){ modalRoot.innerHTML=''; pendingPhotos=[]; }
@@ -670,6 +726,12 @@ function runApp(){
       <select id="fCat">${catOptions}</select>
       <label>Tipo de vehículo</label>
       <select id="fVeh"><option value="">Sin especificar</option>${vehOptions}</select>
+      <label>Estado de la pieza</label>
+      <select id="fEstado">
+        <option value="disponible" ${(!editing||!editing.estado||editing.estado==='disponible')?'selected':''}>${escapeHtml(config.estados.disponible.label)}</option>
+        <option value="apartada" ${editing&&editing.estado==='apartada'?'selected':''}>${escapeHtml(config.estados.apartada.label)}</option>
+        <option value="revision" ${editing&&editing.estado==='revision'?'selected':''}>${escapeHtml(config.estados.revision.label)}</option>
+      </select>
       <label>Compatibilidades (separadas por coma)</label>
       <input id="fCompat" value="${editing?escapeAttr((editing.compatibilidad||[]).join(', ')):''}" placeholder="Ej. Nissan Tsuru, VW Jetta MK2">
       <label>Precio (MXN) *</label>
@@ -711,11 +773,12 @@ function runApp(){
       const nombre = document.getElementById('fName').value.trim();
       const categoriaId = document.getElementById('fCat').value;
       const vehiculo = document.getElementById('fVeh').value;
+      const estado = document.getElementById('fEstado').value;
       const compatibilidad = document.getElementById('fCompat').value.split(',').map(s=>s.trim()).filter(Boolean);
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculo, compatibilidad, precio, fotos:pendingPhotos, notas};
+      const data = {nombre, categoriaId, vehiculo, estado, compatibilidad, precio, fotos:pendingPhotos, notas};
       try{
         if(editing){
           await updateDoc(doc(db,'productos',editing.id), data);
@@ -798,6 +861,8 @@ function runApp(){
       <input id="sSlogan" value="${escapeAttr(config.eslogan||'')}">
       <label>Texto de "¿Quiénes Somos?" (déjalo vacío para ocultar la sección)</label>
       <textarea id="sAbout" rows="6">${escapeAttr(config.quienesSomos||'')}</textarea>
+      <label>Texto de "Políticas de Compra" (déjalo vacío para ocultar el apartado)</label>
+      <textarea id="sPolicies" rows="8">${escapeAttr(config.politicasCompra||'')}</textarea>
       <label>PIN de acceso admin</label>
       <input id="sPin" value="${escapeAttr(config.pin)}">
 
@@ -841,6 +906,24 @@ function runApp(){
       <div class="photo-thumbs" id="sTelefonoIconPreviewWrap" style="${config.social?.telefonoIcono?'':'display:none;'}">
         <div class="photo-thumb"><img id="sTelefonoIconPreview" src="${config.social?.telefonoIcono?escapeAttr(config.social.telefonoIcono):''}"><button type="button" class="rm" id="sTelefonoIconRemove">×</button></div>
       </div>
+
+      <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Estados de las piezas</div>
+      <div style="font-size:11px;color:var(--subtitle-color);margin-top:2px;">Personaliza el texto y color de cada estado (se muestra en cada tarjeta).</div>
+      <div class="cat-row-admin">
+        <input type="color" id="eDisponibleColor" value="${config.estados.disponible.color}">
+        <input type="text" id="eDisponibleLabel" value="${escapeAttr(config.estados.disponible.label)}">
+      </div>
+      <div class="cat-row-admin">
+        <input type="color" id="eApartadaColor" value="${config.estados.apartada.color}">
+        <input type="text" id="eApartadaLabel" value="${escapeAttr(config.estados.apartada.label)}">
+      </div>
+      <div class="cat-row-admin">
+        <input type="color" id="eRevisionColor" value="${config.estados.revision.color}">
+        <input type="text" id="eRevisionLabel" value="${escapeAttr(config.estados.revision.label)}">
+      </div>
+
+      <label>Mensaje junto a redes sociales (indica por dónde comprar)</label>
+      <input id="sComprarMsg" placeholder="Haz tu compra por aquí" value="${escapeAttr(config.social?.comprarMensaje||'')}">
 
       <div class="color-grid">
         <div><label>Fondo de la página</label><input type="color" id="cBg" value="${c.bg}"></div>
@@ -910,6 +993,7 @@ function runApp(){
       config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
       config.eslogan = document.getElementById('sSlogan').value.trim();
       config.quienesSomos = document.getElementById('sAbout').value.trim();
+      config.politicasCompra = document.getElementById('sPolicies').value.trim();
       config.pin = document.getElementById('sPin').value.trim() || config.pin;
       config.logo = pendingLogo;
       config.banner = pendingBanner;
@@ -921,7 +1005,13 @@ function runApp(){
         whatsappNumero: document.getElementById('sWhatsappNumero').value.trim(),
         whatsappIcono: pendingIcons.whatsappIcono,
         telefono: document.getElementById('sTelefono').value.trim(),
-        telefonoIcono: pendingIcons.telefonoIcono
+        telefonoIcono: pendingIcons.telefonoIcono,
+        comprarMensaje: document.getElementById('sComprarMsg').value.trim()
+      };
+      config.estados = {
+        disponible: { label: document.getElementById('eDisponibleLabel').value.trim() || config.estados.disponible.label, color: document.getElementById('eDisponibleColor').value },
+        apartada: { label: document.getElementById('eApartadaLabel').value.trim() || config.estados.apartada.label, color: document.getElementById('eApartadaColor').value },
+        revision: { label: document.getElementById('eRevisionLabel').value.trim() || config.estados.revision.label, color: document.getElementById('eRevisionColor').value }
       };
       config.colores = {
         bg: document.getElementById('cBg').value,
