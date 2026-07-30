@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Refacciones</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+  :root{
+    --bg:#0c0e10; --header-bg:#0c0e10cc;
+    --card-bg:#ffffff; --card-text:#15171a; --card-text-muted:#6b7075;
+    --title-color:#f6f6f2; --subtitle-color:#8b9096;
+    --accent:#ff6a3d; --price-color:#ff6a3d;
+    --input-bg:#15181b; --input-text:#eceeef;
+    --panel-bg:#15181b; --panel-border:#25292d;
+    --font-display:'Space Grotesk', Arial, sans-serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);}
+  .cat-root{background:var(--bg);color:var(--title-color);font-family:var(--font-body);min-height:100vh;padding-bottom:70px;}
+  .cat-header{position:sticky;top:0;z-index:10;background:var(--header-bg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.06);padding:26px 24px 16px;display:flex;flex-direction:column;gap:14px;}
+  .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(24px,4vw,32px);letter-spacing:-0.02em;color:var(--title-color);margin:0;}
+  .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;}
+  .cat-search{flex:1;min-width:200px;max-width:380px;padding:11px 16px;background:var(--input-bg);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:13.5px;outline:none;transition:border-color .15s;}
+  .cat-search:focus{border-color:var(--accent);}
+  .cat-search::placeholder{color:var(--subtitle-color);}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-family:var(--font-body);font-weight:500;font-size:12px;padding:7px 14px;background:transparent;border:1px solid var(--panel-border);border-radius:999px;color:var(--subtitle-color);cursor:pointer;user-select:none;transition:all .15s;}
+  .chip:hover{border-color:var(--accent);color:var(--title-color);}
+  .chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .chip-row-label{font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--subtitle-color);margin-bottom:-4px;}
+  .cat-grid{padding:28px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px;}
+  .empty-state{padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
+  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;}
+  .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
+  .prod-photo-wrap{position:relative;width:100%;aspect-ratio:1/1;background:#ececec;}
+  .prod-photo{width:100%;height:100%;object-fit:cover;display:block;}
+  .prod-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#ececec;color:#a0a4a8;font-size:12px;font-family:var(--font-body);}
+  .prod-cat-pill{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.92);padding:4px 10px 4px 6px;border-radius:999px;font-size:10.5px;font-weight:600;color:#20232a;font-family:var(--font-body);}
+  .prod-cat-dot{width:7px;height:7px;border-radius:50%;flex:none;}
+  .prod-veh-pill{position:absolute;top:10px;right:10px;background:rgba(20,20,20,0.75);color:#fff;padding:4px 9px;border-radius:999px;font-size:10px;font-family:var(--font-body);}
+  .prod-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .prod-name{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--card-text);line-height:1.2;}
+  .prod-price-row{display:flex;align-items:baseline;justify-content:space-between;margin-top:auto;padding-top:6px;}
+  .prod-price{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--price-color);}
+  .prod-currency{font-size:11px;font-weight:500;color:var(--card-text-muted);margin-left:3px;}
+  .prod-details summary{font-size:11px;color:var(--card-text-muted);cursor:pointer;font-family:var(--font-body);list-style:none;}
+  .prod-details summary::-webkit-details-marker{display:none;}
+  .prod-details summary:before{content:"Ver compatibilidad ›";}
+  .prod-details[open] summary:before{content:"Ocultar ▾";}
+  .prod-compat-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .compat-pill{font-size:10px;background:#f1f1ef;color:#4a4d52;padding:2px 8px;border-radius:6px;font-family:var(--font-body);}
+  .prod-notes{font-size:11px;color:var(--card-text-muted);margin-top:6px;}
+  .admin-fab{position:fixed;bottom:22px;right:22px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4);z-index:20;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+  .admin-fab:hover{transform:scale(1.08);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px;}
+  .modal{background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:18px;max-width:560px;width:100%;max-height:86vh;overflow-y:auto;padding:26px;color:var(--input-text);}
+  .modal h3{font-family:var(--font-display);font-weight:600;margin:0 0 16px 0;color:var(--title-color);font-size:17px;}
+  .modal label{display:block;font-family:var(--font-body);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--subtitle-color);margin:14px 0 5px;}
+  .modal input, .modal select, .modal textarea{width:100%;padding:10px 12px;background:var(--input-bg);border:1px solid var(--panel-border);border-radius:10px;color:var(--input-text);font-family:var(--font-body);font-size:13.5px;outline:none;}
+  .modal input:focus, .modal select:focus, .modal textarea:focus{border-color:var(--accent);}
+  .modal input[type=color]{padding:3px;height:40px;cursor:pointer;border-radius:8px;}
+  .modal input[type=file]{padding:8px;}
+  .modal textarea{resize:vertical;min-height:52px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+  .btn{font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;border:none;border-radius:10px;cursor:pointer;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--subtitle-color);border:1px solid var(--panel-border);}
+  .btn-small{padding:7px 12px;font-size:11px;}
+  .admin-list-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--panel-border);}
+  .admin-list-item .name{font-size:13px;}
+  .admin-list-item .actions{display:flex;gap:6px;}
+  .icon-btn{background:var(--bg);color:var(--input-text);border:1px solid var(--panel-border);border-radius:8px;font-size:11px;padding:6px 10px;cursor:pointer;font-family:var(--font-body);}
+  .status-msg{font-family:var(--font-body);font-size:11.5px;color:var(--subtitle-color);margin-top:8px;min-height:14px;}
+  .status-msg.err{color:#ff7a6b;}
+  .status-msg.ok{color:#6fce8a;}
+  .tab-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{font-family:var(--font-body);font-weight:600;font-size:11.5px;padding:8px 14px;background:transparent;color:var(--subtitle-color);border:1px solid var(--panel-border);border-radius:999px;cursor:pointer;}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .cat-row-admin{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--panel-border);}
+  .cat-row-admin input[type=text]{flex:1;}
+  .cat-row-admin input[type=color]{width:38px;flex:none;padding:2px;}
+  .photo-preview{width:100%;max-height:150px;object-fit:contain;margin-top:8px;background:var(--bg);border-radius:8px;}
+  .color-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .color-grid label{margin-top:14px;}
+  .setup-screen{max-width:640px;margin:60px auto;padding:0 20px;font-family:var(--font-body);color:var(--input-text);line-height:1.6;}
+  .setup-screen h2{font-family:var(--font-display);margin-bottom:14px;}
+  .setup-screen code{background:var(--panel-bg);padding:2px 6px;border-radius:4px;font-size:12.5px;}
+  .setup-screen ol{padding-left:20px;margin:14px 0;}
+  .setup-screen li{margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div id="setupScreen" class="setup-screen" style="display:none;">
+  <h2>Falta conectar tu base de datos</h2>
+  <p>Este catálogo guarda todo en Firebase (gratis, sin tarjeta). Configúralo una sola vez:</p>
+  <ol>
+    <li>Ve a <code>console.firebase.google.com</code> → crea un proyecto (nombre libre).</li>
+    <li>Dentro del proyecto, clic en el ícono <code>&lt;/&gt;</code> (Web) para agregar una app. Ponle un nombre y copia el bloque <code>firebaseConfig</code> que te muestra.</li>
+    <li>Abre este archivo HTML con un editor de texto (Bloc de notas sirve) y pega ese bloque donde dice <code>PEGA_AQUI_TU_FIREBASE_CONFIG</code>, cerca del inicio del archivo.</li>
+    <li>En el menú lateral de Firebase entra a <b>Firestore Database</b> → Crear base de datos → modo producción → cualquier ubicación.</li>
+    <li>Dentro de Firestore, pestaña <b>Reglas</b>: borra lo que hay y pega las reglas que te di aparte (documento "reglas-firestore.txt"). Clic en Publicar.</li>
+    <li>Guarda el archivo HTML y súbelo a GitHub Pages (o cualquier hosting estático). Listo — el link ya funciona para todos.</li>
+  </ol>
+  <p>Una vez configurado, este mensaje desaparece solo.</p>
+</div>
+
+<div class="cat-root" id="catRoot" style="display:none;">
+  <div class="cat-header">
+    <h1 class="cat-title" id="catTitle">Cargando...</h1>
+    <div class="cat-sub" id="catSlogan">Catálogo de refacciones usadas</div>
+    <input class="cat-search" id="catSearch" placeholder="Buscar por nombre, marca o modelo...">
+    <div>
+      <div class="chip-row-label">Categoría</div>
+      <div class="chip-row" id="catChips"></div>
+    </div>
+    <div>
+      <div class="chip-row-label">Vehículo</div>
+      <div class="chip-row" id="vehChips"></div>
+    </div>
+  </div>
+  <div id="catGrid" class="cat-grid"></div>
+</div>
+
+<button class="admin-fab" id="adminFab" title="Panel de administración" style="display:none;">&#9881;</button>
+<div id="modalRoot"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
+  onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ======================================================================
+// PEGA_AQUI_TU_FIREBASE_CONFIG
+// Reemplaza el objeto de abajo por el que copiaste de la consola de Firebase.
+const firebaseConfig = {
+  apiKey: "AIzaSyDHYaNfv1v1ljTQHR6wBPSuHPOyUHnqaRc",
+  authDomain: "refaccionaria-72f12.firebaseapp.com",
+  projectId: "refaccionaria-72f12",
+  storageBucket: "refaccionaria-72f12.firebasestorage.app",
+  messagingSenderId: "669092473265",
+  appId: "1:669092473265:web:62ba7db6d4a0051d367590"
+};
+};
+// ======================================================================
+
+const configuradoDeVerdad = firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY";
+
+if(!configuradoDeVerdad){
+  document.getElementById('setupScreen').style.display = 'block';
+} else {
+  document.getElementById('catRoot').style.display = 'block';
+  document.getElementById('adminFab').style.display = 'flex';
+  runApp();
+}
+
+function runApp(){
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const VEHICULOS = ['Coche','Camioneta','Camión'];
+  let pieces = [];
+  let config = {
+    titulo:'Refacciones Puebla',
+    eslogan:'Encuentra la pieza correcta.',
+    pin:'2026',
+    colores:{
+      bg:'#0c0e10', titleColor:'#f6f6f2', subtitleColor:'#8b9096',
+      accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
+      inputBg:'#15181b', inputText:'#eceeef'
+    },
+    categorias:[
+      {id:'motor', label:'Motor', color:'#b5502f'},
+      {id:'transmision', label:'Transmisión', color:'#4a5a63'},
+      {id:'suspension', label:'Suspensión', color:'#6b7a3a'},
+      {id:'direccion', label:'Dirección', color:'#c98a1f'},
+      {id:'frenos', label:'Frenos', color:'#a3352b'},
+      {id:'electrico', label:'Eléctrico', color:'#e0a527'},
+      {id:'carroceria', label:'Carrocería', color:'#3f7068'},
+      {id:'otro', label:'Otro', color:'#7a7a72'}
+    ]
+  };
+  let activeCat = 'Todas';
+  let activeVeh = 'Todas';
+  let searchTerm = '';
+  let adminUnlocked = false;
+  let pendingPhotoData = null;
+
+  const grid = document.getElementById('catGrid');
+  const chipsEl = document.getElementById('catChips');
+  const vehChipsEl = document.getElementById('vehChips');
+  const titleEl = document.getElementById('catTitle');
+  const sloganEl = document.getElementById('catSlogan');
+  const searchEl = document.getElementById('catSearch');
+  const modalRoot = document.getElementById('modalRoot');
+
+  function applyTheme(){
+    const c = config.colores;
+    const root = document.documentElement.style;
+    root.setProperty('--bg', c.bg);
+    root.setProperty('--header-bg', c.bg + 'cc');
+    root.setProperty('--title-color', c.titleColor);
+    root.setProperty('--subtitle-color', c.subtitleColor);
+    root.setProperty('--accent', c.accent);
+    root.setProperty('--price-color', c.price);
+    root.setProperty('--card-bg', c.cardBg);
+    root.setProperty('--card-text', c.cardText);
+    root.setProperty('--input-bg', c.inputBg);
+    root.setProperty('--input-text', c.inputText);
+    root.setProperty('--panel-bg', c.inputBg);
+  }
+  function catById(id){ return config.categorias.find(cc=>cc.id===id); }
+
+  const configRef = doc(db, 'configuracion', 'admin');
+  onSnapshot(configRef, (snap)=>{
+    if(snap.exists()){
+      const loaded = snap.data();
+      config = Object.assign({}, config, loaded, {
+        colores: Object.assign({}, config.colores, loaded.colores||{})
+      });
+    }
+    applyTheme();
+    titleEl.textContent = config.titulo;
+    sloganEl.textContent = config.eslogan || '';
+    renderChips();
+    renderVehChips();
+    renderGrid();
+  }, (err)=>{ console.error('config', err); });
+
+  const productosQuery = query(collection(db,'productos'), orderBy('creado','desc'));
+  onSnapshot(productosQuery, (snap)=>{
+    pieces = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    renderGrid();
+  }, (err)=>{ console.error('productos', err); });
+
+  async function saveConfig(){ await setDoc(configRef, config, {merge:false}); }
+
+  function renderChips(){
+    const cats = ['Todas', ...config.categorias.map(c=>c.label)];
+    chipsEl.innerHTML = '';
+    cats.forEach(cat=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (activeCat===cat ? ' active' : '');
+      chip.textContent = cat;
+      chip.onclick = ()=>{ activeCat = cat; renderChips(); renderGrid(); };
+      chipsEl.appendChild(chip);
+    });
+  }
+  function renderVehChips(){
+    const vehs = ['Todas', ...VEHICULOS];
+    vehChipsEl.innerHTML = '';
+    vehs.forEach(v=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (activeVeh===v ? ' active' : '');
+      chip.textContent = v;
+      chip.onclick = ()=>{ activeVeh = v; renderVehChips(); renderGrid(); };
+      vehChipsEl.appendChild(chip);
+    });
+  }
+  function matchesFilter(piece){
+    const cat = catById(piece.categoriaId);
+    const label = cat ? cat.label : 'Otro';
+    if(activeCat!=='Todas' && label!==activeCat) return false;
+    if(activeVeh!=='Todas' && piece.vehiculo!==activeVeh) return false;
+    if(!searchTerm) return true;
+    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')).toLowerCase();
+    return hay.includes(searchTerm.toLowerCase());
+  }
+  function renderGrid(){
+    const list = pieces.filter(matchesFilter);
+    grid.innerHTML = '';
+    if(list.length===0){
+      grid.innerHTML = '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
+      return;
+    }
+    list.forEach(piece=>{
+      const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
+      const card = document.createElement('div');
+      card.className = 'prod-card';
+      const photoHtml = piece.foto
+        ? `<img class="prod-photo" src="${escapeAttr(piece.foto)}" onerror="this.outerHTML='<div class=&quot;prod-photo-placeholder&quot;>Sin foto</div>'">`
+        : `<div class="prod-photo-placeholder">Sin foto</div>`;
+      const compatHtml = (piece.compatibilidad||[]).map(c=>`<span class="compat-pill">${escapeHtml(c)}</span>`).join('');
+      const hasExtra = (piece.compatibilidad||[]).length>0 || piece.notas;
+      card.innerHTML = `
+        <div class="prod-photo-wrap">
+          ${photoHtml}
+          <div class="prod-cat-pill"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
+          ${piece.vehiculo ? `<div class="prod-veh-pill">${escapeHtml(piece.vehiculo)}</div>` : ''}
+        </div>
+        <div class="prod-body">
+          <div class="prod-name">${escapeHtml(piece.nombre)}</div>
+          ${hasExtra ? `<details class="prod-details"><summary></summary>
+            <div class="prod-compat-list">${compatHtml}</div>
+            ${piece.notas ? `<div class="prod-notes">${escapeHtml(piece.notas)}</div>` : ''}
+          </details>` : ''}
+          <div class="prod-price-row">
+            <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+  searchEl.addEventListener('input', (e)=>{ searchTerm = e.target.value; renderGrid(); });
+
+  document.getElementById('adminFab').onclick = ()=>{ adminUnlocked ? openAdminPanel() : openPinModal(); };
+  function closeModal(){ modalRoot.innerHTML=''; pendingPhotoData=null; }
+
+  function openPinModal(){
+    modalRoot.innerHTML = `
+      <div class="modal-overlay"><div class="modal">
+        <h3>Acceso admin</h3>
+        <label>PIN</label>
+        <input type="password" id="pinInput" placeholder="PIN">
+        <div class="status-msg err" id="pinMsg"></div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="pinOk">Entrar</button>
+          <button class="btn btn-ghost" id="pinCancel">Cancelar</button>
+        </div>
+      </div></div>`;
+    document.getElementById('pinCancel').onclick = closeModal;
+    document.getElementById('pinOk').onclick = ()=>{
+      const v = document.getElementById('pinInput').value;
+      if(v === config.pin){ adminUnlocked = true; openAdminPanel(); }
+      else{ document.getElementById('pinMsg').textContent = 'PIN incorrecto.'; }
+    };
+  }
+
+  function openAdminPanel(tab){
+    tab = tab || 'piezas';
+    modalRoot.innerHTML = `
+      <div class="modal-overlay"><div class="modal">
+        <h3>Panel de administración</h3>
+        <div class="tab-row">
+          <div class="tab ${tab==='piezas'?'active':''}" id="tabPiezas">Piezas</div>
+          <div class="tab ${tab==='nueva'?'active':''}" id="tabNueva">Agregar</div>
+          <div class="tab ${tab==='categorias'?'active':''}" id="tabCats">Categorías</div>
+          <div class="tab ${tab==='ajustes'?'active':''}" id="tabAjustes">Diseño</div>
+        </div>
+        <div id="adminBody"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" id="closeAdmin">Cerrar</button></div>
+      </div></div>`;
+    document.getElementById('closeAdmin').onclick = closeModal;
+    document.getElementById('tabPiezas').onclick = ()=>openAdminPanel('piezas');
+    document.getElementById('tabNueva').onclick = ()=>openAdminPanel('nueva');
+    document.getElementById('tabCats').onclick = ()=>openAdminPanel('categorias');
+    document.getElementById('tabAjustes').onclick = ()=>openAdminPanel('ajustes');
+    const body = document.getElementById('adminBody');
+    if(tab==='piezas') renderAdminList(body);
+    else if(tab==='nueva') renderAdminForm(body, null);
+    else if(tab==='categorias') renderCatManager(body);
+    else renderAdminSettings(body);
+  }
+
+  function renderAdminList(body){
+    if(pieces.length===0){ body.innerHTML = '<div class="status-msg">Sin piezas registradas todavía.</div>'; return; }
+    body.innerHTML = pieces.map(p=>{
+      const cat = catById(p.categoriaId);
+      return `<div class="admin-list-item">
+        <span class="name">${escapeHtml(p.nombre)} — ${escapeHtml(cat?cat.label:'Otro')} — $${escapeHtml(String(p.precio))}</span>
+        <span class="actions">
+          <button class="icon-btn" data-edit="${p.id}">Editar</button>
+          <button class="icon-btn" data-del="${p.id}">Borrar</button>
+        </span>
+      </div>`;
+    }).join('');
+    body.querySelectorAll('[data-edit]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const piece = pieces.find(p=>p.id===btn.dataset.edit);
+        openAdminPanel('nueva');
+        setTimeout(()=>renderAdminForm(document.getElementById('adminBody'), piece), 0);
+      };
+    });
+    body.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        if(!confirm('¿Borrar esta pieza del catálogo?')) return;
+        await deleteDoc(doc(db,'productos',btn.dataset.del));
+        renderAdminList(body);
+      };
+    });
+  }
+
+  function fileToCompressedDataUrl(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let w = img.width, h = img.height;
+          if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+          else{ if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderAdminForm(body, editing){
+    pendingPhotoData = editing ? (editing.foto || null) : null;
+    const catOptions = config.categorias.map(c=>`<option value="${c.id}" ${editing&&editing.categoriaId===c.id?'selected':''}>${escapeHtml(c.label)}</option>`).join('');
+    const vehOptions = VEHICULOS.map(v=>`<option value="${v}" ${editing&&editing.vehiculo===v?'selected':''}>${v}</option>`).join('');
+    body.innerHTML = `
+      <label>Nombre de la pieza *</label>
+      <input id="fName" value="${editing?escapeAttr(editing.nombre):''}" placeholder="Ej. Bomba de agua">
+      <label>Categoría *</label>
+      <select id="fCat">${catOptions}</select>
+      <label>Tipo de vehículo</label>
+      <select id="fVeh"><option value="">Sin especificar</option>${vehOptions}</select>
+      <label>Compatibilidades (separadas por coma)</label>
+      <input id="fCompat" value="${editing?escapeAttr((editing.compatibilidad||[]).join(', ')):''}" placeholder="Ej. Nissan Tsuru, VW Jetta MK2">
+      <label>Precio (MXN) *</label>
+      <input id="fPrice" type="number" value="${editing?editing.precio:''}" placeholder="Ej. 450">
+      <label>Foto (elige el archivo directo de tu celular o computadora)</label>
+      <input type="file" id="fPhotoFile" accept="image/*">
+      <img id="fPhotoPreview" class="photo-preview" style="${pendingPhotoData?'':'display:none;'}" src="${pendingPhotoData?escapeAttr(pendingPhotoData):''}">
+      <div class="status-msg" id="photoMsg"></div>
+      <label>Notas (opcional)</label>
+      <textarea id="fNotes" placeholder="Ej. Probada, funciona bien">${editing?escapeHtml(editing.notas||''):''}</textarea>
+      <div class="status-msg err" id="formMsg"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="fSave">${editing?'Guardar cambios':'Agregar pieza'}</button>
+      </div>
+    `;
+    document.getElementById('fPhotoFile').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      document.getElementById('photoMsg').textContent = 'Procesando imagen...';
+      try{
+        let quality = 0.7, dataUrl = await fileToCompressedDataUrl(file, 420, quality);
+        while(dataUrl.length > 700000 && quality > 0.3){
+          quality -= 0.15;
+          dataUrl = await fileToCompressedDataUrl(file, 420, quality);
+        }
+        pendingPhotoData = dataUrl;
+        const prev = document.getElementById('fPhotoPreview');
+        prev.src = dataUrl; prev.style.display = 'block';
+        document.getElementById('photoMsg').textContent = 'Foto lista.';
+      }catch(err){
+        document.getElementById('photoMsg').textContent = 'No se pudo procesar la imagen.';
+      }
+    });
+    document.getElementById('fSave').onclick = async ()=>{
+      const nombre = document.getElementById('fName').value.trim();
+      const categoriaId = document.getElementById('fCat').value;
+      const vehiculo = document.getElementById('fVeh').value;
+      const compatibilidad = document.getElementById('fCompat').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const precio = Number(document.getElementById('fPrice').value.trim());
+      const notas = document.getElementById('fNotes').value.trim();
+      if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
+      const foto = pendingPhotoData || (editing ? editing.foto : null);
+      const data = {nombre, categoriaId, vehiculo, compatibilidad, precio, foto, notas};
+      try{
+        if(editing){
+          await updateDoc(doc(db,'productos',editing.id), data);
+        }else{
+          data.creado = Date.now();
+          await addDoc(collection(db,'productos'), data);
+        }
+        openAdminPanel('piezas');
+      }catch(e){
+        document.getElementById('formMsg').textContent = 'Error al guardar: '+e.message;
+      }
+    };
+  }
+
+  function renderCatManager(body){
+    body.innerHTML = `
+      <div id="catList"></div>
+      <label>Agregar categoría</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="newCatLabel" placeholder="Nombre de categoría" style="flex:1;">
+        <input type="color" id="newCatColor" value="#7a7a72">
+        <button class="btn btn-primary btn-small" id="addCatBtn">Agregar</button>
+      </div>
+      <div class="status-msg" id="catMsg"></div>
+    `;
+    function renderList(){
+      const listEl = document.getElementById('catList');
+      listEl.innerHTML = config.categorias.map(c=>`
+        <div class="cat-row-admin" data-id="${c.id}">
+          <input type="color" value="${c.color}" data-color="${c.id}">
+          <input type="text" value="${escapeAttr(c.label)}" data-label="${c.id}">
+          <button class="icon-btn" data-delcat="${c.id}">Borrar</button>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('[data-color]').forEach(inp=>{
+        inp.onchange = async ()=>{
+          const cat = catById(inp.dataset.color);
+          cat.color = inp.value;
+          await saveConfig();
+        };
+      });
+      listEl.querySelectorAll('[data-label]').forEach(inp=>{
+        inp.onchange = async ()=>{
+          const cat = catById(inp.dataset.label);
+          cat.label = inp.value.trim() || cat.label;
+          await saveConfig();
+        };
+      });
+      listEl.querySelectorAll('[data-delcat]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const inUse = pieces.some(p=>p.categoriaId===btn.dataset.delcat);
+          if(inUse){ document.getElementById('catMsg').className='status-msg err'; document.getElementById('catMsg').textContent='No se puede borrar: hay piezas usando esta categoría.'; return; }
+          if(!confirm('¿Borrar esta categoría?')) return;
+          config.categorias = config.categorias.filter(c=>c.id!==btn.dataset.delcat);
+          await saveConfig(); renderList();
+        };
+      });
+    }
+    renderList();
+    document.getElementById('addCatBtn').onclick = async ()=>{
+      const label = document.getElementById('newCatLabel').value.trim();
+      const color = document.getElementById('newCatColor').value;
+      if(!label){ document.getElementById('catMsg').className='status-msg err'; document.getElementById('catMsg').textContent='Escribe un nombre.'; return; }
+      const id = 'c'+Date.now();
+      config.categorias.push({id, label, color});
+      await saveConfig();
+      document.getElementById('newCatLabel').value='';
+      renderList();
+      document.getElementById('catMsg').className='status-msg ok';
+      document.getElementById('catMsg').textContent='Categoría agregada.';
+    };
+  }
+
+  function renderAdminSettings(body){
+    const c = config.colores;
+    body.innerHTML = `
+      <label>Nombre del catálogo</label>
+      <input id="sTitle" value="${escapeAttr(config.titulo)}">
+      <label>Eslogan</label>
+      <input id="sSlogan" value="${escapeAttr(config.eslogan||'')}">
+      <label>PIN de acceso admin</label>
+      <input id="sPin" value="${escapeAttr(config.pin)}">
+      <div class="color-grid">
+        <div><label>Fondo de la página</label><input type="color" id="cBg" value="${c.bg}"></div>
+        <div><label>Color del título</label><input type="color" id="cTitle" value="${c.titleColor}"></div>
+        <div><label>Color de subtítulos</label><input type="color" id="cSub" value="${c.subtitleColor}"></div>
+        <div><label>Color de acento (botones)</label><input type="color" id="cAccent" value="${c.accent}"></div>
+        <div><label>Color del precio</label><input type="color" id="cPrice" value="${c.price}"></div>
+        <div><label>Fondo de tarjetas</label><input type="color" id="cCardBg" value="${c.cardBg}"></div>
+        <div><label>Texto en tarjetas</label><input type="color" id="cCardText" value="${c.cardText}"></div>
+        <div><label>Fondo de campos (PIN, formularios)</label><input type="color" id="cInputBg" value="${c.inputBg}"></div>
+        <div><label>Texto de campos (PIN, formularios)</label><input type="color" id="cInputText" value="${c.inputText}"></div>
+      </div>
+      <div class="status-msg" id="sMsg"></div>
+      <div class="modal-actions"><button class="btn btn-primary" id="sSave">Guardar diseño</button></div>
+    `;
+    document.getElementById('sSave').onclick = async ()=>{
+      config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
+      config.eslogan = document.getElementById('sSlogan').value.trim();
+      config.pin = document.getElementById('sPin').value.trim() || config.pin;
+      config.colores = {
+        bg: document.getElementById('cBg').value,
+        titleColor: document.getElementById('cTitle').value,
+        subtitleColor: document.getElementById('cSub').value,
+        accent: document.getElementById('cAccent').value,
+        price: document.getElementById('cPrice').value,
+        cardBg: document.getElementById('cCardBg').value,
+        cardText: document.getElementById('cCardText').value,
+        inputBg: document.getElementById('cInputBg').value,
+        inputText: document.getElementById('cInputText').value
+      };
+      try{
+        await saveConfig();
+        document.getElementById('sMsg').className='status-msg ok';
+        document.getElementById('sMsg').textContent = 'Guardado.';
+      }catch(e){
+        document.getElementById('sMsg').className='status-msg err';
+        document.getElementById('sMsg').textContent = 'Error al guardar: '+e.message;
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
