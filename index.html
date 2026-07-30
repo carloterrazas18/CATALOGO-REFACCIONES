@@ -380,7 +380,7 @@ function runApp(){
     const list = pieces.filter(matchesFilter);
     grid.innerHTML = '';
     if(list.length===0){
-      grid.innerHTML = '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
+      grid.innerHTML = '<div class="empty-state">No hay Existencias, De momento...</div>';
       return;
     }
     list.forEach(piece=>{
