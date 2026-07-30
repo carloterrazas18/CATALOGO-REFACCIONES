@@ -13,7 +13,6 @@
     --accent:#ff6a3d; --price-color:#ff6a3d;
     --input-bg:#15181b; --input-text:#eceeef;
     --panel-bg:#15181b; --panel-border:#25292d;
-    --about-bg:#15181b;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -147,12 +146,18 @@
   .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);}
   .lightbox-notes{font-size:13px;color:var(--card-text-muted);margin-top:6px;}
 
-  .about-section{margin:26px 24px 0;padding:28px 24px;color:var(--title-color);font-family:var(--font-body);background:var(--about-bg);border-radius:16px;}
-  .about-section .about-inner{max-width:760px;margin:0 auto;text-align:center;}
-  .about-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3vw,24px);color:var(--title-color);margin-bottom:10px;letter-spacing:-0.01em;}
-  .about-text{font-size:14px;line-height:1.65;color:var(--subtitle-color);white-space:pre-line;}
+  .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
+  .about-card{padding:28px 24px;animation:aboutFade .4s ease;}
+  .about-card .about-inner{max-width:760px;margin:0 auto;text-align:center;}
+  .about-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3vw,24px);margin-bottom:10px;letter-spacing:-0.01em;}
+  .about-text{font-size:14px;line-height:1.65;white-space:pre-line;}
+  .about-dots{display:flex;justify-content:center;gap:6px;padding:0 24px 20px;}
+  .about-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.35;cursor:pointer;border:none;padding:0;transition:opacity .2s,transform .2s;}
+  .about-dot.on{opacity:1;transform:scale(1.3);}
+  @keyframes aboutFade{from{opacity:0;}to{opacity:1;}}
   @media (max-width:720px){
-    .about-section{margin:20px 14px 0;padding:22px 16px;}
+    .about-section{margin:20px 14px 0;}
+    .about-card{padding:22px 16px;}
   }
 
   .policies-bar{margin:16px 24px 0;padding:14px 20px;background:rgba(255,106,61,0.06);border:1.5px dashed var(--accent);border-radius:14px;color:var(--accent);font-family:var(--font-body);font-weight:600;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .15s,transform .15s;}
@@ -227,10 +232,7 @@
     </div>
   </div>
   <div class="about-section" id="aboutSection" style="display:none;">
-    <div class="about-inner">
-      <h2 class="about-title">¿Quiénes Somos?</h2>
-      <p class="about-text" id="aboutText"></p>
-    </div>
+    <div id="aboutTrack"></div>
   </div>
   <div class="policies-bar" id="policiesBar" style="display:none;">
     <span class="p-icon">📄</span><span>Políticas de Compra</span><span class="p-arrow">→</span>
@@ -284,12 +286,13 @@ function runApp(){
     pin:'2026',
     logo:null,
     banner:null,
+    aboutTarjetas:[],
     quienesSomos:'En Refaccionaria ARCO nos especializamos en la venta de refacciones usadas para automóviles, camionetas y camiones de diversas marcas. Ofrecemos atención personalizada, fotografías reales de cada pieza, precios competitivos y envíos a todo México para que puedas comprar con mayor confianza.\n\nAdemás de nuestro inventario disponible, también te ayudamos a conseguir algunas refacciones bajo pedido cuando es posible, brindándote una solución más completa.\n\nRealizamos envíos a todo México y entregas personales en Puebla.',
     politicasCompra:'En Refaccionaria ARCO nos esforzamos por brindar información clara y transparente sobre cada una de nuestras refacciones. Antes de realizar cualquier compra, te pedimos leer detenidamente las siguientes políticas.\n\nAl concretar una compra, realizar un pago o confirmar un pedido por cualquier medio (WhatsApp, llamada telefónica, Facebook, Instagram u otro canal de comunicación), el comprador manifiesta haber leído, comprendido y aceptado las presentes Políticas de Compra.\n\n1. Sobre nuestras refacciones\n\n• Todas las refacciones comercializadas por Refaccionaria ARCO son usadas, salvo que expresamente se indique lo contrario.\n• Al tratarse de piezas usadas, es normal que presenten desgaste, rayones, suciedad, decoloración, marcas de uso u otros detalles estéticos propios de su condición.\n• Dichas características forman parte de la naturaleza del producto y no constituyen un defecto.\n\n2. Compatibilidad\n\n• Es responsabilidad exclusiva del comprador verificar que la refacción sea compatible con su vehículo.\n• Recomendamos verificar año, versión, motor, transmisión, número de parte, serie (VIN), medidas y cualquier otra especificación técnica antes de realizar la compra.\n• Refaccionaria ARCO puede brindar orientación basada en la información proporcionada por el comprador; sin embargo, dicha orientación no sustituye la verificación técnica que corresponde al cliente.\n• No aceptamos reclamaciones por incompatibilidad cuando ésta pudo verificarse antes de la compra.\n\n3. Fotografías\n\n• Todas las fotografías publicadas corresponden a la refacción disponible, salvo que expresamente se indique lo contrario.\n• Las imágenes forman parte de la descripción del producto.\n• Si el comprador requiere fotografías adicionales, videos, medidas o información complementaria, deberá solicitarlos antes de efectuar el pago.\n\n4. Estado de la refacción\n\n• Todas las refacciones se venden en el estado físico y funcional en que se encuentran al momento de la venta.\n• Es responsabilidad exclusiva del comprador solicitar, antes de realizar cualquier pago, toda la información que considere necesaria respecto al estado, funcionamiento, desgaste, detalles estéticos, medidas, números de parte o cualquier otra característica de la refacción.\n• Una vez realizado el pago, se entenderá que el comprador recibió la información que consideró suficiente para tomar su decisión y acepta el estado de la pieza adquirida.\n• La falta de preguntas o de solicitudes de información antes de la compra no genera responsabilidad para Refaccionaria ARCO.\n\n5. Pagos\n\n• Toda compra deberá liquidarse en su totalidad antes de ser enviada o entregada, salvo acuerdo distinto.\n• Una pieza únicamente se considerará apartada una vez confirmado el pago.\n• Los precios están sujetos a cambio sin previo aviso mientras la compra no haya sido confirmada.\n\n6. Envíos\n\n• Realizamos envíos a toda la República Mexicana.\n• El costo del envío corre por cuenta del comprador, salvo acuerdo distinto.\n• Los tiempos de entrega dependen exclusivamente de la empresa de paquetería.\n• Una vez entregado el paquete a la empresa transportista, se proporcionará la guía de rastreo correspondiente.\n• Refaccionaria ARCO no es responsable por retrasos ocasionados por la empresa de paquetería, condiciones climatológicas, bloqueos, desastres naturales o cualquier circunstancia ajena a nuestro control.\n\n7. Entregas personales\n\n• Las entregas personales se realizan únicamente en Puebla, previo acuerdo entre ambas partes.\n• El comprador deberá presentarse en el lugar y horario acordados.\n• En caso de no asistir, la entrega deberá ser reprogramada.\n\n8. Cambios, devoluciones y reembolsos\n\n• Todas las ventas realizadas por Refaccionaria ARCO son consideradas finales.\n• No realizamos cambios, devoluciones ni reembolsos por incompatibilidad, error del comprador, diagnóstico incorrecto, instalación incorrecta, cambio de opinión, falta de conocimientos técnicos o por no haber solicitado la información necesaria antes de efectuar la compra.\n• Antes de realizar cualquier pago, el comprador es responsable de verificar que la refacción corresponda exactamente a sus necesidades y resolver todas sus dudas.\n• Al concretar la compra, el comprador reconoce que revisó las fotografías, tuvo la oportunidad de solicitar información adicional y acepta las condiciones de venta de la refacción adquirida.\n• Lo anterior se entiende sin perjuicio de los derechos que, en su caso, otorgue la legislación mexicana aplicable.\n\n9. Instalación\n\n• Recomendamos que todas las refacciones sean instaladas por personal técnico calificado.\n• Refaccionaria ARCO no será responsable por daños derivados de instalaciones incorrectas, adaptaciones, modificaciones, diagnósticos erróneos, uso inadecuado o manipulación posterior a la entrega de la pieza.\n• Los gastos de instalación, desmontaje, mano de obra, diagnósticos, grúas o cualquier otro gasto relacionado son responsabilidad exclusiva del comprador.\n\n10. Responsabilidad del comprador\n\nEl comprador reconoce y acepta que es su responsabilidad:\n\n• Verificar la compatibilidad de la refacción con su vehículo.\n• Revisar cuidadosamente las fotografías publicadas.\n• Solicitar información adicional antes de efectuar el pago.\n• Verificar números de parte, medidas, versiones, motor, transmisión, serie (VIN) y demás especificaciones técnicas.\n• Resolver cualquier duda antes de concretar la compra.\n\nLa omisión de cualquiera de estas verificaciones no genera responsabilidad para Refaccionaria ARCO.\n\n11. Disponibilidad\n\n• Todo el inventario se encuentra sujeto a disponibilidad.\n• Una refacción puede venderse por otro medio antes de que el pago sea confirmado.\n• La publicación de una pieza en el catálogo no constituye una reserva de la misma.\n\n12. Aceptación de las políticas\n\nAl realizar una compra con Refaccionaria ARCO por cualquier medio de comunicación, el comprador declara que:\n\n• Leyó las presentes Políticas de Compra.\n• Comprendió el contenido de las mismas.\n• Tuvo oportunidad de resolver todas sus dudas antes de realizar el pago.\n• Acepta voluntariamente las condiciones aquí establecidas como parte de la operación comercial.',
     colores:{
       bg:'#0c0e10', titleColor:'#f6f6f2', subtitleColor:'#8b9096',
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
-      inputBg:'#15181b', inputText:'#eceeef', aboutBg:'#15181b'
+      inputBg:'#15181b', inputText:'#eceeef'
     },
     social:{
       tiktokUrl:'', tiktokIcono:null,
@@ -320,6 +323,8 @@ function runApp(){
   let adminUnlocked = false;
   let pendingPhotos = [];
   const slideTimers = new Map();
+  let aboutTimer = null;
+  let aboutIdx = 0;
 
   const grid = document.getElementById('catGrid');
   const chipsEl = document.getElementById('catChips');
@@ -330,7 +335,7 @@ function runApp(){
   const headerEl = document.getElementById('catHeader');
   const searchEl = document.getElementById('catSearch');
   const aboutSectionEl = document.getElementById('aboutSection');
-  const aboutTextEl = document.getElementById('aboutText');
+  const aboutTrackEl = document.getElementById('aboutTrack');
   const policiesBarEl = document.getElementById('policiesBar');
   const headerSocialEl = document.getElementById('headerSocial');
   const modalRoot = document.getElementById('modalRoot');
@@ -355,7 +360,6 @@ function runApp(){
     root.setProperty('--input-bg', c.inputBg);
     root.setProperty('--input-text', c.inputText);
     root.setProperty('--panel-bg', c.inputBg);
-    root.setProperty('--about-bg', c.aboutBg || c.inputBg);
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -412,12 +416,16 @@ function runApp(){
     applyTheme();
     titleEl.textContent = config.titulo;
     sloganEl.textContent = config.eslogan || '';
-    if((config.quienesSomos||'').trim()){
-      aboutTextEl.textContent = config.quienesSomos;
-      aboutSectionEl.style.display = 'block';
-    }else{
-      aboutSectionEl.style.display = 'none';
+    if((!config.aboutTarjetas || !config.aboutTarjetas.length) && (config.quienesSomos||'').trim()){
+      config.aboutTarjetas = [{
+        id:'legacy',
+        titulo:'¿Quiénes Somos?',
+        texto:config.quienesSomos,
+        colorTexto:config.colores.subtitleColor||'#8b9096',
+        colorFondo:config.colores.inputBg||'#15181b'
+      }];
     }
+    renderAbout();
     if((config.politicasCompra||'').trim()){
       policiesBarEl.style.display = 'flex';
     }else{
@@ -472,6 +480,55 @@ function runApp(){
   function clearSlideTimers(){
     slideTimers.forEach(t=>clearInterval(t));
     slideTimers.clear();
+  }
+
+  function renderAbout(){
+    const cards = (config.aboutTarjetas||[]).filter(t=>t && ((t.titulo||'').trim() || (t.texto||'').trim()));
+    if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; }
+    if(!cards.length){
+      aboutSectionEl.style.display = 'none';
+      aboutSectionEl.onmouseenter = null;
+      aboutSectionEl.onmouseleave = null;
+      return;
+    }
+    aboutSectionEl.style.display = 'block';
+    if(aboutIdx >= cards.length) aboutIdx = 0;
+
+    function draw(){
+      const t = cards[aboutIdx];
+      const textColor = t.colorTexto || '#eceeef';
+      const bgColor = t.colorFondo || '#15181b';
+      const dotsHtml = cards.length > 1
+        ? `<div class="about-dots" style="color:${textColor}">${cards.map((_,i)=>`<button type="button" class="about-dot ${i===aboutIdx?'on':''}" data-goto="${i}"></button>`).join('')}</div>`
+        : '';
+      aboutTrackEl.innerHTML = `
+        <div class="about-card" style="background:${bgColor};color:${textColor}">
+          <div class="about-inner">
+            ${t.titulo ? `<h2 class="about-title">${escapeHtml(t.titulo)}</h2>` : ''}
+            ${t.texto ? `<p class="about-text">${escapeHtml(t.texto)}</p>` : ''}
+          </div>
+        </div>
+        ${dotsHtml}
+      `;
+      aboutTrackEl.querySelectorAll('[data-goto]').forEach(dot=>{
+        dot.onclick = ()=>{ aboutIdx = Number(dot.dataset.goto); draw(); restartAboutTimer(); };
+      });
+    }
+
+    function restartAboutTimer(){
+      if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; }
+      if(cards.length > 1){
+        aboutTimer = setInterval(()=>{
+          aboutIdx = (aboutIdx+1) % cards.length;
+          draw();
+        }, 5000);
+      }
+    }
+
+    draw();
+    restartAboutTimer();
+    aboutSectionEl.onmouseenter = ()=>{ if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; } };
+    aboutSectionEl.onmouseleave = ()=>{ restartAboutTimer(); };
   }
 
   function renderGrid(){
@@ -623,6 +680,7 @@ function runApp(){
           <div class="tab ${tab==='piezas'?'active':''}" id="tabPiezas">Piezas</div>
           <div class="tab ${tab==='nueva'?'active':''}" id="tabNueva">Agregar</div>
           <div class="tab ${tab==='categorias'?'active':''}" id="tabCats">Categorías</div>
+          <div class="tab ${tab==='about'?'active':''}" id="tabAbout">Quiénes Somos</div>
           <div class="tab ${tab==='ajustes'?'active':''}" id="tabAjustes">Diseño</div>
         </div>
         <div id="adminBody"></div>
@@ -632,11 +690,13 @@ function runApp(){
     document.getElementById('tabPiezas').onclick = ()=>openAdminPanel('piezas');
     document.getElementById('tabNueva').onclick = ()=>openAdminPanel('nueva');
     document.getElementById('tabCats').onclick = ()=>openAdminPanel('categorias');
+    document.getElementById('tabAbout').onclick = ()=>openAdminPanel('about');
     document.getElementById('tabAjustes').onclick = ()=>openAdminPanel('ajustes');
     const body = document.getElementById('adminBody');
     if(tab==='piezas') renderAdminList(body);
     else if(tab==='nueva') renderAdminForm(body, null);
     else if(tab==='categorias') renderCatManager(body);
+    else if(tab==='about') renderAboutManager(body);
     else renderAdminSettings(body);
   }
 
@@ -852,6 +912,93 @@ function runApp(){
     };
   }
 
+  function renderAboutManager(body){
+    function renderList(){
+      const cards = config.aboutTarjetas || [];
+      const listEl = document.getElementById('aboutList');
+      if(!cards.length){
+        listEl.innerHTML = '<div class="status-msg">Sin tarjetas todavía. Agrega la primera abajo.</div>';
+        return;
+      }
+      listEl.innerHTML = cards.map((t,i)=>`
+        <div class="admin-list-item" style="flex-direction:column;align-items:stretch;gap:8px;padding:14px 0;">
+          <label>Título</label>
+          <input type="text" data-title="${i}" value="${escapeAttr(t.titulo||'')}">
+          <label>Contenido</label>
+          <textarea rows="4" data-text="${i}">${escapeAttr(t.texto||'')}</textarea>
+          <div class="color-grid">
+            <div><label>Color del texto</label><input type="color" data-colortext="${i}" value="${t.colorTexto||'#eceeef'}"></div>
+            <div><label>Color de la tarjeta</label><input type="color" data-colorbg="${i}" value="${t.colorFondo||'#15181b'}"></div>
+          </div>
+          <div class="actions" style="justify-content:flex-end;display:flex;gap:6px;">
+            <button class="icon-btn" data-up="${i}" ${i===0?'disabled':''}>&uarr; Subir</button>
+            <button class="icon-btn" data-down="${i}" ${i===cards.length-1?'disabled':''}>&darr; Bajar</button>
+            <button class="icon-btn" data-delcard="${i}">Borrar</button>
+          </div>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('[data-title]').forEach(inp=>{
+        inp.onchange = async ()=>{ cards[Number(inp.dataset.title)].titulo = inp.value.trim(); await saveConfig(); };
+      });
+      listEl.querySelectorAll('[data-text]').forEach(inp=>{
+        inp.onchange = async ()=>{ cards[Number(inp.dataset.text)].texto = inp.value.trim(); await saveConfig(); };
+      });
+      listEl.querySelectorAll('[data-colortext]').forEach(inp=>{
+        inp.onchange = async ()=>{ cards[Number(inp.dataset.colortext)].colorTexto = inp.value; await saveConfig(); };
+      });
+      listEl.querySelectorAll('[data-colorbg]').forEach(inp=>{
+        inp.onchange = async ()=>{ cards[Number(inp.dataset.colorbg)].colorFondo = inp.value; await saveConfig(); };
+      });
+      listEl.querySelectorAll('[data-delcard]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          if(!confirm('¿Borrar esta tarjeta?')) return;
+          cards.splice(Number(btn.dataset.delcard),1);
+          await saveConfig(); renderList();
+        };
+      });
+      listEl.querySelectorAll('[data-up]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.up);
+          [cards[i-1],cards[i]] = [cards[i],cards[i-1]];
+          await saveConfig(); renderList();
+        };
+      });
+      listEl.querySelectorAll('[data-down]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.down);
+          [cards[i+1],cards[i]] = [cards[i],cards[i+1]];
+          await saveConfig(); renderList();
+        };
+      });
+    }
+    body.innerHTML = `
+      <div style="font-size:11.5px;color:var(--subtitle-color);margin-bottom:14px;line-height:1.5;">
+        Estas tarjetas se muestran deslizándose solas donde antes estaba el texto fijo de "¿Quiénes Somos?". Si hay más de una, van cambiando cada 5 segundos y se detienen mientras el cursor está encima. Déjalas vacías (borra todas) para ocultar la sección.
+      </div>
+      <div id="aboutList"></div>
+      <div class="modal-actions"><button class="btn btn-primary btn-small" id="addAboutBtn">+ Agregar tarjeta</button></div>
+      <div class="status-msg" id="aboutMsg"></div>
+    `;
+    renderList();
+    document.getElementById('addAboutBtn').onclick = async ()=>{
+      config.aboutTarjetas = config.aboutTarjetas || [];
+      config.aboutTarjetas.push({
+        id:'t'+Date.now(),
+        titulo:'Nuevo título',
+        texto:'Escribe aquí el contenido de esta tarjeta...',
+        colorTexto:'#eceeef',
+        colorFondo:'#15181b'
+      });
+      try{
+        await saveConfig();
+        renderList();
+      }catch(e){
+        document.getElementById('aboutMsg').className = 'status-msg err';
+        document.getElementById('aboutMsg').textContent = 'Error al guardar: '+e.message;
+      }
+    };
+  }
+
   function renderAdminSettings(body){
     const c = config.colores;
     body.innerHTML = `
@@ -859,8 +1006,6 @@ function runApp(){
       <input id="sTitle" value="${escapeAttr(config.titulo)}">
       <label>Eslogan</label>
       <input id="sSlogan" value="${escapeAttr(config.eslogan||'')}">
-      <label>Texto de "¿Quiénes Somos?" (déjalo vacío para ocultar la sección)</label>
-      <textarea id="sAbout" rows="6">${escapeAttr(config.quienesSomos||'')}</textarea>
       <label>Texto de "Políticas de Compra" (déjalo vacío para ocultar el apartado)</label>
       <textarea id="sPolicies" rows="8">${escapeAttr(config.politicasCompra||'')}</textarea>
       <label>PIN de acceso admin</label>
@@ -935,7 +1080,6 @@ function runApp(){
         <div><label>Texto en tarjetas</label><input type="color" id="cCardText" value="${c.cardText}"></div>
         <div><label>Fondo de campos</label><input type="color" id="cInputBg" value="${c.inputBg}"></div>
         <div><label>Texto de campos</label><input type="color" id="cInputText" value="${c.inputText}"></div>
-        <div><label>Fondo de "¿Quiénes Somos?"</label><input type="color" id="cAboutBg" value="${c.aboutBg||'#15181b'}"></div>
       </div>
       <div class="status-msg" id="sMsg"></div>
       <div class="modal-actions"><button class="btn btn-primary" id="sSave">Guardar diseño</button></div>
@@ -992,7 +1136,6 @@ function runApp(){
     document.getElementById('sSave').onclick = async ()=>{
       config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
       config.eslogan = document.getElementById('sSlogan').value.trim();
-      config.quienesSomos = document.getElementById('sAbout').value.trim();
       config.politicasCompra = document.getElementById('sPolicies').value.trim();
       config.pin = document.getElementById('sPin').value.trim() || config.pin;
       config.logo = pendingLogo;
@@ -1022,8 +1165,7 @@ function runApp(){
         cardBg: document.getElementById('cCardBg').value,
         cardText: document.getElementById('cCardText').value,
         inputBg: document.getElementById('cInputBg').value,
-        inputText: document.getElementById('cInputText').value,
-        aboutBg: document.getElementById('cAboutBg').value
+        inputText: document.getElementById('cInputText').value
       };
       try{
         await saveConfig();
