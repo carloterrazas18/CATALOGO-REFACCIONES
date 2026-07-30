@@ -14,6 +14,8 @@
     --input-bg:#15181b; --input-text:#eceeef;
     --panel-bg:#15181b; --panel-border:#25292d;
     --chip-label-bg:rgba(255,255,255,0.07); --chip-label-color:#8b9096;
+    --outline-color:#000000;
+    --search-label-bg:#ff6a3d; --search-label-color:#ffffff;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -46,7 +48,7 @@
     display:flex;align-items:center;gap:12px;
     justify-content:center;text-align:left;
   }
-  .header-social{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:8px;align-self:flex-end;}
+  .header-social{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
   .comprar-msg{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--subtitle-color);text-align:center;}
   .social-icons-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
   .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
@@ -54,9 +56,11 @@
   .social-link svg{width:17px;height:17px;fill:currentColor;}
   .social-link img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .cat-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;display:none;background:rgba(255,255,255,0.08);}
-  .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-0.02em;color:var(--title-color);line-height:1.1;}
-  .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;margin-top:2px;}
+  .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-0.02em;color:var(--title-color);line-height:1.1;text-shadow:-1.5px -1.5px 0 var(--outline-color),1.5px -1.5px 0 var(--outline-color),-1.5px 1.5px 0 var(--outline-color),1.5px 1.5px 0 var(--outline-color);}
+  .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;margin-top:2px;text-shadow:-1px -1px 0 var(--outline-color),1px -1px 0 var(--outline-color),-1px 1px 0 var(--outline-color),1px 1px 0 var(--outline-color);}
   .header-search-wrap{grid-column:3;display:flex;justify-content:flex-end;}
+  .search-block{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:280px;}
+  .search-label{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--search-label-color);background:var(--search-label-bg);padding:5px 16px;border-radius:999px;display:inline-block;}
   .cat-search{width:100%;max-width:280px;padding:10px 16px;background:rgba(21,24,27,0.85);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .15s;}
   .cat-search:focus{border-color:var(--accent);}
   .cat-search::placeholder{color:var(--subtitle-color);}
@@ -228,7 +232,10 @@
         </div>
       </div>
       <div class="header-search-wrap">
-        <input class="cat-search" id="catSearch" placeholder="Buscar por nombre, marca o modelo...">
+        <div class="search-block">
+          <div class="search-label">Busca tu Refacción</div>
+          <input class="cat-search" id="catSearch" placeholder="Buscar por nombre, marca o modelo...">
+        </div>
       </div>
     </div>
     <div class="filters-row">
@@ -304,7 +311,8 @@ function runApp(){
       bg:'#0c0e10', titleColor:'#f6f6f2', subtitleColor:'#8b9096',
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
       inputBg:'#15181b', inputText:'#eceeef',
-      chipLabelBg:'#1c2024', chipLabelColor:'#8b9096'
+      chipLabelBg:'#1c2024', chipLabelColor:'#8b9096',
+      outlineColor:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff'
     },
     social:{
       tiktokUrl:'', tiktokIcono:null,
@@ -384,6 +392,9 @@ function runApp(){
     root.setProperty('--panel-bg', c.inputBg);
     root.setProperty('--chip-label-bg', c.chipLabelBg || '#1c2024');
     root.setProperty('--chip-label-color', c.chipLabelColor || '#8b9096');
+    root.setProperty('--outline-color', c.outlineColor || '#000000');
+    root.setProperty('--search-label-bg', c.searchLabelBg || '#ff6a3d');
+    root.setProperty('--search-label-color', c.searchLabelColor || '#ffffff');
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -1160,6 +1171,9 @@ function runApp(){
         <div><label>Texto de campos</label><input type="color" id="cInputText" value="${c.inputText}"></div>
         <div><label>Fondo subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipBg" value="${c.chipLabelBg||'#1c2024'}"></div>
         <div><label>Color subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipColor" value="${c.chipLabelColor||'#8b9096'}"></div>
+        <div><label>Contorno de título y eslogan</label><input type="color" id="cOutline" value="${c.outlineColor||'#000000'}"></div>
+        <div><label>Fondo del subtítulo de búsqueda</label><input type="color" id="cSearchBg" value="${c.searchLabelBg||'#ff6a3d'}"></div>
+        <div><label>Color del subtítulo de búsqueda</label><input type="color" id="cSearchColor" value="${c.searchLabelColor||'#ffffff'}"></div>
       </div>
       <div class="status-msg" id="sMsg"></div>
       <div class="modal-actions"><button class="btn btn-primary" id="sSave">Guardar diseño</button></div>
@@ -1251,7 +1265,10 @@ function runApp(){
         inputBg: document.getElementById('cInputBg').value,
         inputText: document.getElementById('cInputText').value,
         chipLabelBg: document.getElementById('cChipBg').value,
-        chipLabelColor: document.getElementById('cChipColor').value
+        chipLabelColor: document.getElementById('cChipColor').value,
+        outlineColor: document.getElementById('cOutline').value,
+        searchLabelBg: document.getElementById('cSearchBg').value,
+        searchLabelColor: document.getElementById('cSearchColor').value
       };
       try{
         await saveConfig();
