@@ -69,7 +69,7 @@
   .cat-grid{padding:30px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
   .empty-state{padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
 
-  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;}
+  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;}
   .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
   .prod-photo-wrap{position:relative;width:100%;aspect-ratio:1/1;background:#ececec;}
   .prod-photo{width:100%;height:100%;object-fit:cover;display:block;}
@@ -77,15 +77,17 @@
   .prod-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px;}
   .prod-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.55);}
   .prod-dot.on{background:#fff;}
-  .prod-cat-pill{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.92);padding:4px 10px 4px 6px;border-radius:999px;font-size:10.5px;font-weight:600;color:#20232a;font-family:var(--font-body);}
+  .prod-cat-pill{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.92);padding:4px 10px 4px 6px;border-radius:999px;font-size:10.5px;font-weight:600;color:#20232a;font-family:var(--font-body);max-width:calc(100% - 20px);}
+  .prod-cat-pill span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .prod-cat-dot{width:7px;height:7px;border-radius:50%;flex:none;}
   .prod-veh-pill{position:absolute;top:10px;right:10px;background:rgba(20,20,20,0.75);color:#fff;padding:4px 9px;border-radius:999px;font-size:10px;font-family:var(--font-body);}
-  .prod-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1;}
-  .prod-name{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--card-text);line-height:1.2;}
+  .prod-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;}
+  .prod-name{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--card-text);line-height:1.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   .prod-price-row{display:flex;align-items:baseline;justify-content:space-between;margin-top:auto;padding-top:6px;}
   .prod-price{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--price-color);}
   .prod-currency{font-size:11px;font-weight:500;color:var(--card-text-muted);margin-left:3px;}
-  .prod-compat-hint{font-size:11px;color:var(--card-text-muted);}
+  .prod-compat-hint{font-size:11px;color:var(--card-text-muted);overflow-wrap:anywhere;}
+  .prod-year-hint{font-size:11.5px;font-weight:600;color:var(--card-text);overflow-wrap:anywhere;}
   .estado-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;font-family:var(--font-body);padding:2px 0;}
   .estado-dot{width:7px;height:7px;border-radius:50%;flex:none;}
 
@@ -129,31 +131,34 @@
 
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
   .lightbox{background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;}
-  .lightbox-media{position:relative;background:#111;aspect-ratio:1/1;}
+  .lightbox-media{position:relative;background:#111;aspect-ratio:1/1;min-width:0;}
   .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;}
   .lightbox-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .lightbox-arrow.left{left:10px;} .lightbox-arrow.right{right:10px;}
   .lightbox-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;}
   .lightbox-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer;}
   .lightbox-dots span.on{background:#fff;}
-  .lightbox-info{padding:26px;display:flex;flex-direction:column;gap:10px;}
+  .lightbox-info{padding:26px;display:flex;flex-direction:column;gap:10px;min-width:0;}
   .lightbox-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.55);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
-  .lightbox-name{font-family:var(--font-display);font-weight:700;font-size:22px;}
+  .lightbox-name{font-family:var(--font-display);font-weight:700;font-size:22px;overflow-wrap:anywhere;}
   .lightbox-pills{display:flex;gap:6px;flex-wrap:wrap;}
   .lightbox-price{font-family:var(--font-display);font-weight:700;font-size:28px;color:var(--price-color);}
   .lightbox-compat-label{font-size:11px;color:var(--card-text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px;}
   .lightbox-compat-list{display:flex;flex-wrap:wrap;gap:6px;}
-  .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);}
-  .lightbox-notes{font-size:13px;color:var(--card-text-muted);margin-top:6px;}
+  .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);overflow-wrap:anywhere;max-width:100%;}
+  .lightbox-notes{font-size:13px;line-height:1.55;color:var(--card-text-muted);margin-top:6px;white-space:pre-line;overflow-wrap:anywhere;max-height:220px;overflow-y:auto;padding-right:6px;}
+  .how-to-buy{margin-top:14px;padding:12px 14px;border:1.5px dashed var(--accent);border-radius:12px;background:rgba(255,106,61,0.06);}
+  .how-to-buy .htb-title{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--accent);margin-bottom:4px;}
+  .how-to-buy .htb-text{font-size:12px;line-height:1.55;color:var(--card-text-muted);}
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
   .about-card{padding:28px 24px;animation:aboutFade .4s ease;}
   .about-card .about-inner{max-width:760px;margin:0 auto;text-align:center;}
   .about-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3vw,24px);margin-bottom:10px;letter-spacing:-0.01em;}
   .about-text{font-size:14px;line-height:1.65;white-space:pre-line;}
-  .about-dots{display:flex;justify-content:center;gap:6px;padding:0 24px 20px;}
-  .about-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.35;cursor:pointer;border:none;padding:0;transition:opacity .2s,transform .2s;}
-  .about-dot.on{opacity:1;transform:scale(1.3);}
+  .about-dots{display:flex;justify-content:center;gap:7px;padding:0 24px 20px;}
+  .about-dot{width:8px;height:8px;border-radius:50%;background:#fff;border:1.5px solid #000;opacity:0.55;cursor:pointer;padding:0;transition:opacity .2s,transform .2s;}
+  .about-dot.on{opacity:1;transform:scale(1.25);}
   @keyframes aboutFade{from{opacity:0;}to{opacity:1;}}
   @media (max-width:720px){
     .about-section{margin:20px 14px 0;}
@@ -296,6 +301,7 @@ function runApp(){
     },
     social:{
       tiktokUrl:'', tiktokIcono:null,
+      facebookUrl:'', facebookIcono:null,
       instagramUrl:'', instagramIcono:null,
       whatsappNumero:'', whatsappIcono:null,
       telefono:'', telefonoIcono:null,
@@ -347,6 +353,15 @@ function runApp(){
     return [];
   }
 
+  function anioLabel(p){
+    if(p.anioDesde && p.anioHasta){
+      return p.anioDesde===p.anioHasta ? String(p.anioDesde) : `${p.anioDesde} - ${p.anioHasta}`;
+    }
+    if(p.anioDesde) return `Desde ${p.anioDesde}`;
+    if(p.anioHasta) return `Hasta ${p.anioHasta}`;
+    return null;
+  }
+
   function applyTheme(){
     const c = config.colores;
     const root = document.documentElement.style;
@@ -377,6 +392,7 @@ function runApp(){
 
   const SOCIAL_ICONS = {
     tiktok: '<svg viewBox="0 0 24 24"><path d="M16.5 3c.4 1.9 1.7 3.4 3.5 3.9v2.6c-1.3-.1-2.5-.5-3.5-1.2v6.4a5.3 5.3 0 1 1-4.6-5.3v2.7a2.6 2.6 0 1 0 1.9 2.5V3h2.7z"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24"><path d="M13.5 21v-7.8h2.6l.4-3h-3v-1.9c0-.9.2-1.5 1.5-1.5h1.6V3.9c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3H10V21h3.5z"/></svg>',
     instagram: '<svg viewBox="0 0 24 24"><path d="M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H8zm4 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6zM17.6 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>',
     whatsapp: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8.9-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8.1.2 1.9 2.9 4.6 4 .6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z"/></svg>',
     telefono: '<svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.7 21 3 13.3 3 4c0-.6.4-1 1-1h3.6c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.2 1l-2.4 2.3z"/></svg>'
@@ -386,6 +402,7 @@ function runApp(){
     const s = config.social || {};
     const items = [];
     if(s.tiktokUrl) items.push({href:s.tiktokUrl, icon:s.tiktokIcono, svg:SOCIAL_ICONS.tiktok, label:'TikTok'});
+    if(s.facebookUrl) items.push({href:s.facebookUrl, icon:s.facebookIcono, svg:SOCIAL_ICONS.facebook, label:'Facebook'});
     if(s.instagramUrl) items.push({href:s.instagramUrl, icon:s.instagramIcono, svg:SOCIAL_ICONS.instagram, label:'Instagram'});
     if(s.whatsappNumero) items.push({href:'https://wa.me/'+s.whatsappNumero.replace(/\D/g,''), icon:s.whatsappIcono, svg:SOCIAL_ICONS.whatsapp, label:'WhatsApp: '+s.whatsappNumero});
     if(s.telefono) items.push({href:'tel:'+s.telefono.replace(/\s+/g,''), icon:s.telefonoIcono, svg:SOCIAL_ICONS.telefono, label:'Llamar: '+s.telefono});
@@ -473,7 +490,7 @@ function runApp(){
     if(activeCat!=='Todas' && label!==activeCat) return false;
     if(activeVeh!=='Todas' && piece.vehiculo!==activeVeh) return false;
     if(!searchTerm) return true;
-    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')).toLowerCase();
+    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')).toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
   }
 
@@ -499,7 +516,7 @@ function runApp(){
       const textColor = t.colorTexto || '#eceeef';
       const bgColor = t.colorFondo || '#15181b';
       const dotsHtml = cards.length > 1
-        ? `<div class="about-dots" style="color:${textColor}">${cards.map((_,i)=>`<button type="button" class="about-dot ${i===aboutIdx?'on':''}" data-goto="${i}"></button>`).join('')}</div>`
+        ? `<div class="about-dots">${cards.map((_,i)=>`<button type="button" class="about-dot ${i===aboutIdx?'on':''}" data-goto="${i}"></button>`).join('')}</div>`
         : '';
       aboutTrackEl.innerHTML = `
         <div class="about-card" style="background:${bgColor};color:${textColor}">
@@ -551,6 +568,8 @@ function runApp(){
         ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
       const compatHtml = (piece.compatibilidad||[]).length
         ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
+      const anio = anioLabel(piece);
+      const anioHtml = anio ? `<div class="prod-year-hint">📅 ${escapeHtml(anio)}</div>` : '';
       const estado = config.estados[piece.estado] || config.estados.disponible;
       const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
       card.innerHTML = `
@@ -563,6 +582,7 @@ function runApp(){
         <div class="prod-body">
           ${estadoHtml}
           <div class="prod-name">${escapeHtml(piece.nombre)}</div>
+          ${anioHtml}
           ${compatHtml}
           <div class="prod-price-row">
             <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
@@ -583,6 +603,27 @@ function runApp(){
         slideTimers.set(piece.id, timer);
       }
     });
+  }
+
+  function howToBuyHtml(){
+    const s = config.social || {};
+    const canales = [];
+    if(s.whatsappNumero) canales.push('WhatsApp');
+    if(s.facebookUrl) canales.push('Facebook');
+    if(s.instagramUrl) canales.push('Instagram');
+    if(s.tiktokUrl) canales.push('TikTok');
+    if(s.telefono) canales.push('teléfono');
+    if(!canales.length) return '';
+    let listaTxt;
+    if(canales.length===1){ listaTxt = canales[0]; }
+    else{ listaTxt = canales.slice(0,-1).join(', ') + ' o ' + canales[canales.length-1]; }
+    const msg = (s.comprarMensaje||'').trim();
+    return `
+      <div class="how-to-buy">
+        <div class="htb-title">🛒 ¿Cómo comprar?</div>
+        <div class="htb-text">Realiza tu compra escribiéndonos por ${escapeHtml(listaTxt)}. Da clic en los íconos que están en el banner principal${msg?`, junto a donde dice "${escapeHtml(msg)}"`:''}, y elige desde dónde prefieras escribirnos.</div>
+      </div>
+    `;
   }
 
   function openLightbox(piece){
@@ -610,9 +651,10 @@ function runApp(){
               ${estadoHtml}
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
-              ${piece.vehiculo ? `<div class="lightbox-pills"><span class="compat-pill">${escapeHtml(piece.vehiculo)}</span></div>` : ''}
+              ${(piece.vehiculo || anioLabel(piece)) ? `<div class="lightbox-pills">${piece.vehiculo?`<span class="compat-pill">${escapeHtml(piece.vehiculo)}</span>`:''}${anioLabel(piece)?`<span class="compat-pill">📅 ${escapeHtml(anioLabel(piece))}</span>`:''}</div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
               ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
+              ${howToBuyHtml()}
             </div>
           </div>
         </div>
@@ -794,6 +836,11 @@ function runApp(){
       </select>
       <label>Compatibilidades (separadas por coma)</label>
       <input id="fCompat" value="${editing?escapeAttr((editing.compatibilidad||[]).join(', ')):''}" placeholder="Ej. Nissan Tsuru, VW Jetta MK2">
+      <label>Años de compatibilidad (opcional)</label>
+      <div style="display:flex;gap:8px;">
+        <input id="fAnioDesde" type="number" placeholder="Desde, ej. 2010" value="${editing&&editing.anioDesde?editing.anioDesde:''}">
+        <input id="fAnioHasta" type="number" placeholder="Hasta, ej. 2015" value="${editing&&editing.anioHasta?editing.anioHasta:''}">
+      </div>
       <label>Precio (MXN) *</label>
       <input id="fPrice" type="number" value="${editing?editing.precio:''}" placeholder="Ej. 450">
       <label>Fotos (hasta ${MAX_FOTOS}, selecciona varias a la vez)</label>
@@ -835,10 +882,14 @@ function runApp(){
       const vehiculo = document.getElementById('fVeh').value;
       const estado = document.getElementById('fEstado').value;
       const compatibilidad = document.getElementById('fCompat').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const anioDesdeRaw = document.getElementById('fAnioDesde').value.trim();
+      const anioHastaRaw = document.getElementById('fAnioHasta').value.trim();
+      const anioDesde = anioDesdeRaw ? Number(anioDesdeRaw) : null;
+      const anioHasta = anioHastaRaw ? Number(anioHastaRaw) : null;
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculo, estado, compatibilidad, precio, fotos:pendingPhotos, notas};
+      const data = {nombre, categoriaId, vehiculo, estado, compatibilidad, anioDesde, anioHasta, precio, fotos:pendingPhotos, notas};
       try{
         if(editing){
           await updateDoc(doc(db,'productos',editing.id), data);
@@ -930,24 +981,33 @@ function runApp(){
             <div><label>Color del texto</label><input type="color" data-colortext="${i}" value="${t.colorTexto||'#eceeef'}"></div>
             <div><label>Color de la tarjeta</label><input type="color" data-colorbg="${i}" value="${t.colorFondo||'#15181b'}"></div>
           </div>
-          <div class="actions" style="justify-content:flex-end;display:flex;gap:6px;">
+          <div class="status-msg" id="aboutCardMsg${i}"></div>
+          <div class="actions" style="justify-content:flex-end;display:flex;gap:6px;flex-wrap:wrap;">
             <button class="icon-btn" data-up="${i}" ${i===0?'disabled':''}>&uarr; Subir</button>
             <button class="icon-btn" data-down="${i}" ${i===cards.length-1?'disabled':''}>&darr; Bajar</button>
             <button class="icon-btn" data-delcard="${i}">Borrar</button>
+            <button class="btn btn-primary btn-small" data-savecard="${i}">Guardar tarjeta</button>
           </div>
         </div>
       `).join('');
-      listEl.querySelectorAll('[data-title]').forEach(inp=>{
-        inp.onchange = async ()=>{ cards[Number(inp.dataset.title)].titulo = inp.value.trim(); await saveConfig(); };
-      });
-      listEl.querySelectorAll('[data-text]').forEach(inp=>{
-        inp.onchange = async ()=>{ cards[Number(inp.dataset.text)].texto = inp.value.trim(); await saveConfig(); };
-      });
-      listEl.querySelectorAll('[data-colortext]').forEach(inp=>{
-        inp.onchange = async ()=>{ cards[Number(inp.dataset.colortext)].colorTexto = inp.value; await saveConfig(); };
-      });
-      listEl.querySelectorAll('[data-colorbg]').forEach(inp=>{
-        inp.onchange = async ()=>{ cards[Number(inp.dataset.colorbg)].colorFondo = inp.value; await saveConfig(); };
+      listEl.querySelectorAll('[data-savecard]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.savecard);
+          const msgEl = document.getElementById('aboutCardMsg'+i);
+          const card = cards[i];
+          card.titulo = listEl.querySelector(`[data-title="${i}"]`).value.trim();
+          card.texto = listEl.querySelector(`[data-text="${i}"]`).value.trim();
+          card.colorTexto = listEl.querySelector(`[data-colortext="${i}"]`).value;
+          card.colorFondo = listEl.querySelector(`[data-colorbg="${i}"]`).value;
+          try{
+            await saveConfig();
+            msgEl.className = 'status-msg ok';
+            msgEl.textContent = 'Tarjeta guardada.';
+          }catch(e){
+            msgEl.className = 'status-msg err';
+            msgEl.textContent = 'Error al guardar: '+e.message;
+          }
+        };
       });
       listEl.querySelectorAll('[data-delcard]').forEach(btn=>{
         btn.onclick = async ()=>{
@@ -973,7 +1033,7 @@ function runApp(){
     }
     body.innerHTML = `
       <div style="font-size:11.5px;color:var(--subtitle-color);margin-bottom:14px;line-height:1.5;">
-        Estas tarjetas se muestran deslizándose solas donde antes estaba el texto fijo de "¿Quiénes Somos?". Si hay más de una, van cambiando cada 5 segundos y se detienen mientras el cursor está encima. Déjalas vacías (borra todas) para ocultar la sección.
+        Estas tarjetas se muestran deslizándose solas donde antes estaba el texto fijo de "¿Quiénes Somos?". Si hay más de una, van cambiando cada 5 segundos y se detienen mientras el cursor está encima. Edita los campos y pulsa "Guardar tarjeta" para aplicar los cambios. Déjalas vacías (borra todas) para ocultar la sección.
       </div>
       <div id="aboutList"></div>
       <div class="modal-actions"><button class="btn btn-primary btn-small" id="addAboutBtn">+ Agregar tarjeta</button></div>
@@ -1029,6 +1089,13 @@ function runApp(){
       <input type="file" id="sTiktokIcon" accept="image/*" style="margin-top:6px;">
       <div class="photo-thumbs" id="sTiktokIconPreviewWrap" style="${config.social?.tiktokIcono?'':'display:none;'}">
         <div class="photo-thumb"><img id="sTiktokIconPreview" src="${config.social?.tiktokIcono?escapeAttr(config.social.tiktokIcono):''}"><button type="button" class="rm" id="sTiktokIconRemove">×</button></div>
+      </div>
+
+      <label>Facebook (enlace)</label>
+      <input id="sFacebookUrl" placeholder="https://www.facebook.com/tupagina" value="${escapeAttr(config.social?.facebookUrl||'')}">
+      <input type="file" id="sFacebookIcon" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="sFacebookIconPreviewWrap" style="${config.social?.facebookIcono?'':'display:none;'}">
+        <div class="photo-thumb"><img id="sFacebookIconPreview" src="${config.social?.facebookIcono?escapeAttr(config.social.facebookIcono):''}"><button type="button" class="rm" id="sFacebookIconRemove">×</button></div>
       </div>
 
       <label>Instagram (enlace)</label>
@@ -1089,6 +1156,7 @@ function runApp(){
     const sc = config.social || {};
     let pendingIcons = {
       tiktokIcono: sc.tiktokIcono || null,
+      facebookIcono: sc.facebookIcono || null,
       instagramIcono: sc.instagramIcono || null,
       whatsappIcono: sc.whatsappIcono || null,
       telefonoIcono: sc.telefonoIcono || null
@@ -1106,6 +1174,7 @@ function runApp(){
       };
     }
     wireIconUpload('tiktokIcono','sTiktokIcon','sTiktokIconPreviewWrap','sTiktokIconPreview','sTiktokIconRemove');
+    wireIconUpload('facebookIcono','sFacebookIcon','sFacebookIconPreviewWrap','sFacebookIconPreview','sFacebookIconRemove');
     wireIconUpload('instagramIcono','sInstagramIcon','sInstagramIconPreviewWrap','sInstagramIconPreview','sInstagramIconRemove');
     wireIconUpload('whatsappIcono','sWhatsappIcon','sWhatsappIconPreviewWrap','sWhatsappIconPreview','sWhatsappIconRemove');
     wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
@@ -1143,6 +1212,8 @@ function runApp(){
       config.social = {
         tiktokUrl: document.getElementById('sTiktokUrl').value.trim(),
         tiktokIcono: pendingIcons.tiktokIcono,
+        facebookUrl: document.getElementById('sFacebookUrl').value.trim(),
+        facebookIcono: pendingIcons.facebookIcono,
         instagramUrl: document.getElementById('sInstagramUrl').value.trim(),
         instagramIcono: pendingIcons.instagramIcono,
         whatsappNumero: document.getElementById('sWhatsappNumero').value.trim(),
