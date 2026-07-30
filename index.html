@@ -13,6 +13,7 @@
     --accent:#ff6a3d; --price-color:#ff6a3d;
     --input-bg:#15181b; --input-text:#eceeef;
     --panel-bg:#15181b; --panel-border:#25292d;
+    --about-bg:#15181b;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -45,6 +46,11 @@
     display:flex;align-items:center;gap:12px;
     justify-content:center;text-align:left;
   }
+  .header-social{grid-column:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
+  .social-link:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px);}
+  .social-link svg{width:17px;height:17px;fill:currentColor;}
+  .social-link img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .cat-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;display:none;background:rgba(255,255,255,0.08);}
   .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-0.02em;color:var(--title-color);line-height:1.1;}
   .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;margin-top:2px;}
@@ -138,6 +144,14 @@
   .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);}
   .lightbox-notes{font-size:13px;color:var(--card-text-muted);margin-top:6px;}
 
+  .about-section{margin:26px 24px 0;padding:28px 24px;color:var(--title-color);font-family:var(--font-body);background:var(--about-bg);border-radius:16px;}
+  .about-section .about-inner{max-width:760px;margin:0 auto;text-align:center;}
+  .about-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3vw,24px);color:var(--title-color);margin-bottom:10px;letter-spacing:-0.01em;}
+  .about-text{font-size:14px;line-height:1.65;color:var(--subtitle-color);white-space:pre-line;}
+  @media (max-width:720px){
+    .about-section{margin:20px 14px 0;padding:22px 16px;}
+  }
+
   .setup-screen{max-width:640px;margin:60px auto;padding:0 20px;font-family:var(--font-body);color:var(--input-text);line-height:1.6;}
   .setup-screen h2{font-family:var(--font-display);margin-bottom:14px;}
   .setup-screen code{background:var(--panel-bg);padding:2px 6px;border-radius:4px;font-size:12.5px;}
@@ -146,8 +160,9 @@
 
   @media (max-width:720px){
     .header-top{grid-template-columns:1fr;}
-    .header-center{grid-column:1;justify-content:center;text-align:center;flex-direction:column;}
-    .header-search-wrap{grid-column:1;justify-content:center;margin-top:12px;}
+    .header-center{grid-column:1;justify-content:center;text-align:center;flex-direction:column;order:1;}
+    .header-social{grid-column:1;justify-content:center;margin-top:12px;order:2;}
+    .header-search-wrap{grid-column:1;justify-content:center;margin-top:12px;order:3;}
     .cat-search{max-width:100%;}
     .lightbox{grid-template-columns:1fr;max-width:480px;}
     .lightbox-media{aspect-ratio:4/3;}
@@ -174,7 +189,7 @@
 <div class="cat-root" id="catRoot" style="display:none;">
   <div class="cat-header" id="catHeader">
     <div class="header-top">
-      <div></div>
+      <div class="header-social" id="headerSocial"></div>
       <div class="header-center">
         <img class="cat-logo" id="catLogo" alt="logo">
         <div>
@@ -195,6 +210,12 @@
         <div class="chip-row-label">Vehículo</div>
         <div class="chip-row" id="vehChips"></div>
       </div>
+    </div>
+  </div>
+  <div class="about-section" id="aboutSection" style="display:none;">
+    <div class="about-inner">
+      <h2 class="about-title">¿Quiénes Somos?</h2>
+      <p class="about-text" id="aboutText"></p>
     </div>
   </div>
   <div id="catGrid" class="cat-grid"></div>
@@ -246,10 +267,17 @@ function runApp(){
     pin:'2026',
     logo:null,
     banner:null,
+    quienesSomos:'En Refaccionaria ARCO nos especializamos en la venta de refacciones usadas para automóviles, camionetas y camiones de diversas marcas. Ofrecemos atención personalizada, fotografías reales de cada pieza, precios competitivos y envíos a todo México para que puedas comprar con mayor confianza.\n\nAdemás de nuestro inventario disponible, también te ayudamos a conseguir algunas refacciones bajo pedido cuando es posible, brindándote una solución más completa.\n\nRealizamos envíos a todo México y entregas personales en Puebla.',
     colores:{
       bg:'#0c0e10', titleColor:'#f6f6f2', subtitleColor:'#8b9096',
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
-      inputBg:'#15181b', inputText:'#eceeef'
+      inputBg:'#15181b', inputText:'#eceeef', aboutBg:'#15181b'
+    },
+    social:{
+      tiktokUrl:'', tiktokIcono:null,
+      instagramUrl:'', instagramIcono:null,
+      whatsappNumero:'', whatsappIcono:null,
+      telefono:'', telefonoIcono:null
     },
     categorias:[
       {id:'motor', label:'Motor', color:'#b5502f'},
@@ -277,6 +305,9 @@ function runApp(){
   const logoEl = document.getElementById('catLogo');
   const headerEl = document.getElementById('catHeader');
   const searchEl = document.getElementById('catSearch');
+  const aboutSectionEl = document.getElementById('aboutSection');
+  const aboutTextEl = document.getElementById('aboutText');
+  const headerSocialEl = document.getElementById('headerSocial');
   const modalRoot = document.getElementById('modalRoot');
   const lightboxRoot = document.getElementById('lightboxRoot');
 
@@ -299,6 +330,7 @@ function runApp(){
     root.setProperty('--input-bg', c.inputBg);
     root.setProperty('--input-text', c.inputText);
     root.setProperty('--panel-bg', c.inputBg);
+    root.setProperty('--about-bg', c.aboutBg || c.inputBg);
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -314,19 +346,48 @@ function runApp(){
   }
   function catById(id){ return config.categorias.find(cc=>cc.id===id); }
 
+  const SOCIAL_ICONS = {
+    tiktok: '<svg viewBox="0 0 24 24"><path d="M16.5 3c.4 1.9 1.7 3.4 3.5 3.9v2.6c-1.3-.1-2.5-.5-3.5-1.2v6.4a5.3 5.3 0 1 1-4.6-5.3v2.7a2.6 2.6 0 1 0 1.9 2.5V3h2.7z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24"><path d="M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H8zm4 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6zM17.6 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>',
+    whatsapp: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8.9-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8.1.2 1.9 2.9 4.6 4 .6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z"/></svg>',
+    telefono: '<svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.7 21 3 13.3 3 4c0-.6.4-1 1-1h3.6c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.2 1l-2.4 2.3z"/></svg>'
+  };
+
+  function renderSocial(){
+    const s = config.social || {};
+    const items = [];
+    if(s.tiktokUrl) items.push({href:s.tiktokUrl, icon:s.tiktokIcono, svg:SOCIAL_ICONS.tiktok, label:'TikTok'});
+    if(s.instagramUrl) items.push({href:s.instagramUrl, icon:s.instagramIcono, svg:SOCIAL_ICONS.instagram, label:'Instagram'});
+    if(s.whatsappNumero) items.push({href:'https://wa.me/'+s.whatsappNumero.replace(/\D/g,''), icon:s.whatsappIcono, svg:SOCIAL_ICONS.whatsapp, label:'WhatsApp: '+s.whatsappNumero});
+    if(s.telefono) items.push({href:'tel:'+s.telefono.replace(/\s+/g,''), icon:s.telefonoIcono, svg:SOCIAL_ICONS.telefono, label:'Llamar: '+s.telefono});
+    headerSocialEl.innerHTML = items.map(it=>{
+      const inner = it.icon ? `<img src="${escapeAttr(it.icon)}" alt="${escapeAttr(it.label)}">` : it.svg;
+      const isHttp = /^https?:\/\//.test(it.href);
+      return `<a class="social-link" href="${escapeAttr(it.href)}" ${isHttp?'target="_blank" rel="noopener"':''} title="${escapeAttr(it.label)}">${inner}</a>`;
+    }).join('');
+  }
+
   const configRef = doc(db, 'configuracion', 'admin');
   onSnapshot(configRef, (snap)=>{
     if(snap.exists()){
       const loaded = snap.data();
       config = Object.assign({}, config, loaded, {
-        colores: Object.assign({}, config.colores, loaded.colores||{})
+        colores: Object.assign({}, config.colores, loaded.colores||{}),
+        social: Object.assign({}, config.social, loaded.social||{})
       });
     }
     applyTheme();
     titleEl.textContent = config.titulo;
     sloganEl.textContent = config.eslogan || '';
+    if((config.quienesSomos||'').trim()){
+      aboutTextEl.textContent = config.quienesSomos;
+      aboutSectionEl.style.display = 'block';
+    }else{
+      aboutSectionEl.style.display = 'none';
+    }
     renderChips();
     renderVehChips();
+    renderSocial();
     renderGrid();
   }, (err)=>{ console.error('config', err); });
 
@@ -380,7 +441,7 @@ function runApp(){
     const list = pieces.filter(matchesFilter);
     grid.innerHTML = '';
     if(list.length===0){
-      grid.innerHTML = '<div class="empty-state">No hay Existencias, De momento...</div>';
+      grid.innerHTML = '<div class="empty-state">No hay existencias, De Momento.. Si quieres que te consigamos tu pieza, contactanos directamente.</div>';
       return;
     }
     list.forEach(piece=>{
@@ -735,6 +796,8 @@ function runApp(){
       <input id="sTitle" value="${escapeAttr(config.titulo)}">
       <label>Eslogan</label>
       <input id="sSlogan" value="${escapeAttr(config.eslogan||'')}">
+      <label>Texto de "¿Quiénes Somos?" (déjalo vacío para ocultar la sección)</label>
+      <textarea id="sAbout" rows="6">${escapeAttr(config.quienesSomos||'')}</textarea>
       <label>PIN de acceso admin</label>
       <input id="sPin" value="${escapeAttr(config.pin)}">
 
@@ -748,6 +811,37 @@ function runApp(){
       <img id="sBannerPreview" class="design-preview banner" style="${config.banner?'':'display:none;'}" src="${config.banner?escapeAttr(config.banner):''}">
       <button class="btn btn-ghost btn-small" id="sBannerRemove" style="margin-top:8px;${config.banner?'':'display:none;'}">Quitar banner</button>
 
+      <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Redes sociales y contacto</div>
+      <div style="font-size:11px;color:var(--subtitle-color);margin-top:2px;">Deja en blanco lo que no uses. Puedes subir tu propio ícono para cada una; si no subes nada, se usa un ícono genérico.</div>
+
+      <label>TikTok (enlace)</label>
+      <input id="sTiktokUrl" placeholder="https://www.tiktok.com/@tuusuario" value="${escapeAttr(config.social?.tiktokUrl||'')}">
+      <input type="file" id="sTiktokIcon" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="sTiktokIconPreviewWrap" style="${config.social?.tiktokIcono?'':'display:none;'}">
+        <div class="photo-thumb"><img id="sTiktokIconPreview" src="${config.social?.tiktokIcono?escapeAttr(config.social.tiktokIcono):''}"><button type="button" class="rm" id="sTiktokIconRemove">×</button></div>
+      </div>
+
+      <label>Instagram (enlace)</label>
+      <input id="sInstagramUrl" placeholder="https://www.instagram.com/tuusuario" value="${escapeAttr(config.social?.instagramUrl||'')}">
+      <input type="file" id="sInstagramIcon" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="sInstagramIconPreviewWrap" style="${config.social?.instagramIcono?'':'display:none;'}">
+        <div class="photo-thumb"><img id="sInstagramIconPreview" src="${config.social?.instagramIcono?escapeAttr(config.social.instagramIcono):''}"><button type="button" class="rm" id="sInstagramIconRemove">×</button></div>
+      </div>
+
+      <label>WhatsApp (número con lada, solo dígitos, ej. 5212223334455)</label>
+      <input id="sWhatsappNumero" placeholder="5212223334455" value="${escapeAttr(config.social?.whatsappNumero||'')}">
+      <input type="file" id="sWhatsappIcon" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="sWhatsappIconPreviewWrap" style="${config.social?.whatsappIcono?'':'display:none;'}">
+        <div class="photo-thumb"><img id="sWhatsappIconPreview" src="${config.social?.whatsappIcono?escapeAttr(config.social.whatsappIcono):''}"><button type="button" class="rm" id="sWhatsappIconRemove">×</button></div>
+      </div>
+
+      <label>Teléfono de atención (se muestra tal cual y se puede marcar)</label>
+      <input id="sTelefono" placeholder="222 123 4567" value="${escapeAttr(config.social?.telefono||'')}">
+      <input type="file" id="sTelefonoIcon" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="sTelefonoIconPreviewWrap" style="${config.social?.telefonoIcono?'':'display:none;'}">
+        <div class="photo-thumb"><img id="sTelefonoIconPreview" src="${config.social?.telefonoIcono?escapeAttr(config.social.telefonoIcono):''}"><button type="button" class="rm" id="sTelefonoIconRemove">×</button></div>
+      </div>
+
       <div class="color-grid">
         <div><label>Fondo de la página</label><input type="color" id="cBg" value="${c.bg}"></div>
         <div><label>Color del título</label><input type="color" id="cTitle" value="${c.titleColor}"></div>
@@ -758,12 +852,36 @@ function runApp(){
         <div><label>Texto en tarjetas</label><input type="color" id="cCardText" value="${c.cardText}"></div>
         <div><label>Fondo de campos</label><input type="color" id="cInputBg" value="${c.inputBg}"></div>
         <div><label>Texto de campos</label><input type="color" id="cInputText" value="${c.inputText}"></div>
+        <div><label>Fondo de "¿Quiénes Somos?"</label><input type="color" id="cAboutBg" value="${c.aboutBg||'#15181b'}"></div>
       </div>
       <div class="status-msg" id="sMsg"></div>
       <div class="modal-actions"><button class="btn btn-primary" id="sSave">Guardar diseño</button></div>
     `;
     let pendingLogo = config.logo || null;
     let pendingBanner = config.banner || null;
+    const sc = config.social || {};
+    let pendingIcons = {
+      tiktokIcono: sc.tiktokIcono || null,
+      instagramIcono: sc.instagramIcono || null,
+      whatsappIcono: sc.whatsappIcono || null,
+      telefonoIcono: sc.telefonoIcono || null
+    };
+    function wireIconUpload(key, fileId, previewWrapId, previewId, removeId){
+      document.getElementById(fileId).addEventListener('change', async (e)=>{
+        const file = e.target.files[0]; if(!file) return;
+        pendingIcons[key] = await compressToBudget(file, 80000);
+        document.getElementById(previewId).src = pendingIcons[key];
+        document.getElementById(previewWrapId).style.display = 'flex';
+      });
+      document.getElementById(removeId).onclick = ()=>{
+        pendingIcons[key] = null;
+        document.getElementById(previewWrapId).style.display = 'none';
+      };
+    }
+    wireIconUpload('tiktokIcono','sTiktokIcon','sTiktokIconPreviewWrap','sTiktokIconPreview','sTiktokIconRemove');
+    wireIconUpload('instagramIcono','sInstagramIcon','sInstagramIconPreviewWrap','sInstagramIconPreview','sInstagramIconRemove');
+    wireIconUpload('whatsappIcono','sWhatsappIcon','sWhatsappIconPreviewWrap','sWhatsappIconPreview','sWhatsappIconRemove');
+    wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
       pendingLogo = await compressToBudget(file, 150000);
@@ -791,9 +909,20 @@ function runApp(){
     document.getElementById('sSave').onclick = async ()=>{
       config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
       config.eslogan = document.getElementById('sSlogan').value.trim();
+      config.quienesSomos = document.getElementById('sAbout').value.trim();
       config.pin = document.getElementById('sPin').value.trim() || config.pin;
       config.logo = pendingLogo;
       config.banner = pendingBanner;
+      config.social = {
+        tiktokUrl: document.getElementById('sTiktokUrl').value.trim(),
+        tiktokIcono: pendingIcons.tiktokIcono,
+        instagramUrl: document.getElementById('sInstagramUrl').value.trim(),
+        instagramIcono: pendingIcons.instagramIcono,
+        whatsappNumero: document.getElementById('sWhatsappNumero').value.trim(),
+        whatsappIcono: pendingIcons.whatsappIcono,
+        telefono: document.getElementById('sTelefono').value.trim(),
+        telefonoIcono: pendingIcons.telefonoIcono
+      };
       config.colores = {
         bg: document.getElementById('cBg').value,
         titleColor: document.getElementById('cTitle').value,
@@ -803,7 +932,8 @@ function runApp(){
         cardBg: document.getElementById('cCardBg').value,
         cardText: document.getElementById('cCardText').value,
         inputBg: document.getElementById('cInputBg').value,
-        inputText: document.getElementById('cInputText').value
+        inputText: document.getElementById('cInputText').value,
+        aboutBg: document.getElementById('cAboutBg').value
       };
       try{
         await saveConfig();
