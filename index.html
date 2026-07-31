@@ -655,7 +655,7 @@ function runApp(){
     if(minPrice!==null && precioNum < minPrice) return false;
     if(maxPrice!==null && precioNum > maxPrice) return false;
     if(!searchTerm) return true;
-    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')).toLowerCase();
+    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')+' '+(piece.motor||'')).toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
   }
 
@@ -726,7 +726,10 @@ function runApp(){
     const compatHtml = (piece.compatibilidad||[]).length
       ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
     const anio = anioLabel(piece);
+    const motor = (piece.motor||'').trim();
     const anioHtml = anio ? `<div class="prod-year-block"><span class="prod-year-label">Modelos</span><span class="prod-year-value">${escapeHtml(anio)}</span></div>` : '';
+    const motorHtml = motor ? `<div class="prod-year-block"><span class="prod-year-label">Motor</span><span class="prod-year-value">${escapeHtml(motor)}</span></div>` : '';
+    const specsHtml = (anioHtml || motorHtml) ? `<div style="display:flex;gap:14px;flex-wrap:wrap;">${anioHtml}${motorHtml}</div>` : '';
     const estado = config.estados[piece.estado] || config.estados.disponible;
     const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
     card.innerHTML = `
@@ -739,7 +742,7 @@ function runApp(){
       <div class="prod-body">
         ${estadoHtml}
         <div class="prod-name">${escapeHtml(piece.nombre)}</div>
-        ${anioHtml}
+        ${specsHtml}
         ${compatHtml}
         <div class="prod-price-row">
           <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
@@ -922,7 +925,10 @@ function runApp(){
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
               ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
-              ${anioLabel(piece) ? `<div class="lightbox-compat-label" style="margin-top:6px;">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div>` : ''}
+              ${(anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
+                ${anioLabel(piece) ? `<div><div class="lightbox-compat-label">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div></div>` : ''}
+                ${(piece.motor||'').trim() ? `<div><div class="lightbox-compat-label">Motor</div><div class="lightbox-year-value">${escapeHtml(piece.motor.trim())}</div></div>` : ''}
+              </div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
               ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
               <div class="lightbox-actions">
@@ -1193,6 +1199,8 @@ function runApp(){
         <input id="fAnioDesde" type="number" placeholder="Desde, ej. 2010" value="${editing&&editing.anioDesde?editing.anioDesde:''}">
         <input id="fAnioHasta" type="number" placeholder="Hasta, ej. 2015" value="${editing&&editing.anioHasta?editing.anioHasta:''}">
       </div>
+      <label>Motor (opcional)</label>
+      <input id="fMotor" placeholder="Ej. 2.0L Turbo" value="${editing&&editing.motor?escapeAttr(editing.motor):''}">
       <label>Precio (MXN) *</label>
       <input id="fPrice" type="number" value="${editing?editing.precio:''}" placeholder="Ej. 450">
       <label>Fotos (hasta ${MAX_FOTOS}, selecciona varias a la vez)</label>
@@ -1238,10 +1246,11 @@ function runApp(){
       const anioHastaRaw = document.getElementById('fAnioHasta').value.trim();
       const anioDesde = anioDesdeRaw ? Number(anioDesdeRaw) : null;
       const anioHasta = anioHastaRaw ? Number(anioHastaRaw) : null;
+      const motor = document.getElementById('fMotor').value.trim();
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, precio, fotos:pendingPhotos, notas};
+      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, motor, precio, fotos:pendingPhotos, notas};
       try{
         if(editing){
           await updateDoc(doc(db,'productos',editing.id), data);
