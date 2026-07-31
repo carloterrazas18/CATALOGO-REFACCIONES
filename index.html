@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catálogo de Refacciones</title>
+<meta name="description" content="Catálogo de refacciones automotrices usadas. Encuentra la pieza correcta para tu vehículo.">
+<meta property="og:title" content="Catálogo de Refacciones">
+<meta property="og:description" content="Refacciones usadas para autos, camionetas y camiones. Precios competitivos y atención personalizada.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230c0e10'/%3E%3Cpath fill='%23ff6a3d' d='M17 7.4a4.6 4.6 0 0 1-5.7 5.6L7 17.3 5.7 16l4.3-4.3A4.6 4.6 0 0 1 15.6 6l-2.5 2.5 1.4 1.4L17 7.4z'/%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
   :root{
@@ -16,6 +21,9 @@
     --chip-label-bg:rgba(255,255,255,0.07); --chip-label-color:#8b9096;
     --outline-color:#000000; --outline-color-social:#000000;
     --search-label-bg:#ff6a3d; --search-label-color:#ffffff;
+    --wa-btn-bg:#25d366; --wa-btn-color:#ffffff;
+    --share-btn-bg:#15181b; --share-btn-color:#8b9096;
+    --htb-bg:#1c1410; --htb-border:#ff6a3d; --htb-title-color:#ff6a3d;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -51,7 +59,7 @@
   .header-social{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
   .comprar-msg{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--subtitle-color);text-align:center;text-shadow:-1px -1px 0 var(--outline-color-social),1px -1px 0 var(--outline-color-social),-1px 1px 0 var(--outline-color-social),1px 1px 0 var(--outline-color-social);}
   .social-icons-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
-  .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
+  .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
   .social-link:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px);}
   .social-link svg{width:17px;height:17px;fill:currentColor;}
   .social-link img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
@@ -59,9 +67,14 @@
   .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-0.02em;color:var(--title-color);line-height:1.1;text-shadow:-1.5px -1.5px 0 var(--outline-color),1.5px -1.5px 0 var(--outline-color),-1.5px 1.5px 0 var(--outline-color),1.5px 1.5px 0 var(--outline-color);}
   .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;margin-top:2px;text-shadow:-1px -1px 0 var(--outline-color),1px -1px 0 var(--outline-color),-1px 1px 0 var(--outline-color),1px 1px 0 var(--outline-color);}
   .header-search-wrap{grid-column:3;display:flex;justify-content:flex-end;}
-  .search-block{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:280px;}
+  .search-block{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:320px;}
   .search-label{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--search-label-color);background:var(--search-label-bg);padding:5px 16px;border-radius:999px;display:inline-block;}
   .cat-search{width:100%;max-width:280px;padding:10px 16px;background:rgba(21,24,27,0.85);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .15s;}
+  .search-input-row{display:flex;align-items:center;gap:8px;width:100%;}
+  .search-input-row .cat-search{max-width:none;flex:1;min-width:0;}
+  .search-btn{flex:none;width:38px;height:38px;border-radius:50%;border:none;background:var(--search-label-bg);color:var(--search-label-color);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;}
+  .search-btn:hover{transform:scale(1.06);}
+  .search-btn svg{width:18px;height:18px;fill:currentColor;}
   .cat-search:focus{border-color:var(--accent);}
   .cat-search::placeholder{color:var(--subtitle-color);}
 
@@ -72,6 +85,11 @@
   .chip{font-family:var(--font-body);font-weight:500;font-size:12px;padding:7px 14px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--subtitle-color);cursor:pointer;user-select:none;transition:all .15s;}
   .chip:hover{border-color:var(--accent);color:var(--title-color);}
   .chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .price-range-row{display:flex;align-items:center;gap:6px;}
+  .price-input{width:72px;padding:7px 10px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:12px;outline:none;transition:border-color .15s;}
+  .price-input:focus{border-color:var(--accent);}
+  .price-sep{color:var(--subtitle-color);font-size:12px;}
+  .sort-select{padding:7px 12px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:12px;outline:none;cursor:pointer;}
 
   .cat-grid{padding:30px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
   .empty-state{padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
@@ -157,11 +175,16 @@
   .lightbox-year-value{font-size:13.5px;font-weight:600;color:var(--card-text);overflow-wrap:anywhere;}
   .compat-pill{font-size:11px;background:#f1f1ef;color:#4a4d52;padding:3px 9px;border-radius:6px;font-family:var(--font-body);overflow-wrap:anywhere;max-width:100%;}
   .lightbox-notes{font-size:13px;line-height:1.55;color:var(--card-text-muted);margin-top:6px;white-space:pre-line;overflow-wrap:anywhere;max-height:220px;overflow-y:auto;padding-right:6px;}
-  .how-to-buy{margin-top:14px;padding:12px 14px;border:1.5px dashed var(--accent);border-radius:12px;background:rgba(255,106,61,0.06);}
-  .how-to-buy .htb-title{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--accent);margin-bottom:4px;}
-  .how-to-buy .htb-text{font-size:12px;line-height:1.55;color:var(--card-text-muted);}
+  .lightbox-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .lightbox-actions .btn, .lightbox-actions .wa-buy-btn, .lightbox-actions .share-btn-custom{text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .how-to-buy{margin-top:14px;padding:12px 14px;border:1.5px dashed var(--htb-border);border-radius:12px;background:var(--htb-bg);}
+  .how-to-buy .htb-title{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--htb-title-color);margin-bottom:4px;}
+  .how-to-buy .htb-text{font-size:12px;line-height:1.55;color:var(--card-text-muted);white-space:pre-line;}
+  .lightbox-actions .wa-buy-btn{background:var(--wa-btn-bg);color:var(--wa-btn-color);border:none;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;cursor:pointer;}
+  .lightbox-actions .share-btn-custom{background:var(--share-btn-bg);color:var(--share-btn-color);border:1px solid var(--panel-border);border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;cursor:pointer;}
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
+  .about-section.search-hidden{display:none !important;}
   .about-card{padding:28px 24px;animation:aboutFade .4s ease;}
   .about-card .about-inner{max-width:760px;margin:0 auto;text-align:center;}
   .about-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3vw,24px);margin-bottom:10px;letter-spacing:-0.01em;}
@@ -234,7 +257,12 @@
       <div class="header-search-wrap">
         <div class="search-block">
           <div class="search-label">Busca tu Refacción</div>
-          <input class="cat-search" id="catSearch" placeholder="Buscar por nombre, marca o modelo...">
+          <div class="search-input-row">
+            <input class="cat-search" id="catSearch" placeholder="Buscar por nombre, marca o modelo...">
+            <button type="button" class="search-btn" id="catSearchBtn" title="Buscar" aria-label="Buscar">
+              <svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm7.7 13.3-3-3 1.4-1.4 3 3-1.4 1.4z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -246,6 +274,22 @@
       <div>
         <div class="chip-row-label">Vehículo</div>
         <div class="chip-row" id="vehChips"></div>
+      </div>
+      <div>
+        <div class="chip-row-label">Precio</div>
+        <div class="price-range-row">
+          <input type="number" class="price-input" id="minPriceInput" placeholder="Mín" min="0">
+          <span class="price-sep">—</span>
+          <input type="number" class="price-input" id="maxPriceInput" placeholder="Máx" min="0">
+        </div>
+      </div>
+      <div>
+        <div class="chip-row-label">Ordenar</div>
+        <select class="sort-select" id="sortSelect">
+          <option value="default">Más recientes</option>
+          <option value="price_asc">Precio: menor a mayor</option>
+          <option value="price_desc">Precio: mayor a menor</option>
+        </select>
       </div>
     </div>
   </div>
@@ -312,8 +356,13 @@ function runApp(){
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
       inputBg:'#15181b', inputText:'#eceeef',
       chipLabelBg:'#1c2024', chipLabelColor:'#8b9096',
-      outlineColor:'#000000', outlineColorSocial:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff'
+      outlineColor:'#000000', outlineColorSocial:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff',
+      socialIconColors:{tiktok:'#000000', facebook:'#1877f2', instagram:'#e1306c', whatsapp:'#25d366', telefono:'#6b7280'},
+      waBtnBg:'#25d366', waBtnColor:'#ffffff',
+      shareBtnBg:'#15181b', shareBtnColor:'#8b9096',
+      htbBg:'#1c1410', htbBorder:'#ff6a3d', htbTitleColor:'#ff6a3d'
     },
+    howToBuy:{ titulo:'¿Cómo comprar?', texto:'' },
     social:{
       tiktokUrl:'', tiktokIcono:null,
       facebookUrl:'', facebookIcono:null,
@@ -341,7 +390,12 @@ function runApp(){
   let activeCat = 'Todas';
   let activeVeh = 'Todas';
   let searchTerm = '';
+  let minPrice = null;
+  let maxPrice = null;
+  let sortBy = 'default';
   let adminUnlocked = false;
+  let pinAttempts = 0;
+  let pinLockUntil = 0;
   let pendingPhotos = [];
   const slideTimers = new Map();
   let aboutTimer = null;
@@ -396,6 +450,13 @@ function runApp(){
     root.setProperty('--outline-color-social', c.outlineColorSocial || '#000000');
     root.setProperty('--search-label-bg', c.searchLabelBg || '#ff6a3d');
     root.setProperty('--search-label-color', c.searchLabelColor || '#ffffff');
+    root.setProperty('--wa-btn-bg', c.waBtnBg || '#25d366');
+    root.setProperty('--wa-btn-color', c.waBtnColor || '#ffffff');
+    root.setProperty('--share-btn-bg', c.shareBtnBg || '#15181b');
+    root.setProperty('--share-btn-color', c.shareBtnColor || '#8b9096');
+    root.setProperty('--htb-bg', c.htbBg || '#1c1410');
+    root.setProperty('--htb-border', c.htbBorder || '#ff6a3d');
+    root.setProperty('--htb-title-color', c.htbTitleColor || '#ff6a3d');
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -421,16 +482,18 @@ function runApp(){
 
   function renderSocial(){
     const s = config.social || {};
+    const ic = config.colores.socialIconColors || {};
     const items = [];
-    if(s.tiktokUrl) items.push({href:s.tiktokUrl, icon:s.tiktokIcono, svg:SOCIAL_ICONS.tiktok, label:'TikTok'});
-    if(s.facebookUrl) items.push({href:s.facebookUrl, icon:s.facebookIcono, svg:SOCIAL_ICONS.facebook, label:'Facebook'});
-    if(s.instagramUrl) items.push({href:s.instagramUrl, icon:s.instagramIcono, svg:SOCIAL_ICONS.instagram, label:'Instagram'});
-    if(s.whatsappNumero) items.push({href:'https://wa.me/'+s.whatsappNumero.replace(/\D/g,''), icon:s.whatsappIcono, svg:SOCIAL_ICONS.whatsapp, label:'WhatsApp: '+s.whatsappNumero});
-    if(s.telefono) items.push({href:'tel:'+s.telefono.replace(/\s+/g,''), icon:s.telefonoIcono, svg:SOCIAL_ICONS.telefono, label:'Llamar: '+s.telefono});
+    if(s.tiktokUrl) items.push({key:'tiktok', href:s.tiktokUrl, icon:s.tiktokIcono, svg:SOCIAL_ICONS.tiktok, label:'TikTok'});
+    if(s.facebookUrl) items.push({key:'facebook', href:s.facebookUrl, icon:s.facebookIcono, svg:SOCIAL_ICONS.facebook, label:'Facebook'});
+    if(s.instagramUrl) items.push({key:'instagram', href:s.instagramUrl, icon:s.instagramIcono, svg:SOCIAL_ICONS.instagram, label:'Instagram'});
+    if(s.whatsappNumero) items.push({key:'whatsapp', href:'https://wa.me/'+s.whatsappNumero.replace(/\D/g,''), icon:s.whatsappIcono, svg:SOCIAL_ICONS.whatsapp, label:'WhatsApp: '+s.whatsappNumero});
+    if(s.telefono) items.push({key:'telefono', href:'tel:'+s.telefono.replace(/\s+/g,''), icon:s.telefonoIcono, svg:SOCIAL_ICONS.telefono, label:'Llamar: '+s.telefono});
     const iconsHtml = items.map(it=>{
       const inner = it.icon ? `<img src="${escapeAttr(it.icon)}" alt="${escapeAttr(it.label)}">` : it.svg;
       const isHttp = /^https?:\/\//.test(it.href);
-      return `<a class="social-link" href="${escapeAttr(it.href)}" ${isHttp?'target="_blank" rel="noopener"':''} title="${escapeAttr(it.label)}">${inner}</a>`;
+      const borderColor = ic[it.key] || '#ffffff33';
+      return `<a class="social-link" style="border-color:${escapeAttr(borderColor)};" href="${escapeAttr(it.href)}" ${isHttp?'target="_blank" rel="noopener"':''} title="${escapeAttr(it.label)}">${inner}</a>`;
     }).join('');
     const msg = (s.comprarMensaje||'').trim();
     const msgHtml = (msg && items.length) ? `<span class="comprar-msg">${escapeHtml(msg)}</span>` : '';
@@ -511,6 +574,9 @@ function runApp(){
     const label = cat ? cat.label : 'Otro';
     if(activeCat!=='Todas' && label!==activeCat) return false;
     if(activeVeh!=='Todas' && piece.vehiculo!==activeVeh) return false;
+    const precioNum = Number(piece.precio);
+    if(minPrice!==null && precioNum < minPrice) return false;
+    if(maxPrice!==null && precioNum > maxPrice) return false;
     if(!searchTerm) return true;
     const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')).toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
@@ -572,10 +638,15 @@ function runApp(){
 
   function renderGrid(){
     clearSlideTimers();
-    const list = pieces.filter(matchesFilter);
+    let list = pieces.filter(matchesFilter);
+    if(sortBy==='price_asc') list = list.slice().sort((a,b)=>Number(a.precio)-Number(b.precio));
+    else if(sortBy==='price_desc') list = list.slice().sort((a,b)=>Number(b.precio)-Number(a.precio));
     grid.innerHTML = '';
     if(list.length===0){
-      grid.innerHTML = '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
+      const hayFiltros = searchTerm || minPrice!==null || maxPrice!==null || activeCat!=='Todas' || activeVeh!=='Todas';
+      grid.innerHTML = hayFiltros
+        ? '<div class="empty-state">No encontramos piezas que coincidan con tu búsqueda o filtros. Intenta con otros términos.</div>'
+        : '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
       return;
     }
     list.forEach(piece=>{
@@ -629,6 +700,17 @@ function runApp(){
 
   function howToBuyHtml(){
     const s = config.social || {};
+    const hb = config.howToBuy || {};
+    const titulo = (hb.titulo||'').trim() || '¿Cómo comprar?';
+    const textoPersonalizado = (hb.texto||'').trim();
+    if(textoPersonalizado){
+      return `
+        <div class="how-to-buy">
+          <div class="htb-title">🛒 ${escapeHtml(titulo)}</div>
+          <div class="htb-text">${escapeHtml(textoPersonalizado)}</div>
+        </div>
+      `;
+    }
     const canales = [];
     if(s.whatsappNumero) canales.push('WhatsApp');
     if(s.facebookUrl) canales.push('Facebook');
@@ -642,7 +724,7 @@ function runApp(){
     const msg = (s.comprarMensaje||'').trim();
     return `
       <div class="how-to-buy">
-        <div class="htb-title">🛒 ¿Cómo comprar?</div>
+        <div class="htb-title">🛒 ${escapeHtml(titulo)}</div>
         <div class="htb-text">Realiza tu compra escribiéndonos por ${escapeHtml(listaTxt)}. Da clic en los íconos que están en el banner principal${msg?`, junto a donde dice "${escapeHtml(msg)}"`:''}, y elige desde dónde prefieras escribirnos.</div>
       </div>
     `;
@@ -656,6 +738,9 @@ function runApp(){
       const compatHtml = (piece.compatibilidad||[]).map(c=>`<span class="compat-pill">${escapeHtml(c)}</span>`).join('');
       const estado = config.estados[piece.estado] || config.estados.disponible;
       const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
+      const waNum = (config.social?.whatsappNumero||'').replace(/\D/g,'');
+      const waMsg = encodeURIComponent(`Hola, me interesa esta pieza: ${piece.nombre} ($${piece.precio} MXN)`);
+      const waLink = waNum ? `https://wa.me/${waNum}?text=${waMsg}` : null;
       lightboxRoot.innerHTML = `
         <div class="lightbox-overlay" id="lbOv">
           <div class="lightbox">
@@ -677,6 +762,10 @@ function runApp(){
               ${anioLabel(piece) ? `<div class="lightbox-compat-label" style="margin-top:6px;">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
               ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
+              <div class="lightbox-actions">
+                ${waLink ? `<a class="wa-buy-btn" href="${waLink}" target="_blank" rel="noopener">💬 Comprar por WhatsApp</a>` : ''}
+                <button type="button" class="share-btn-custom" id="lbShare">🔗 Compartir</button>
+              </div>
               ${howToBuyHtml()}
             </div>
           </div>
@@ -684,6 +773,22 @@ function runApp(){
       `;
       document.getElementById('lbClose').onclick = ()=>{ lightboxRoot.innerHTML=''; };
       document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') lightboxRoot.innerHTML=''; });
+      const shareBtn = document.getElementById('lbShare');
+      if(shareBtn){
+        shareBtn.onclick = async ()=>{
+          const shareText = `Mira esta pieza: ${piece.nombre} — $${piece.precio} MXN`;
+          const shareUrl = window.location.href;
+          if(navigator.share){
+            try{ await navigator.share({title:piece.nombre, text:shareText, url:shareUrl}); }catch(e){}
+          }else{
+            try{
+              await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+              shareBtn.textContent = '✅ Copiado';
+              setTimeout(()=>{ shareBtn.textContent = '🔗 Compartir'; }, 1800);
+            }catch(e){}
+          }
+        };
+      }
       const prev = document.getElementById('lbPrev');
       const next = document.getElementById('lbNext');
       if(prev) prev.onclick = ()=>{ idx = (idx-1+fotos.length)%fotos.length; draw(); };
@@ -699,7 +804,17 @@ function runApp(){
     return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
   function escapeAttr(str){ return escapeHtml(str); }
-  searchEl.addEventListener('input', (e)=>{ searchTerm = e.target.value; renderGrid(); });
+  function applySearchTerm(val){
+    searchTerm = val;
+    aboutSectionEl.classList.toggle('search-hidden', !!searchTerm.trim());
+    renderGrid();
+  }
+  searchEl.addEventListener('input', (e)=>{ applySearchTerm(e.target.value); });
+  document.getElementById('catSearchBtn').addEventListener('click', ()=>{ applySearchTerm(searchEl.value); });
+  searchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') applySearchTerm(searchEl.value); });
+  document.getElementById('minPriceInput').addEventListener('input', (e)=>{ minPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
+  document.getElementById('maxPriceInput').addEventListener('input', (e)=>{ maxPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
+  document.getElementById('sortSelect').addEventListener('change', (e)=>{ sortBy = e.target.value; renderGrid(); });
   policiesBarEl.addEventListener('click', openPoliciesModal);
 
   function openPoliciesModal(){
@@ -717,22 +832,36 @@ function runApp(){
   function closeModal(){ modalRoot.innerHTML=''; pendingPhotos=[]; }
 
   function openPinModal(){
+    const lockedNow = Date.now() < pinLockUntil;
+    const secsLeft = Math.ceil((pinLockUntil-Date.now())/1000);
     modalRoot.innerHTML = `
       <div class="modal-overlay"><div class="modal">
         <h3>Acceso admin</h3>
         <label>PIN</label>
-        <input type="password" id="pinInput" placeholder="PIN">
-        <div class="status-msg err" id="pinMsg"></div>
+        <input type="password" id="pinInput" placeholder="PIN" ${lockedNow?'disabled':''}>
+        <div class="status-msg err" id="pinMsg">${lockedNow?`Demasiados intentos. Intenta de nuevo en ${secsLeft}s.`:''}</div>
         <div class="modal-actions">
-          <button class="btn btn-primary" id="pinOk">Entrar</button>
+          <button class="btn btn-primary" id="pinOk" ${lockedNow?'disabled':''}>Entrar</button>
           <button class="btn btn-ghost" id="pinCancel">Cancelar</button>
         </div>
       </div></div>`;
     document.getElementById('pinCancel').onclick = closeModal;
     document.getElementById('pinOk').onclick = ()=>{
+      if(Date.now() < pinLockUntil) return;
       const v = document.getElementById('pinInput').value;
-      if(v === config.pin){ adminUnlocked = true; openAdminPanel(); }
-      else{ document.getElementById('pinMsg').textContent = 'PIN incorrecto.'; }
+      if(v === config.pin){
+        pinAttempts = 0;
+        adminUnlocked = true; openAdminPanel();
+      }else{
+        pinAttempts++;
+        if(pinAttempts>=5){
+          pinLockUntil = Date.now() + 60000;
+          pinAttempts = 0;
+          openPinModal();
+        }else{
+          document.getElementById('pinMsg').textContent = `PIN incorrecto. Te quedan ${5-pinAttempts} intento(s).`;
+        }
+      }
     };
   }
 
@@ -1112,6 +1241,13 @@ function runApp(){
         <input type="file" id="sBannerFile" accept="image/*">
         <img id="sBannerPreview" class="design-preview banner" style="${config.banner?'':'display:none;'}" src="${config.banner?escapeAttr(config.banner):''}">
         <button class="btn btn-ghost btn-small" id="sBannerRemove" style="margin-top:8px;${config.banner?'':'display:none;'}">Quitar banner</button>
+
+        <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Bloque "¿Cómo comprar?"</div>
+        <div style="font-size:11px;color:var(--subtitle-color);margin-top:2px;">Si dejas el texto vacío, se genera automáticamente según tus redes configuradas.</div>
+        <label>Título</label>
+        <input id="sHtbTitulo" placeholder="¿Cómo comprar?" value="${escapeAttr(config.howToBuy?.titulo||'')}">
+        <label>Texto (opcional, para personalizarlo tú mismo)</label>
+        <textarea id="sHtbTexto" rows="4" placeholder="Déjalo vacío para el texto automático">${escapeAttr(config.howToBuy?.texto||'')}</textarea>
       </div>
 
       <div id="secRedes" style="${subtab==='redes'?'':'display:none;'}">
@@ -1189,6 +1325,21 @@ function runApp(){
           <div><label>Contorno del mensaje junto a redes</label><input type="color" id="cOutlineSocial" value="${c.outlineColorSocial||'#000000'}"></div>
           <div><label>Fondo del subtítulo de búsqueda</label><input type="color" id="cSearchBg" value="${c.searchLabelBg||'#ff6a3d'}"></div>
           <div><label>Color del subtítulo de búsqueda</label><input type="color" id="cSearchColor" value="${c.searchLabelColor||'#ffffff'}"></div>
+          <div><label>Fondo botón "Comprar por WhatsApp"</label><input type="color" id="cWaBg" value="${c.waBtnBg||'#25d366'}"></div>
+          <div><label>Texto botón "Comprar por WhatsApp"</label><input type="color" id="cWaColor" value="${c.waBtnColor||'#ffffff'}"></div>
+          <div><label>Fondo botón "Compartir"</label><input type="color" id="cShareBg" value="${c.shareBtnBg||'#15181b'}"></div>
+          <div><label>Texto botón "Compartir"</label><input type="color" id="cShareColor" value="${c.shareBtnColor||'#8b9096'}"></div>
+          <div><label>Fondo bloque "¿Cómo comprar?"</label><input type="color" id="cHtbBg" value="${c.htbBg||'#1c1410'}"></div>
+          <div><label>Contorno bloque "¿Cómo comprar?"</label><input type="color" id="cHtbBorder" value="${c.htbBorder||'#ff6a3d'}"></div>
+          <div><label>Título bloque "¿Cómo comprar?"</label><input type="color" id="cHtbTitle" value="${c.htbTitleColor||'#ff6a3d'}"></div>
+        </div>
+        <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Contorno de íconos de redes y contacto</div>
+        <div class="color-grid" style="margin-top:8px;">
+          <div><label>TikTok</label><input type="color" id="cIconTiktok" value="${(c.socialIconColors&&c.socialIconColors.tiktok)||'#000000'}"></div>
+          <div><label>Facebook</label><input type="color" id="cIconFacebook" value="${(c.socialIconColors&&c.socialIconColors.facebook)||'#1877f2'}"></div>
+          <div><label>Instagram</label><input type="color" id="cIconInstagram" value="${(c.socialIconColors&&c.socialIconColors.instagram)||'#e1306c'}"></div>
+          <div><label>WhatsApp</label><input type="color" id="cIconWhatsapp" value="${(c.socialIconColors&&c.socialIconColors.whatsapp)||'#25d366'}"></div>
+          <div><label>Teléfono</label><input type="color" id="cIconTelefono" value="${(c.socialIconColors&&c.socialIconColors.telefono)||'#6b7280'}"></div>
         </div>
       </div>
 
@@ -1254,6 +1405,10 @@ function runApp(){
       config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
       config.eslogan = document.getElementById('sSlogan').value.trim();
       config.politicasCompra = document.getElementById('sPolicies').value.trim();
+      config.howToBuy = {
+        titulo: document.getElementById('sHtbTitulo').value.trim(),
+        texto: document.getElementById('sHtbTexto').value.trim()
+      };
       config.pin = document.getElementById('sPin').value.trim() || config.pin;
       config.logo = pendingLogo;
       config.banner = pendingBanner;
@@ -1290,7 +1445,21 @@ function runApp(){
         outlineColor: document.getElementById('cOutline').value,
         outlineColorSocial: document.getElementById('cOutlineSocial').value,
         searchLabelBg: document.getElementById('cSearchBg').value,
-        searchLabelColor: document.getElementById('cSearchColor').value
+        searchLabelColor: document.getElementById('cSearchColor').value,
+        waBtnBg: document.getElementById('cWaBg').value,
+        waBtnColor: document.getElementById('cWaColor').value,
+        shareBtnBg: document.getElementById('cShareBg').value,
+        shareBtnColor: document.getElementById('cShareColor').value,
+        htbBg: document.getElementById('cHtbBg').value,
+        htbBorder: document.getElementById('cHtbBorder').value,
+        htbTitleColor: document.getElementById('cHtbTitle').value,
+        socialIconColors: {
+          tiktok: document.getElementById('cIconTiktok').value,
+          facebook: document.getElementById('cIconFacebook').value,
+          instagram: document.getElementById('cIconInstagram').value,
+          whatsapp: document.getElementById('cIconWhatsapp').value,
+          telefono: document.getElementById('cIconTelefono').value
+        }
       };
       try{
         await saveConfig();
