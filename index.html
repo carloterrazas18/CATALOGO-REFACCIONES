@@ -8,7 +8,8 @@
 <meta property="og:title" content="Catálogo de Refacciones">
 <meta property="og:description" content="Refacciones usadas para autos, camionetas y camiones. Precios competitivos y atención personalizada.">
 <meta property="og:type" content="website">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230c0e10'/%3E%3Cpath fill='%23ff6a3d' d='M17 7.4a4.6 4.6 0 0 1-5.7 5.6L7 17.3 5.7 16l4.3-4.3A4.6 4.6 0 0 1 15.6 6l-2.5 2.5 1.4 1.4L17 7.4z'/%3E%3C/svg%3E">
+<meta property="og:image" id="ogImageMeta" content="">
+<link rel="icon" id="faviconLink" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230c0e10'/%3E%3Cpath fill='%23ff6a3d' d='M17 7.4a4.6 4.6 0 0 1-5.7 5.6L7 17.3 5.7 16l4.3-4.3A4.6 4.6 0 0 1 15.6 6l-2.5 2.5 1.4 1.4L17 7.4z'/%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
   :root{
@@ -107,6 +108,7 @@
   .prod-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .35s ease;}
   .prod-photo.active{opacity:1;}
   .prod-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#ececec;color:#a0a4a8;font-size:12px;font-family:var(--font-body);}
+  .conn-error{background:#3a1f1f;border:1px solid #7a3333;color:#f2b8b8;padding:14px 16px;border-radius:10px;margin:16px 0;font-size:13px;font-family:var(--font-body);text-align:center;}
   .prod-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px;}
   .prod-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.55);}
   .prod-dot.on{background:#fff;}
@@ -319,6 +321,9 @@
   <div class="policies-bar" id="policiesBar" style="display:none;">
     <span class="p-icon">📄</span><span>Políticas de Compra</span><span class="p-arrow">→</span>
   </div>
+  <div id="connError" class="conn-error" style="display:none;">
+    ⚠️ No pudimos cargar el catálogo. Revisa tu conexión a internet e intenta recargar la página.
+  </div>
   <div id="catGrid" class="cat-grid"></div>
 </div>
 
@@ -520,6 +525,12 @@ function runApp(){
     }
     if(config.logo){
       logoEl.src = config.logo; logoEl.style.display = 'block';
+      // Usamos el mismo logo como ícono de pestaña (favicon) y como imagen
+      // de vista previa cuando se comparte el link del catálogo.
+      const faviconLink = document.getElementById('faviconLink');
+      if(faviconLink) faviconLink.href = config.logo;
+      const ogImageMeta = document.getElementById('ogImageMeta');
+      if(ogImageMeta) ogImageMeta.setAttribute('content', config.logo);
     }else{
       logoEl.style.display = 'none';
     }
@@ -555,8 +566,10 @@ function runApp(){
     headerSocialEl.innerHTML = msgHtml + iconsRowHtml;
   }
 
+  const connErrorEl = document.getElementById('connError');
   const configRef = doc(db, 'configuracion', 'admin');
   onSnapshot(configRef, (snap)=>{
+    connErrorEl.style.display = 'none';
     if(snap.exists()){
       const loaded = snap.data();
       config = Object.assign({}, config, loaded, {
@@ -591,13 +604,23 @@ function runApp(){
     renderVehChips();
     renderSocial();
     renderGrid();
-  }, (err)=>{ console.error('config', err); });
+  }, (err)=>{ console.error('config', err); connErrorEl.style.display = 'block'; });
 
   const productosQuery = query(collection(db,'productos'), orderBy('creado','desc'));
+  let deepLinkChecked = false;
   onSnapshot(productosQuery, (snap)=>{
+    connErrorEl.style.display = 'none';
     pieces = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
     renderGrid();
-  }, (err)=>{ console.error('productos', err); });
+    if(!deepLinkChecked && pieces.length>0){
+      deepLinkChecked = true;
+      const pid = new URLSearchParams(window.location.search).get('pieza');
+      if(pid){
+        const piece = pieces.find(p=>p.id===pid);
+        if(piece) openLightbox(piece);
+      }
+    }
+  }, (err)=>{ console.error('productos', err); connErrorEl.style.display = 'block'; });
 
   async function saveConfig(){ await setDoc(configRef, config, {merge:false}); }
 
@@ -852,7 +875,25 @@ function runApp(){
     `;
   }
 
+  function closeLightbox(){
+    lightboxRoot.innerHTML = '';
+    try{
+      const url = new URL(window.location.href);
+      if(url.searchParams.has('pieza')){
+        url.searchParams.delete('pieza');
+        history.replaceState(null, '', url);
+      }
+    }catch(e){}
+  }
+
   function openLightbox(piece){
+    // Reflejamos el id de la pieza en la URL para que, al compartir el link,
+    // la persona que lo abra caiga directo en esta pieza (no en el catálogo general).
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.set('pieza', piece.id);
+      history.replaceState(null, '', url);
+    }catch(e){}
     const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
     const fotos = piecePhotos(piece);
     let idx = 0;
@@ -893,8 +934,8 @@ function runApp(){
           </div>
         </div>
       `;
-      document.getElementById('lbClose').onclick = ()=>{ lightboxRoot.innerHTML=''; };
-      document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') lightboxRoot.innerHTML=''; });
+      document.getElementById('lbClose').onclick = closeLightbox;
+      document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
       const shareBtn = document.getElementById('lbShare');
       if(shareBtn){
         shareBtn.onclick = async ()=>{
@@ -931,9 +972,16 @@ function runApp(){
     aboutSectionEl.classList.toggle('search-hidden', !!searchTerm.trim());
     renderGrid();
   }
-  searchEl.addEventListener('input', (e)=>{ applySearchTerm(e.target.value); });
-  document.getElementById('catSearchBtn').addEventListener('click', ()=>{ applySearchTerm(searchEl.value); });
-  searchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') applySearchTerm(searchEl.value); });
+  let searchDebounceTimer = null;
+  searchEl.addEventListener('input', (e)=>{
+    // Esperamos a que la persona deje de teclear (300ms) antes de filtrar,
+    // para no redibujar toda la cuadrícula en cada letra.
+    const val = e.target.value;
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(()=>applySearchTerm(val), 300);
+  });
+  document.getElementById('catSearchBtn').addEventListener('click', ()=>{ clearTimeout(searchDebounceTimer); applySearchTerm(searchEl.value); });
+  searchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ clearTimeout(searchDebounceTimer); applySearchTerm(searchEl.value); } });
   document.getElementById('minPriceInput').addEventListener('input', (e)=>{ minPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
   document.getElementById('maxPriceInput').addEventListener('input', (e)=>{ maxPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
   document.getElementById('sortSelect').addEventListener('change', (e)=>{ sortBy = e.target.value; renderGrid(); });
@@ -1020,9 +1068,31 @@ function runApp(){
     else renderAdminSettings(body);
   }
 
+  function descargarRespaldoCatalogo(){
+    const respaldo = {
+      generado: new Date().toISOString(),
+      titulo: config.titulo || '',
+      categorias: config.categorias || [],
+      productos: pieces
+    };
+    const blob = new Blob([JSON.stringify(respaldo, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `respaldo-catalogo-${fecha}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function renderAdminList(body){
-    if(pieces.length===0){ body.innerHTML = '<div class="status-msg">Sin piezas registradas todavía.</div>'; return; }
-    body.innerHTML = pieces.map(p=>{
+    const backupBtnHtml = `<div style="margin-bottom:12px;">
+      <button class="btn btn-ghost" id="btnRespaldo">⬇️ Respaldar catálogo (descargar)</button>
+    </div>`;
+    if(pieces.length===0){ body.innerHTML = backupBtnHtml + '<div class="status-msg">Sin piezas registradas todavía.</div>'; document.getElementById('btnRespaldo').onclick = descargarRespaldoCatalogo; return; }
+    body.innerHTML = backupBtnHtml + pieces.map(p=>{
       const cat = catById(p.categoriaId);
       return `<div class="admin-list-item">
         <span class="name">${escapeHtml(p.nombre)} — ${escapeHtml(cat?cat.label:'Otro')} — $${escapeHtml(String(p.precio))}</span>
@@ -1032,6 +1102,7 @@ function runApp(){
         </span>
       </div>`;
     }).join('');
+    document.getElementById('btnRespaldo').onclick = descargarRespaldoCatalogo;
     body.querySelectorAll('[data-edit]').forEach(btn=>{
       btn.onclick = ()=>{
         const piece = pieces.find(p=>p.id===btn.dataset.edit);
