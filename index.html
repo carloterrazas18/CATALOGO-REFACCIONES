@@ -104,7 +104,8 @@
   .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;}
   .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
   .prod-photo-wrap{position:relative;width:100%;aspect-ratio:1/1;background:#ececec;}
-  .prod-photo{width:100%;height:100%;object-fit:cover;display:block;}
+  .prod-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .35s ease;}
+  .prod-photo.active{opacity:1;}
   .prod-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#ececec;color:#a0a4a8;font-size:12px;font-family:var(--font-body);}
   .prod-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px;}
   .prod-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.55);}
@@ -695,7 +696,7 @@ function runApp(){
     const card = document.createElement('div');
     card.className = 'prod-card';
     const photoHtml = fotos.length
-      ? `<img class="prod-photo" data-idx="0" src="${escapeAttr(fotos[0])}" loading="lazy" decoding="async">`
+      ? `<img class="prod-photo prod-photo-a active" data-idx="0" src="${escapeAttr(fotos[0])}" loading="lazy" decoding="async">${fotos.length>1 ? `<img class="prod-photo prod-photo-b" decoding="async">` : ''}`
       : `<div class="prod-photo-placeholder">Sin foto</div>`;
     const dotsHtml = fotos.length>1
       ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
@@ -724,29 +725,41 @@ function runApp(){
     `;
     card.addEventListener('click', ()=>openLightbox(piece));
     if(fotos.length>1){
-      const imgEl = card.querySelector('.prod-photo');
+      const front0 = card.querySelector('.prod-photo-a');
+      const back0 = card.querySelector('.prod-photo-b');
       const dots = card.querySelectorAll('.prod-dot');
-      // Precargamos en segundo plano las demás fotos del carrusel (la primera
-      // ya se carga sola por el loading="lazy" del <img>). Así, cuando el
-      // temporizador cambia de foto, la imagen ya está en caché y el cambio
-      // se ve fluido, sin saltos ni pantallazos en blanco.
-      const preloaded = fotos.slice(1).map(src=>{ const im = new Image(); im.decoding = 'async'; im.src = src; return im; });
+      // Precargamos solo UNA foto por delante (no todas de golpe), para no
+      // saturar la conexión cuando hay varias tarjetas cargando a la vez.
+      const cache = new Array(fotos.length);
+      function preload(i){
+        if(!cache[i]){ const im = new Image(); im.decoding = 'async'; im.src = fotos[i]; cache[i] = im; }
+        return cache[i];
+      }
+      preload(1);
       let idx = 0;
+      let front = front0, back = back0;
       const timer = setInterval(()=>{
         const nextIdx = (idx+1)%fotos.length;
-        const showNext = ()=>{
+        const nextImg = preload(nextIdx);
+        const swap = ()=>{
+          // La foto que sigue se prepara en la capa de atrás (invisible) y
+          // luego se cruza con la de enfrente: nunca queda un instante sin
+          // foto visible, así se elimina el "flash" del fondo gris.
+          back.src = fotos[nextIdx];
+          back.classList.add('active');
+          front.classList.remove('active');
           idx = nextIdx;
-          imgEl.src = fotos[idx];
           dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+          const tmp = front; front = back; back = tmp;
+          preload((idx+1)%fotos.length);
         };
-        const nextImg = preloaded[nextIdx-1]; // preloaded no incluye el índice 0
-        if(nextIdx===0 || !nextImg || nextImg.complete){
-          showNext();
+        if(nextImg.complete){
+          swap();
         }else{
-          // Si por alguna razón aún no terminó de precargar (conexión lenta),
-          // esperamos a que cargue en vez de mostrar un hueco en blanco.
-          nextImg.addEventListener('load', showNext, {once:true});
-          nextImg.addEventListener('error', showNext, {once:true});
+          // Si aún no terminó de precargar (conexión lenta), esperamos a que
+          // cargue en vez de mostrar un hueco en blanco.
+          nextImg.addEventListener('load', swap, {once:true});
+          nextImg.addEventListener('error', swap, {once:true});
         }
       }, 2600);
       slideTimers.set(piece.id, timer);
