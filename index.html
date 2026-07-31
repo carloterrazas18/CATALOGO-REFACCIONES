@@ -439,6 +439,11 @@ function runApp(){
   let aboutTimer = null;
   let aboutIdx = 0;
 
+  const PAGE_SIZE = 12;
+  let currentList = [];
+  let renderedCount = 0;
+  let gridObserver = null;
+
   const grid = document.getElementById('catGrid');
   const chipsEl = document.getElementById('catChips');
   const vehChipsEl = document.getElementById('vehChips');
@@ -684,11 +689,106 @@ function runApp(){
     aboutSectionEl.onmouseleave = ()=>{ restartAboutTimer(); };
   }
 
+  function createCard(piece){
+    const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
+    const fotos = piecePhotos(piece);
+    const card = document.createElement('div');
+    card.className = 'prod-card';
+    const photoHtml = fotos.length
+      ? `<img class="prod-photo" data-idx="0" src="${escapeAttr(fotos[0])}" loading="lazy" decoding="async">`
+      : `<div class="prod-photo-placeholder">Sin foto</div>`;
+    const dotsHtml = fotos.length>1
+      ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
+    const compatHtml = (piece.compatibilidad||[]).length
+      ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
+    const anio = anioLabel(piece);
+    const anioHtml = anio ? `<div class="prod-year-block"><span class="prod-year-label">Modelos</span><span class="prod-year-value">${escapeHtml(anio)}</span></div>` : '';
+    const estado = config.estados[piece.estado] || config.estados.disponible;
+    const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
+    card.innerHTML = `
+      <div class="prod-photo-wrap">
+        ${photoHtml}
+        <div class="prod-cat-pill"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
+        ${getPieceVehiculos(piece).length ? `<div class="prod-veh-pill">${escapeHtml(getPieceVehiculos(piece).join(' / '))}</div>` : ''}
+        ${dotsHtml}
+      </div>
+      <div class="prod-body">
+        ${estadoHtml}
+        <div class="prod-name">${escapeHtml(piece.nombre)}</div>
+        ${anioHtml}
+        ${compatHtml}
+        <div class="prod-price-row">
+          <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
+        </div>
+      </div>
+    `;
+    card.addEventListener('click', ()=>openLightbox(piece));
+    if(fotos.length>1){
+      const imgEl = card.querySelector('.prod-photo');
+      const dots = card.querySelectorAll('.prod-dot');
+      // Precargamos en segundo plano las demás fotos del carrusel (la primera
+      // ya se carga sola por el loading="lazy" del <img>). Así, cuando el
+      // temporizador cambia de foto, la imagen ya está en caché y el cambio
+      // se ve fluido, sin saltos ni pantallazos en blanco.
+      const preloaded = fotos.slice(1).map(src=>{ const im = new Image(); im.decoding = 'async'; im.src = src; return im; });
+      let idx = 0;
+      const timer = setInterval(()=>{
+        const nextIdx = (idx+1)%fotos.length;
+        const showNext = ()=>{
+          idx = nextIdx;
+          imgEl.src = fotos[idx];
+          dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+        };
+        const nextImg = preloaded[nextIdx-1]; // preloaded no incluye el índice 0
+        if(nextIdx===0 || !nextImg || nextImg.complete){
+          showNext();
+        }else{
+          // Si por alguna razón aún no terminó de precargar (conexión lenta),
+          // esperamos a que cargue en vez de mostrar un hueco en blanco.
+          nextImg.addEventListener('load', showNext, {once:true});
+          nextImg.addEventListener('error', showNext, {once:true});
+        }
+      }, 2600);
+      slideTimers.set(piece.id, timer);
+    }
+    return card;
+  }
+
+  function ensureSentinel(){
+    let sentinel = document.getElementById('gridSentinel');
+    if(!sentinel){
+      sentinel = document.createElement('div');
+      sentinel.id = 'gridSentinel';
+      sentinel.style.cssText = 'grid-column:1/-1;height:1px;';
+    }
+    grid.appendChild(sentinel);
+    return sentinel;
+  }
+
+  function renderNextBatch(){
+    const slice = currentList.slice(renderedCount, renderedCount + PAGE_SIZE);
+    const existingSentinel = document.getElementById('gridSentinel');
+    if(existingSentinel) existingSentinel.remove();
+    const frag = document.createDocumentFragment();
+    slice.forEach(piece=> frag.appendChild(createCard(piece)));
+    grid.appendChild(frag);
+    renderedCount += slice.length;
+    if(renderedCount < currentList.length){
+      const sentinel = ensureSentinel();
+      if(gridObserver) gridObserver.observe(sentinel);
+    }else if(gridObserver){
+      gridObserver.disconnect();
+    }
+  }
+
   function renderGrid(){
     clearSlideTimers();
+    if(gridObserver) gridObserver.disconnect();
     let list = pieces.filter(matchesFilter);
     if(sortBy==='price_asc') list = list.slice().sort((a,b)=>Number(a.precio)-Number(b.precio));
     else if(sortBy==='price_desc') list = list.slice().sort((a,b)=>Number(b.precio)-Number(a.precio));
+    currentList = list;
+    renderedCount = 0;
     grid.innerHTML = '';
     if(list.length===0){
       const hayFiltros = searchTerm || minPrice!==null || maxPrice!==null || activeCat!=='Todas' || activeVeh!=='Todas';
@@ -697,53 +797,14 @@ function runApp(){
         : '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
       return;
     }
-    list.forEach(piece=>{
-      const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
-      const fotos = piecePhotos(piece);
-      const card = document.createElement('div');
-      card.className = 'prod-card';
-      const photoHtml = fotos.length
-        ? `<img class="prod-photo" data-idx="0" src="${escapeAttr(fotos[0])}">`
-        : `<div class="prod-photo-placeholder">Sin foto</div>`;
-      const dotsHtml = fotos.length>1
-        ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
-      const compatHtml = (piece.compatibilidad||[]).length
-        ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
-      const anio = anioLabel(piece);
-      const anioHtml = anio ? `<div class="prod-year-block"><span class="prod-year-label">Modelos</span><span class="prod-year-value">${escapeHtml(anio)}</span></div>` : '';
-      const estado = config.estados[piece.estado] || config.estados.disponible;
-      const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
-      card.innerHTML = `
-        <div class="prod-photo-wrap">
-          ${photoHtml}
-          <div class="prod-cat-pill"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
-          ${getPieceVehiculos(piece).length ? `<div class="prod-veh-pill">${escapeHtml(getPieceVehiculos(piece).join(' / '))}</div>` : ''}
-          ${dotsHtml}
-        </div>
-        <div class="prod-body">
-          ${estadoHtml}
-          <div class="prod-name">${escapeHtml(piece.nombre)}</div>
-          ${anioHtml}
-          ${compatHtml}
-          <div class="prod-price-row">
-            <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
-          </div>
-        </div>
-      `;
-      card.addEventListener('click', ()=>openLightbox(piece));
-      grid.appendChild(card);
-      if(fotos.length>1){
-        const imgEl = card.querySelector('.prod-photo');
-        const dots = card.querySelectorAll('.prod-dot');
-        let idx = 0;
-        const timer = setInterval(()=>{
-          idx = (idx+1)%fotos.length;
-          imgEl.src = fotos[idx];
-          dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
-        }, 2600);
-        slideTimers.set(piece.id, timer);
-      }
-    });
+    if(!gridObserver){
+      gridObserver = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting) renderNextBatch();
+        });
+      }, { root:null, rootMargin:'400px 0px', threshold:0 });
+    }
+    renderNextBatch();
   }
 
   function howToBuyHtml(){
