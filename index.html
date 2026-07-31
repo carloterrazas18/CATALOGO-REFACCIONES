@@ -14,16 +14,20 @@
   :root{
     --bg:#0c0e10; --header-bg:#0c0e10;
     --card-bg:#ffffff; --card-text:#15171a; --card-text-muted:#6b7075;
-    --title-color:#f6f6f2; --subtitle-color:#8b9096;
+    --title-color:#f6f6f2; --subtitle-color:#8b9096; --eslogan-color:#8b9096;
     --accent:#ff6a3d; --price-color:#ff6a3d;
     --input-bg:#15181b; --input-text:#eceeef;
     --panel-bg:#15181b; --panel-border:#25292d;
     --chip-label-bg:rgba(255,255,255,0.07); --chip-label-color:#8b9096;
-    --outline-color:#000000; --outline-color-social:#000000;
+    --outline-color:#000000; --outline-color-eslogan:#000000; --outline-color-social:#000000;
     --search-label-bg:#ff6a3d; --search-label-color:#ffffff;
     --wa-btn-bg:#25d366; --wa-btn-color:#ffffff;
     --share-btn-bg:#15181b; --share-btn-color:#8b9096;
     --htb-bg:#1c1410; --htb-border:#ff6a3d; --htb-title-color:#ff6a3d;
+    --policies-btn-bg:#241a15; --policies-btn-border:#ff6a3d; --policies-btn-text:#ff6a3d;
+    --policies-modal-bg:#15181b;
+    --policies-content-bg:#15181b; --policies-content-border:#25292d; --policies-content-text:#eceeef;
+    --policies-title-color:#ff6a3d;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
@@ -65,7 +69,7 @@
   .social-link img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .cat-logo{width:52px;height:52px;border-radius:12px;object-fit:cover;display:none;background:rgba(255,255,255,0.08);}
   .cat-title{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-0.02em;color:var(--title-color);line-height:1.1;text-shadow:-1.5px -1.5px 0 var(--outline-color),1.5px -1.5px 0 var(--outline-color),-1.5px 1.5px 0 var(--outline-color),1.5px 1.5px 0 var(--outline-color);}
-  .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);letter-spacing:0.02em;margin-top:2px;text-shadow:-1px -1px 0 var(--outline-color),1px -1px 0 var(--outline-color),-1px 1px 0 var(--outline-color),1px 1px 0 var(--outline-color);}
+  .cat-sub{font-family:var(--font-body);font-size:12.5px;color:var(--eslogan-color);letter-spacing:0.02em;margin-top:2px;text-shadow:-1px -1px 0 var(--outline-color-eslogan),1px -1px 0 var(--outline-color-eslogan),-1px 1px 0 var(--outline-color-eslogan),1px 1px 0 var(--outline-color-eslogan);}
   .header-search-wrap{grid-column:3;display:flex;justify-content:flex-end;}
   .search-block{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:320px;}
   .search-label{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--search-label-color);background:var(--search-label-bg);padding:5px 16px;border-radius:999px;display:inline-block;}
@@ -89,10 +93,13 @@
   .price-input{width:72px;padding:7px 10px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:12px;outline:none;transition:border-color .15s;}
   .price-input:focus{border-color:var(--accent);}
   .price-sep{color:var(--subtitle-color);font-size:12px;}
+  .veh-checkbox-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;}
+  .veh-checkbox{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:13px;color:var(--input-text);cursor:pointer;}
+  .veh-checkbox input{width:16px;height:16px;cursor:pointer;}
   .sort-select{padding:7px 12px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:12px;outline:none;cursor:pointer;}
 
   .cat-grid{padding:30px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
-  .empty-state{padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
+  .empty-state{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
 
   .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;}
   .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
@@ -149,6 +156,14 @@
   .cat-row-admin input[type=color]{width:38px;flex:none;padding:2px;}
   .color-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
   .color-grid label{margin-top:14px;}
+  .color-section{background:var(--input-bg);border:1px solid var(--panel-border);border-radius:12px;margin-bottom:12px;overflow:hidden;}
+  .color-section summary{list-style:none;cursor:pointer;padding:13px 16px;font-family:var(--font-display);font-weight:600;font-size:13.5px;color:var(--title-color);display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;}
+  .color-section summary::-webkit-details-marker{display:none;}
+  .color-section summary::after{content:'▸';font-size:12px;color:var(--subtitle-color);transition:transform .15s;}
+  .color-section[open] summary::after{transform:rotate(90deg);}
+  .color-section summary .sec-hint{font-family:var(--font-body);font-weight:400;font-size:11px;color:var(--subtitle-color);margin-left:auto;margin-right:6px;}
+  .color-section .sec-body{padding:2px 16px 16px;border-top:1px solid var(--panel-border);}
+  .color-section .sec-body .color-grid label{margin-top:12px;}
   .photo-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
   .photo-thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;background:var(--bg);}
   .photo-thumb img{width:100%;height:100%;object-fit:cover;}
@@ -198,13 +213,15 @@
     .about-card{padding:22px 16px;}
   }
 
-  .policies-bar{margin:16px 24px 0;padding:14px 20px;background:rgba(255,106,61,0.06);border:1.5px dashed var(--accent);border-radius:14px;color:var(--accent);font-family:var(--font-body);font-weight:600;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .15s,transform .15s;}
-  .policies-bar:hover{background:rgba(255,106,61,0.13);transform:translateY(-1px);}
+  .policies-bar{margin:16px 24px 0;padding:14px 20px;background:var(--policies-btn-bg);border:1.5px dashed var(--policies-btn-border);border-radius:14px;color:var(--policies-btn-text);font-family:var(--font-body);font-weight:600;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .15s;}
+  .policies-bar:hover{transform:translateY(-1px);}
   .policies-bar .p-icon{font-size:16px;}
   .policies-bar .p-arrow{transition:transform .15s;}
   .policies-bar:hover .p-arrow{transform:translateX(3px);}
-  .policies-modal{max-width:640px;}
-  .policies-text{font-size:13.5px;line-height:1.7;color:var(--input-text);white-space:pre-line;}
+  .policies-modal{max-width:640px;background:var(--policies-modal-bg);border:1px solid var(--policies-content-border);}
+  .policies-modal h3{color:var(--policies-title-color);}
+  .policies-box{background:var(--policies-content-bg);border:1.5px solid var(--policies-content-border);border-radius:12px;padding:14px 16px;}
+  .policies-text{font-size:13.5px;line-height:1.7;color:var(--policies-content-text);white-space:pre-line;}
   @media (max-width:720px){
     .policies-bar{margin:14px 14px 0;padding:12px 14px;font-size:12.5px;}
   }
@@ -239,6 +256,8 @@
     <li>Abre este archivo HTML con un editor de texto y pega ese bloque donde dice <code>PEGA_AQUI_TU_FIREBASE_CONFIG</code>.</li>
     <li>En el menú lateral de Firebase entra a <b>Firestore Database</b> → Crear base de datos → modo producción.</li>
     <li>Pestaña <b>Reglas</b>: pega las reglas que te di aparte y publica.</li>
+    <li>En el menú lateral entra a <b>Authentication</b> → pestaña <b>Sign-in method</b> → activa el proveedor <b>Correo/contraseña</b>.</li>
+    <li>Dentro de Authentication, pestaña <b>Users</b> → <b>Add user</b> → crea tu único usuario admin (correo y contraseña). Ese es el que usarás para entrar al panel, ya no hay PIN.</li>
     <li>Guarda el archivo y súbelo a GitHub Pages. Listo.</li>
   </ol>
 </div>
@@ -312,6 +331,9 @@ import {
   getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ======================================================================
 // PEGA_AQUI_TU_FIREBASE_CONFIG
@@ -338,16 +360,23 @@ if(!configuradoDeVerdad){
 function runApp(){
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
   const VEHICULOS = ['Coche','Camioneta','Camión'];
+  function getPieceVehiculos(piece){
+    if(piece.vehiculos && piece.vehiculos.length) return piece.vehiculos;
+    if(piece.vehiculo) return [piece.vehiculo];
+    return [];
+  }
   const MAX_FOTOS = 20;
   let pieces = [];
   let config = {
     titulo:'Refacciones Puebla',
     eslogan:'Encuentra la pieza correcta.',
-    pin:'2026',
     logo:null,
     banner:null,
+    politicasTitulo:'📄 Políticas de Compra',
     aboutTarjetas:[],
     quienesSomos:'En Refaccionaria ARCO nos especializamos en la venta de refacciones usadas para automóviles, camionetas y camiones de diversas marcas. Ofrecemos atención personalizada, fotografías reales de cada pieza, precios competitivos y envíos a todo México para que puedas comprar con mayor confianza.\n\nAdemás de nuestro inventario disponible, también te ayudamos a conseguir algunas refacciones bajo pedido cuando es posible, brindándote una solución más completa.\n\nRealizamos envíos a todo México y entregas personales en Puebla.',
     politicasCompra:'En Refaccionaria ARCO nos esforzamos por brindar información clara y transparente sobre cada una de nuestras refacciones. Antes de realizar cualquier compra, te pedimos leer detenidamente las siguientes políticas.\n\nAl concretar una compra, realizar un pago o confirmar un pedido por cualquier medio (WhatsApp, llamada telefónica, Facebook, Instagram u otro canal de comunicación), el comprador manifiesta haber leído, comprendido y aceptado las presentes Políticas de Compra.\n\n1. Sobre nuestras refacciones\n\n• Todas las refacciones comercializadas por Refaccionaria ARCO son usadas, salvo que expresamente se indique lo contrario.\n• Al tratarse de piezas usadas, es normal que presenten desgaste, rayones, suciedad, decoloración, marcas de uso u otros detalles estéticos propios de su condición.\n• Dichas características forman parte de la naturaleza del producto y no constituyen un defecto.\n\n2. Compatibilidad\n\n• Es responsabilidad exclusiva del comprador verificar que la refacción sea compatible con su vehículo.\n• Recomendamos verificar año, versión, motor, transmisión, número de parte, serie (VIN), medidas y cualquier otra especificación técnica antes de realizar la compra.\n• Refaccionaria ARCO puede brindar orientación basada en la información proporcionada por el comprador; sin embargo, dicha orientación no sustituye la verificación técnica que corresponde al cliente.\n• No aceptamos reclamaciones por incompatibilidad cuando ésta pudo verificarse antes de la compra.\n\n3. Fotografías\n\n• Todas las fotografías publicadas corresponden a la refacción disponible, salvo que expresamente se indique lo contrario.\n• Las imágenes forman parte de la descripción del producto.\n• Si el comprador requiere fotografías adicionales, videos, medidas o información complementaria, deberá solicitarlos antes de efectuar el pago.\n\n4. Estado de la refacción\n\n• Todas las refacciones se venden en el estado físico y funcional en que se encuentran al momento de la venta.\n• Es responsabilidad exclusiva del comprador solicitar, antes de realizar cualquier pago, toda la información que considere necesaria respecto al estado, funcionamiento, desgaste, detalles estéticos, medidas, números de parte o cualquier otra característica de la refacción.\n• Una vez realizado el pago, se entenderá que el comprador recibió la información que consideró suficiente para tomar su decisión y acepta el estado de la pieza adquirida.\n• La falta de preguntas o de solicitudes de información antes de la compra no genera responsabilidad para Refaccionaria ARCO.\n\n5. Pagos\n\n• Toda compra deberá liquidarse en su totalidad antes de ser enviada o entregada, salvo acuerdo distinto.\n• Una pieza únicamente se considerará apartada una vez confirmado el pago.\n• Los precios están sujetos a cambio sin previo aviso mientras la compra no haya sido confirmada.\n\n6. Envíos\n\n• Realizamos envíos a toda la República Mexicana.\n• El costo del envío corre por cuenta del comprador, salvo acuerdo distinto.\n• Los tiempos de entrega dependen exclusivamente de la empresa de paquetería.\n• Una vez entregado el paquete a la empresa transportista, se proporcionará la guía de rastreo correspondiente.\n• Refaccionaria ARCO no es responsable por retrasos ocasionados por la empresa de paquetería, condiciones climatológicas, bloqueos, desastres naturales o cualquier circunstancia ajena a nuestro control.\n\n7. Entregas personales\n\n• Las entregas personales se realizan únicamente en Puebla, previo acuerdo entre ambas partes.\n• El comprador deberá presentarse en el lugar y horario acordados.\n• En caso de no asistir, la entrega deberá ser reprogramada.\n\n8. Cambios, devoluciones y reembolsos\n\n• Todas las ventas realizadas por Refaccionaria ARCO son consideradas finales.\n• No realizamos cambios, devoluciones ni reembolsos por incompatibilidad, error del comprador, diagnóstico incorrecto, instalación incorrecta, cambio de opinión, falta de conocimientos técnicos o por no haber solicitado la información necesaria antes de efectuar la compra.\n• Antes de realizar cualquier pago, el comprador es responsable de verificar que la refacción corresponda exactamente a sus necesidades y resolver todas sus dudas.\n• Al concretar la compra, el comprador reconoce que revisó las fotografías, tuvo la oportunidad de solicitar información adicional y acepta las condiciones de venta de la refacción adquirida.\n• Lo anterior se entiende sin perjuicio de los derechos que, en su caso, otorgue la legislación mexicana aplicable.\n\n9. Instalación\n\n• Recomendamos que todas las refacciones sean instaladas por personal técnico calificado.\n• Refaccionaria ARCO no será responsable por daños derivados de instalaciones incorrectas, adaptaciones, modificaciones, diagnósticos erróneos, uso inadecuado o manipulación posterior a la entrega de la pieza.\n• Los gastos de instalación, desmontaje, mano de obra, diagnósticos, grúas o cualquier otro gasto relacionado son responsabilidad exclusiva del comprador.\n\n10. Responsabilidad del comprador\n\nEl comprador reconoce y acepta que es su responsabilidad:\n\n• Verificar la compatibilidad de la refacción con su vehículo.\n• Revisar cuidadosamente las fotografías publicadas.\n• Solicitar información adicional antes de efectuar el pago.\n• Verificar números de parte, medidas, versiones, motor, transmisión, serie (VIN) y demás especificaciones técnicas.\n• Resolver cualquier duda antes de concretar la compra.\n\nLa omisión de cualquiera de estas verificaciones no genera responsabilidad para Refaccionaria ARCO.\n\n11. Disponibilidad\n\n• Todo el inventario se encuentra sujeto a disponibilidad.\n• Una refacción puede venderse por otro medio antes de que el pago sea confirmado.\n• La publicación de una pieza en el catálogo no constituye una reserva de la misma.\n\n12. Aceptación de las políticas\n\nAl realizar una compra con Refaccionaria ARCO por cualquier medio de comunicación, el comprador declara que:\n\n• Leyó las presentes Políticas de Compra.\n• Comprendió el contenido de las mismas.\n• Tuvo oportunidad de resolver todas sus dudas antes de realizar el pago.\n• Acepta voluntariamente las condiciones aquí establecidas como parte de la operación comercial.',
@@ -356,11 +385,16 @@ function runApp(){
       accent:'#ff6a3d', price:'#ff6a3d', cardBg:'#ffffff', cardText:'#15171a',
       inputBg:'#15181b', inputText:'#eceeef',
       chipLabelBg:'#1c2024', chipLabelColor:'#8b9096',
-      outlineColor:'#000000', outlineColorSocial:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff',
+      outlineColor:'#000000', outlineColorEslogan:'#000000', outlineColorSocial:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff',
+      sloganColor:'#8b9096',
       socialIconColors:{tiktok:'#000000', facebook:'#1877f2', instagram:'#e1306c', whatsapp:'#25d366', telefono:'#6b7280'},
       waBtnBg:'#25d366', waBtnColor:'#ffffff',
       shareBtnBg:'#15181b', shareBtnColor:'#8b9096',
-      htbBg:'#1c1410', htbBorder:'#ff6a3d', htbTitleColor:'#ff6a3d'
+      htbBg:'#1c1410', htbBorder:'#ff6a3d', htbTitleColor:'#ff6a3d',
+      policiesBtnBg:'#241a15', policiesBtnBorder:'#ff6a3d', policiesBtnText:'#ff6a3d',
+      policiesModalBg:'#15181b',
+      policiesContentBg:'#15181b', policiesContentBorder:'#25292d', policiesContentText:'#eceeef',
+      policiesTitleColor:'#ff6a3d'
     },
     howToBuy:{ titulo:'¿Cómo comprar?', texto:'' },
     social:{
@@ -394,8 +428,12 @@ function runApp(){
   let maxPrice = null;
   let sortBy = 'default';
   let adminUnlocked = false;
-  let pinAttempts = 0;
-  let pinLockUntil = 0;
+  onAuthStateChanged(auth, (user)=>{
+    adminUnlocked = !!user;
+    if(!adminUnlocked && modalRoot && modalRoot.querySelector('.modal') && document.getElementById('closeAdmin')){
+      closeModal();
+    }
+  });
   let pendingPhotos = [];
   const slideTimers = new Map();
   let aboutTimer = null;
@@ -447,7 +485,9 @@ function runApp(){
     root.setProperty('--chip-label-bg', c.chipLabelBg || '#1c2024');
     root.setProperty('--chip-label-color', c.chipLabelColor || '#8b9096');
     root.setProperty('--outline-color', c.outlineColor || '#000000');
+    root.setProperty('--outline-color-eslogan', c.outlineColorEslogan || '#000000');
     root.setProperty('--outline-color-social', c.outlineColorSocial || '#000000');
+    root.setProperty('--eslogan-color', c.sloganColor || '#8b9096');
     root.setProperty('--search-label-bg', c.searchLabelBg || '#ff6a3d');
     root.setProperty('--search-label-color', c.searchLabelColor || '#ffffff');
     root.setProperty('--wa-btn-bg', c.waBtnBg || '#25d366');
@@ -457,6 +497,14 @@ function runApp(){
     root.setProperty('--htb-bg', c.htbBg || '#1c1410');
     root.setProperty('--htb-border', c.htbBorder || '#ff6a3d');
     root.setProperty('--htb-title-color', c.htbTitleColor || '#ff6a3d');
+    root.setProperty('--policies-btn-bg', c.policiesBtnBg || '#241a15');
+    root.setProperty('--policies-btn-border', c.policiesBtnBorder || '#ff6a3d');
+    root.setProperty('--policies-btn-text', c.policiesBtnText || '#ff6a3d');
+    root.setProperty('--policies-modal-bg', c.policiesModalBg || '#15181b');
+    root.setProperty('--policies-content-bg', c.policiesContentBg || '#15181b');
+    root.setProperty('--policies-content-border', c.policiesContentBorder || '#25292d');
+    root.setProperty('--policies-content-text', c.policiesContentText || '#eceeef');
+    root.setProperty('--policies-title-color', c.policiesTitleColor || '#ff6a3d');
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -573,7 +621,7 @@ function runApp(){
     const cat = catById(piece.categoriaId);
     const label = cat ? cat.label : 'Otro';
     if(activeCat!=='Todas' && label!==activeCat) return false;
-    if(activeVeh!=='Todas' && piece.vehiculo!==activeVeh) return false;
+    if(activeVeh!=='Todas' && !getPieceVehiculos(piece).includes(activeVeh)) return false;
     const precioNum = Number(piece.precio);
     if(minPrice!==null && precioNum < minPrice) return false;
     if(maxPrice!==null && precioNum > maxPrice) return false;
@@ -669,7 +717,7 @@ function runApp(){
         <div class="prod-photo-wrap">
           ${photoHtml}
           <div class="prod-cat-pill"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
-          ${piece.vehiculo ? `<div class="prod-veh-pill">${escapeHtml(piece.vehiculo)}</div>` : ''}
+          ${getPieceVehiculos(piece).length ? `<div class="prod-veh-pill">${escapeHtml(getPieceVehiculos(piece).join(' / '))}</div>` : ''}
           ${dotsHtml}
         </div>
         <div class="prod-body">
@@ -758,7 +806,7 @@ function runApp(){
               ${estadoHtml}
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
-              ${piece.vehiculo ? `<div class="lightbox-pills"><span class="compat-pill">${escapeHtml(piece.vehiculo)}</span></div>` : ''}
+              ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
               ${anioLabel(piece) ? `<div class="lightbox-compat-label" style="margin-top:6px;">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div>` : ''}
               ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
               ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
@@ -820,49 +868,49 @@ function runApp(){
   function openPoliciesModal(){
     modalRoot.innerHTML = `
       <div class="modal-overlay"><div class="modal policies-modal">
-        <h3>📄 Políticas de Compra</h3>
-        <div class="policies-text">${escapeHtml(config.politicasCompra||'')}</div>
+        <h3>${escapeHtml(config.politicasTitulo||'📄 Políticas de Compra')}</h3>
+        <div class="policies-box"><div class="policies-text">${escapeHtml(config.politicasCompra||'')}</div></div>
         <div class="modal-actions"><button class="btn btn-primary" id="closePolicies">Cerrar</button></div>
       </div></div>`;
     document.getElementById('closePolicies').onclick = closeModal;
     document.querySelector('.modal-overlay').addEventListener('click', (e)=>{ if(e.target.classList.contains('modal-overlay')) closeModal(); });
   }
 
-  document.getElementById('adminFab').onclick = ()=>{ adminUnlocked ? openAdminPanel() : openPinModal(); };
+  document.getElementById('adminFab').onclick = ()=>{ adminUnlocked ? openAdminPanel() : openLoginModal(); };
   function closeModal(){ modalRoot.innerHTML=''; pendingPhotos=[]; }
 
-  function openPinModal(){
-    const lockedNow = Date.now() < pinLockUntil;
-    const secsLeft = Math.ceil((pinLockUntil-Date.now())/1000);
+  function openLoginModal(){
     modalRoot.innerHTML = `
       <div class="modal-overlay"><div class="modal">
         <h3>Acceso admin</h3>
-        <label>PIN</label>
-        <input type="password" id="pinInput" placeholder="PIN" ${lockedNow?'disabled':''}>
-        <div class="status-msg err" id="pinMsg">${lockedNow?`Demasiados intentos. Intenta de nuevo en ${secsLeft}s.`:''}</div>
+        <label>Correo</label>
+        <input type="email" id="loginEmail" placeholder="tu@correo.com" autocomplete="username">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
+        <div class="status-msg err" id="loginMsg"></div>
         <div class="modal-actions">
-          <button class="btn btn-primary" id="pinOk" ${lockedNow?'disabled':''}>Entrar</button>
-          <button class="btn btn-ghost" id="pinCancel">Cancelar</button>
+          <button class="btn btn-primary" id="loginOk">Entrar</button>
+          <button class="btn btn-ghost" id="loginCancel">Cancelar</button>
         </div>
       </div></div>`;
-    document.getElementById('pinCancel').onclick = closeModal;
-    document.getElementById('pinOk').onclick = ()=>{
-      if(Date.now() < pinLockUntil) return;
-      const v = document.getElementById('pinInput').value;
-      if(v === config.pin){
-        pinAttempts = 0;
-        adminUnlocked = true; openAdminPanel();
-      }else{
-        pinAttempts++;
-        if(pinAttempts>=5){
-          pinLockUntil = Date.now() + 60000;
-          pinAttempts = 0;
-          openPinModal();
-        }else{
-          document.getElementById('pinMsg').textContent = `PIN incorrecto. Te quedan ${5-pinAttempts} intento(s).`;
-        }
+    document.getElementById('loginCancel').onclick = closeModal;
+    const doLogin = async ()=>{
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const btn = document.getElementById('loginOk');
+      const msg = document.getElementById('loginMsg');
+      if(!email || !pass){ msg.textContent = 'Ingresa correo y contraseña.'; return; }
+      btn.disabled = true; msg.textContent = '';
+      try{
+        await signInWithEmailAndPassword(auth, email, pass);
+        openAdminPanel();
+      }catch(e){
+        msg.textContent = 'Correo o contraseña incorrectos.';
+        btn.disabled = false;
       }
     };
+    document.getElementById('loginOk').onclick = doLogin;
+    document.getElementById('loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') doLogin(); });
   }
 
   function openAdminPanel(tab){
@@ -878,9 +926,13 @@ function runApp(){
           <div class="tab ${tab==='ajustes'?'active':''}" id="tabAjustes">Diseño</div>
         </div>
         <div id="adminBody"></div>
-        <div class="modal-actions"><button class="btn btn-ghost" id="closeAdmin">Cerrar</button></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="closeAdmin">Cerrar</button>
+          <button class="btn btn-ghost" id="logoutAdmin">Cerrar sesión</button>
+        </div>
       </div></div>`;
     document.getElementById('closeAdmin').onclick = closeModal;
+    document.getElementById('logoutAdmin').onclick = async ()=>{ await signOut(auth); closeModal(); };
     document.getElementById('tabPiezas').onclick = ()=>openAdminPanel('piezas');
     document.getElementById('tabNueva').onclick = ()=>openAdminPanel('nueva');
     document.getElementById('tabCats').onclick = ()=>openAdminPanel('categorias');
@@ -972,14 +1024,17 @@ function runApp(){
   function renderAdminForm(body, editing){
     pendingPhotos = editing ? piecePhotos(editing).slice() : [];
     const catOptions = config.categorias.map(c=>`<option value="${c.id}" ${editing&&editing.categoriaId===c.id?'selected':''}>${escapeHtml(c.label)}</option>`).join('');
-    const vehOptions = VEHICULOS.map(v=>`<option value="${v}" ${editing&&editing.vehiculo===v?'selected':''}>${v}</option>`).join('');
+    const vehChecksHtml = VEHICULOS.map(v=>{
+      const checked = editing && getPieceVehiculos(editing).includes(v) ? 'checked' : '';
+      return `<label class="veh-checkbox"><input type="checkbox" value="${escapeAttr(v)}" ${checked}> ${escapeHtml(v)}</label>`;
+    }).join('');
     body.innerHTML = `
       <label>Nombre de la pieza *</label>
       <input id="fName" value="${editing?escapeAttr(editing.nombre):''}" placeholder="Ej. Bomba de agua">
       <label>Categoría *</label>
       <select id="fCat">${catOptions}</select>
-      <label>Tipo de vehículo</label>
-      <select id="fVeh"><option value="">Sin especificar</option>${vehOptions}</select>
+      <label>Tipo de vehículo (puedes seleccionar varios)</label>
+      <div class="veh-checkbox-row" id="fVehGroup">${vehChecksHtml}</div>
       <label>Estado de la pieza</label>
       <select id="fEstado">
         <option value="disponible" ${(!editing||!editing.estado||editing.estado==='disponible')?'selected':''}>${escapeHtml(config.estados.disponible.label)}</option>
@@ -1031,7 +1086,7 @@ function runApp(){
     document.getElementById('fSave').onclick = async ()=>{
       const nombre = document.getElementById('fName').value.trim();
       const categoriaId = document.getElementById('fCat').value;
-      const vehiculo = document.getElementById('fVeh').value;
+      const vehiculos = Array.from(document.querySelectorAll('#fVehGroup input[type="checkbox"]:checked')).map(cb=>cb.value);
       const estado = document.getElementById('fEstado').value;
       const compatibilidad = document.getElementById('fCompat').value.split(',').map(s=>s.trim()).filter(Boolean);
       const anioDesdeRaw = document.getElementById('fAnioDesde').value.trim();
@@ -1041,7 +1096,7 @@ function runApp(){
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculo, estado, compatibilidad, anioDesde, anioHasta, precio, fotos:pendingPhotos, notas};
+      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, precio, fotos:pendingPhotos, notas};
       try{
         if(editing){
           await updateDoc(doc(db,'productos',editing.id), data);
@@ -1227,10 +1282,13 @@ function runApp(){
         <input id="sTitle" value="${escapeAttr(config.titulo)}">
         <label>Eslogan</label>
         <input id="sSlogan" value="${escapeAttr(config.eslogan||'')}">
+        <label>Título de "Políticas de Compra"</label>
+        <input id="sPolicyTitle" placeholder="📄 Políticas de Compra" value="${escapeAttr(config.politicasTitulo||'')}">
         <label>Texto de "Políticas de Compra" (déjalo vacío para ocultar el apartado)</label>
         <textarea id="sPolicies" rows="8">${escapeAttr(config.politicasCompra||'')}</textarea>
-        <label>PIN de acceso admin</label>
-        <input id="sPin" value="${escapeAttr(config.pin)}">
+        <div style="margin-top:14px;padding:12px 14px;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:10px;font-size:12px;color:var(--input-text);">
+          🔒 El acceso admin ahora usa Firebase Authentication (correo y contraseña), no un PIN. Para cambiar la contraseña o agregar otro administrador, hazlo desde <b>console.firebase.google.com</b> → Authentication → Users.
+        </div>
 
         <label>Logo (junto al título)</label>
         <input type="file" id="sLogoFile" accept="image/*">
@@ -1309,38 +1367,100 @@ function runApp(){
       </div>
 
       <div id="secColores" style="${subtab==='colores'?'':'display:none;'}">
-        <div class="color-grid">
-          <div><label>Fondo de la página</label><input type="color" id="cBg" value="${c.bg}"></div>
-          <div><label>Color del título</label><input type="color" id="cTitle" value="${c.titleColor}"></div>
-          <div><label>Color de subtítulos</label><input type="color" id="cSub" value="${c.subtitleColor}"></div>
-          <div><label>Color de acento (botones)</label><input type="color" id="cAccent" value="${c.accent}"></div>
-          <div><label>Color del precio</label><input type="color" id="cPrice" value="${c.price}"></div>
-          <div><label>Fondo de tarjetas</label><input type="color" id="cCardBg" value="${c.cardBg}"></div>
-          <div><label>Texto en tarjetas</label><input type="color" id="cCardText" value="${c.cardText}"></div>
-          <div><label>Fondo de campos</label><input type="color" id="cInputBg" value="${c.inputBg}"></div>
-          <div><label>Texto de campos</label><input type="color" id="cInputText" value="${c.inputText}"></div>
-          <div><label>Fondo subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipBg" value="${c.chipLabelBg||'#1c2024'}"></div>
-          <div><label>Color subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipColor" value="${c.chipLabelColor||'#8b9096'}"></div>
-          <div><label>Contorno de título y eslogan</label><input type="color" id="cOutline" value="${c.outlineColor||'#000000'}"></div>
-          <div><label>Contorno del mensaje junto a redes</label><input type="color" id="cOutlineSocial" value="${c.outlineColorSocial||'#000000'}"></div>
-          <div><label>Fondo del subtítulo de búsqueda</label><input type="color" id="cSearchBg" value="${c.searchLabelBg||'#ff6a3d'}"></div>
-          <div><label>Color del subtítulo de búsqueda</label><input type="color" id="cSearchColor" value="${c.searchLabelColor||'#ffffff'}"></div>
-          <div><label>Fondo botón "Comprar por WhatsApp"</label><input type="color" id="cWaBg" value="${c.waBtnBg||'#25d366'}"></div>
-          <div><label>Texto botón "Comprar por WhatsApp"</label><input type="color" id="cWaColor" value="${c.waBtnColor||'#ffffff'}"></div>
-          <div><label>Fondo botón "Compartir"</label><input type="color" id="cShareBg" value="${c.shareBtnBg||'#15181b'}"></div>
-          <div><label>Texto botón "Compartir"</label><input type="color" id="cShareColor" value="${c.shareBtnColor||'#8b9096'}"></div>
-          <div><label>Fondo bloque "¿Cómo comprar?"</label><input type="color" id="cHtbBg" value="${c.htbBg||'#1c1410'}"></div>
-          <div><label>Contorno bloque "¿Cómo comprar?"</label><input type="color" id="cHtbBorder" value="${c.htbBorder||'#ff6a3d'}"></div>
-          <div><label>Título bloque "¿Cómo comprar?"</label><input type="color" id="cHtbTitle" value="${c.htbTitleColor||'#ff6a3d'}"></div>
-        </div>
-        <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Contorno de íconos de redes y contacto</div>
-        <div class="color-grid" style="margin-top:8px;">
-          <div><label>TikTok</label><input type="color" id="cIconTiktok" value="${(c.socialIconColors&&c.socialIconColors.tiktok)||'#000000'}"></div>
-          <div><label>Facebook</label><input type="color" id="cIconFacebook" value="${(c.socialIconColors&&c.socialIconColors.facebook)||'#1877f2'}"></div>
-          <div><label>Instagram</label><input type="color" id="cIconInstagram" value="${(c.socialIconColors&&c.socialIconColors.instagram)||'#e1306c'}"></div>
-          <div><label>WhatsApp</label><input type="color" id="cIconWhatsapp" value="${(c.socialIconColors&&c.socialIconColors.whatsapp)||'#25d366'}"></div>
-          <div><label>Teléfono</label><input type="color" id="cIconTelefono" value="${(c.socialIconColors&&c.socialIconColors.telefono)||'#6b7280'}"></div>
-        </div>
+        <div style="font-size:11px;color:var(--subtitle-color);margin-bottom:10px;">Toca cada grupo para abrirlo o cerrarlo. Así es más fácil encontrar el color que buscas.</div>
+
+        <details class="color-section" open>
+          <summary>🎨 Página y textos generales<span class="sec-hint">fondo, título, subtítulos, precio</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo de la página</label><input type="color" id="cBg" value="${c.bg}"></div>
+              <div><label>Color del título</label><input type="color" id="cTitle" value="${c.titleColor}"></div>
+              <div><label>Color de subtítulos</label><input type="color" id="cSub" value="${c.subtitleColor}"></div>
+              <div><label>Color del eslogan</label><input type="color" id="cSloganColor" value="${c.sloganColor||'#8b9096'}"></div>
+              <div><label>Color de acento (botones)</label><input type="color" id="cAccent" value="${c.accent}"></div>
+              <div><label>Color del precio</label><input type="color" id="cPrice" value="${c.price}"></div>
+              <div><label>Contorno del título</label><input type="color" id="cOutline" value="${c.outlineColor||'#000000'}"></div>
+              <div><label>Contorno del eslogan</label><input type="color" id="cOutlineEslogan" value="${c.outlineColorEslogan||'#000000'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>🗂️ Tarjetas y campos<span class="sec-hint">piezas, subtítulos, formularios</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo de tarjetas</label><input type="color" id="cCardBg" value="${c.cardBg}"></div>
+              <div><label>Texto en tarjetas</label><input type="color" id="cCardText" value="${c.cardText}"></div>
+              <div><label>Fondo de campos</label><input type="color" id="cInputBg" value="${c.inputBg}"></div>
+              <div><label>Texto de campos</label><input type="color" id="cInputText" value="${c.inputText}"></div>
+              <div><label>Fondo subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipBg" value="${c.chipLabelBg||'#1c2024'}"></div>
+              <div><label>Color subtítulos (Categoría/Vehículo)</label><input type="color" id="cChipColor" value="${c.chipLabelColor||'#8b9096'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>🔍 Buscador<span class="sec-hint">subtítulo de búsqueda</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo del subtítulo de búsqueda</label><input type="color" id="cSearchBg" value="${c.searchLabelBg||'#ff6a3d'}"></div>
+              <div><label>Color del subtítulo de búsqueda</label><input type="color" id="cSearchColor" value="${c.searchLabelColor||'#ffffff'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>💬 Botones de contacto<span class="sec-hint">WhatsApp, compartir</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo botón "Comprar por WhatsApp"</label><input type="color" id="cWaBg" value="${c.waBtnBg||'#25d366'}"></div>
+              <div><label>Texto botón "Comprar por WhatsApp"</label><input type="color" id="cWaColor" value="${c.waBtnColor||'#ffffff'}"></div>
+              <div><label>Fondo botón "Compartir"</label><input type="color" id="cShareBg" value="${c.shareBtnBg||'#15181b'}"></div>
+              <div><label>Texto botón "Compartir"</label><input type="color" id="cShareColor" value="${c.shareBtnColor||'#8b9096'}"></div>
+              <div><label>Contorno del mensaje junto a redes</label><input type="color" id="cOutlineSocial" value="${c.outlineColorSocial||'#000000'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>🛒 Bloque "¿Cómo comprar?"</summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo del bloque</label><input type="color" id="cHtbBg" value="${c.htbBg||'#1c1410'}"></div>
+              <div><label>Contorno del bloque</label><input type="color" id="cHtbBorder" value="${c.htbBorder||'#ff6a3d'}"></div>
+              <div><label>Título del bloque</label><input type="color" id="cHtbTitle" value="${c.htbTitleColor||'#ff6a3d'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>📄 Políticas de Compra<span class="sec-hint">botón, título y recuadro de texto</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Fondo del botón</label><input type="color" id="cPolBtnBg" value="${c.policiesBtnBg||'#241a15'}"></div>
+              <div><label>Contorno del botón</label><input type="color" id="cPolBtnBorder" value="${c.policiesBtnBorder||'#ff6a3d'}"></div>
+              <div><label>Texto del botón</label><input type="color" id="cPolBtnText" value="${c.policiesBtnText||'#ff6a3d'}"></div>
+              <div><label>Color del título (dentro del recuadro)</label><input type="color" id="cPolTitleColor" value="${c.policiesTitleColor||'#ff6a3d'}"></div>
+              <div><label>Fondo detrás (fondo grande del modal)</label><input type="color" id="cPolModalBg" value="${c.policiesModalBg||'#15181b'}"></div>
+              <div><label>Fondo del recuadro de texto</label><input type="color" id="cPolContentBg" value="${c.policiesContentBg||'#15181b'}"></div>
+              <div><label>Contorno del recuadro de texto</label><input type="color" id="cPolContentBorder" value="${c.policiesContentBorder||'#25292d'}"></div>
+              <div><label>Texto dentro del recuadro</label><input type="color" id="cPolContentText" value="${c.policiesContentText||'#eceeef'}"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="color-section">
+          <summary>📱 Íconos de redes y contacto<span class="sec-hint">contorno de cada ícono</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>TikTok</label><input type="color" id="cIconTiktok" value="${(c.socialIconColors&&c.socialIconColors.tiktok)||'#000000'}"></div>
+              <div><label>Facebook</label><input type="color" id="cIconFacebook" value="${(c.socialIconColors&&c.socialIconColors.facebook)||'#1877f2'}"></div>
+              <div><label>Instagram</label><input type="color" id="cIconInstagram" value="${(c.socialIconColors&&c.socialIconColors.instagram)||'#e1306c'}"></div>
+              <div><label>WhatsApp</label><input type="color" id="cIconWhatsapp" value="${(c.socialIconColors&&c.socialIconColors.whatsapp)||'#25d366'}"></div>
+              <div><label>Teléfono</label><input type="color" id="cIconTelefono" value="${(c.socialIconColors&&c.socialIconColors.telefono)||'#6b7280'}"></div>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="status-msg" id="sMsg"></div>
@@ -1404,12 +1524,12 @@ function runApp(){
     document.getElementById('sSave').onclick = async ()=>{
       config.titulo = document.getElementById('sTitle').value.trim() || config.titulo;
       config.eslogan = document.getElementById('sSlogan').value.trim();
+      config.politicasTitulo = document.getElementById('sPolicyTitle').value.trim();
       config.politicasCompra = document.getElementById('sPolicies').value.trim();
       config.howToBuy = {
         titulo: document.getElementById('sHtbTitulo').value.trim(),
         texto: document.getElementById('sHtbTexto').value.trim()
       };
-      config.pin = document.getElementById('sPin').value.trim() || config.pin;
       config.logo = pendingLogo;
       config.banner = pendingBanner;
       config.social = {
@@ -1443,7 +1563,9 @@ function runApp(){
         chipLabelBg: document.getElementById('cChipBg').value,
         chipLabelColor: document.getElementById('cChipColor').value,
         outlineColor: document.getElementById('cOutline').value,
+        outlineColorEslogan: document.getElementById('cOutlineEslogan').value,
         outlineColorSocial: document.getElementById('cOutlineSocial').value,
+        sloganColor: document.getElementById('cSloganColor').value,
         searchLabelBg: document.getElementById('cSearchBg').value,
         searchLabelColor: document.getElementById('cSearchColor').value,
         waBtnBg: document.getElementById('cWaBg').value,
@@ -1453,6 +1575,14 @@ function runApp(){
         htbBg: document.getElementById('cHtbBg').value,
         htbBorder: document.getElementById('cHtbBorder').value,
         htbTitleColor: document.getElementById('cHtbTitle').value,
+        policiesBtnBg: document.getElementById('cPolBtnBg').value,
+        policiesBtnBorder: document.getElementById('cPolBtnBorder').value,
+        policiesBtnText: document.getElementById('cPolBtnText').value,
+        policiesModalBg: document.getElementById('cPolModalBg').value,
+        policiesContentBg: document.getElementById('cPolContentBg').value,
+        policiesContentBorder: document.getElementById('cPolContentBorder').value,
+        policiesContentText: document.getElementById('cPolContentText').value,
+        policiesTitleColor: document.getElementById('cPolTitleColor').value,
         socialIconColors: {
           tiktok: document.getElementById('cIconTiktok').value,
           facebook: document.getElementById('cIconFacebook').value,
