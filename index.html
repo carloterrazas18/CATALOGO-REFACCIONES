@@ -655,7 +655,7 @@ function runApp(){
     if(minPrice!==null && precioNum < minPrice) return false;
     if(maxPrice!==null && precioNum > maxPrice) return false;
     if(!searchTerm) return true;
-    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')+' '+(piece.motor||'')).toLowerCase();
+    const hay = (piece.nombre+' '+(piece.compatibilidad||[]).join(' ')+' '+(piece.notas||'')+' '+(anioLabel(piece)||'')+' '+(piece.motor||'')+' '+(piece.marca||'')).toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
   }
 
@@ -727,9 +727,11 @@ function runApp(){
       ? `<div class="prod-compat-hint">${piece.compatibilidad.length} compatibilidad(es) — clic para ver</div>` : '';
     const anio = anioLabel(piece);
     const motor = (piece.motor||'').trim();
+    const marca = (piece.marca||'').trim();
     const anioHtml = anio ? `<div class="prod-year-block"><span class="prod-year-label">Modelos</span><span class="prod-year-value">${escapeHtml(anio)}</span></div>` : '';
     const motorHtml = motor ? `<div class="prod-year-block"><span class="prod-year-label">Motor</span><span class="prod-year-value">${escapeHtml(motor)}</span></div>` : '';
-    const specsHtml = (anioHtml || motorHtml) ? `<div style="display:flex;gap:14px;flex-wrap:wrap;">${anioHtml}${motorHtml}</div>` : '';
+    const marcaHtml = marca ? `<div class="prod-year-block"><span class="prod-year-label">Marca</span><span class="prod-year-value">${escapeHtml(marca)}</span></div>` : '';
+    const specsHtml = (marcaHtml || anioHtml || motorHtml) ? `<div style="display:flex;gap:14px;flex-wrap:wrap;">${marcaHtml}${anioHtml}${motorHtml}</div>` : '';
     const estado = config.estados[piece.estado] || config.estados.disponible;
     const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
     card.innerHTML = `
@@ -945,7 +947,8 @@ function runApp(){
               <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
               <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
               ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
-              ${(anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
+              ${((piece.marca||'').trim() || anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
+                ${(piece.marca||'').trim() ? `<div><div class="lightbox-compat-label">Marca</div><div class="lightbox-year-value">${escapeHtml(piece.marca.trim())}</div></div>` : ''}
                 ${anioLabel(piece) ? `<div><div class="lightbox-compat-label">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div></div>` : ''}
                 ${(piece.motor||'').trim() ? `<div><div class="lightbox-compat-label">Motor</div><div class="lightbox-year-value">${escapeHtml(piece.motor.trim())}</div></div>` : ''}
               </div>` : ''}
@@ -1219,6 +1222,8 @@ function runApp(){
         <input id="fAnioDesde" type="number" placeholder="Desde, ej. 2010" value="${editing&&editing.anioDesde?editing.anioDesde:''}">
         <input id="fAnioHasta" type="number" placeholder="Hasta, ej. 2015" value="${editing&&editing.anioHasta?editing.anioHasta:''}">
       </div>
+      <label>Marca (opcional)</label>
+      <input id="fMarca" placeholder="Ej. Nissan" value="${editing&&editing.marca?escapeAttr(editing.marca):''}">
       <label>Motor (opcional)</label>
       <input id="fMotor" placeholder="Ej. 2.0L Turbo" value="${editing&&editing.motor?escapeAttr(editing.motor):''}">
       <label>Precio (MXN) *</label>
@@ -1266,11 +1271,12 @@ function runApp(){
       const anioHastaRaw = document.getElementById('fAnioHasta').value.trim();
       const anioDesde = anioDesdeRaw ? Number(anioDesdeRaw) : null;
       const anioHasta = anioHastaRaw ? Number(anioHastaRaw) : null;
+      const marca = document.getElementById('fMarca').value.trim();
       const motor = document.getElementById('fMotor').value.trim();
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, motor, precio, fotos:pendingPhotos, notas};
+      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, marca, motor, precio, fotos:pendingPhotos, notas};
       try{
         if(editing){
           await updateDoc(doc(db,'productos',editing.id), data);
