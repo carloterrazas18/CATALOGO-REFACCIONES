@@ -431,6 +431,58 @@ const firebaseConfig = {
 };
 // ======================================================================
 
+// --- Cloudinary (para que las fotos ya no vivan como base64 en Firestore) ---
+// Preset "Unsigned": permite subir imágenes directo desde el navegador sin
+// exponer ninguna clave secreta y sin necesitar un servidor propio.
+const CLOUDINARY_CLOUD_NAME = 'lleieidt';
+const CLOUDINARY_UPLOAD_PRESET = 'Catalogo_Arco';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+// Sube un Blob/File directo a Cloudinary y regresa la URL pública (https).
+async function subirBlobACloudinary(blob, filename){
+  const form = new FormData();
+  form.append('file', blob, filename || 'foto.jpg');
+  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const resp = await fetch(CLOUDINARY_UPLOAD_URL, { method:'POST', body:form });
+  if(!resp.ok){
+    let detalle = '';
+    try{ detalle = (await resp.json()).error?.message || ''; }catch(e){}
+    throw new Error(`Cloudinary rechazó la subida (${resp.status}). ${detalle}`);
+  }
+  const json = await resp.json();
+  return json.secure_url;
+}
+
+// Igual que arriba, pero para una foto que ya está en formato base64
+// (dataURL) — Cloudinary la acepta directo como si fuera un archivo. Se usa
+// en la migración de fotos viejas.
+async function subirDataUrlACloudinary(dataUrl){
+  const form = new FormData();
+  form.append('file', dataUrl);
+  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const resp = await fetch(CLOUDINARY_UPLOAD_URL, { method:'POST', body:form });
+  if(!resp.ok){
+    let detalle = '';
+    try{ detalle = (await resp.json()).error?.message || ''; }catch(e){}
+    throw new Error(`Cloudinary rechazó la subida (${resp.status}). ${detalle}`);
+  }
+  const json = await resp.json();
+  return json.secure_url;
+}
+
+// Inserta parámetros de transformación de Cloudinary en la URL para pedir
+// una versión más chica/optimizada de la misma foto (miniatura para el
+// grid, o versión grande para el visor ampliado). No sube nada nuevo: la
+// transformación se genera al vuelo la primera vez que se pide esa URL y
+// luego queda cacheada en el CDN.
+function cloudinaryResize(url, width){
+  if(typeof url !== 'string' || !url.includes('/upload/')) return url;
+  return url.replace('/upload/', `/upload/c_limit,w_${width},q_auto,f_auto/`);
+}
+function esUrlCloudinary(v){
+  return typeof v === 'string' && v.includes('res.cloudinary.com');
+}
+
 const configuradoDeVerdad = firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY";
 
 if(!configuradoDeVerdad){
@@ -447,63 +499,29 @@ function runApp(){
   const auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
-  // Vuelve a comprimir (más chica) una imagen que ya está en formato dataURL,
-  // sin depender de ningún servicio externo ni de pagos: todo pasa en el
-  // navegador, con un <canvas>. Respeta si la imagen original era PNG (para
-  // conservar transparencia, como en los íconos) o JPG.
-  function reComprimirDataUrl(dataUrl, maxDim, calidad, mime){
-    return new Promise((resolve, reject)=>{
-      const img = new Image();
-      img.onload = ()=>{
-        let w = img.width, h = img.height;
-        if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
-        else{ if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1,w); canvas.height = Math.max(1,h);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(mime==='image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', calidad));
-      };
-      img.onerror = reject;
-      img.src = dataUrl;
-    });
-  }
-  async function reComprimirABudget(dataUrl, budgetBytes){
-    const mime = (dataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/jpeg';
-    let maxDim = mime==='image/png' ? 480 : 700;
-    let calidad = 0.72;
-    let out = await reComprimirDataUrl(dataUrl, maxDim, calidad, mime);
-    let guard = 0;
-    while(out.length > budgetBytes && guard < 9){
-      if(mime==='image/png'){ maxDim = Math.max(200, maxDim - 80); }
-      else if(calidad > 0.35){ calidad -= 0.1; }
-      else{ maxDim = Math.max(240, maxDim - 130); }
-      out = await reComprimirDataUrl(dataUrl, maxDim, calidad, mime);
-      guard++;
-    }
-    return out;
-  }
-
-  // Recorre el catálogo y "aligera" (recomprime) cualquier foto/ícono que
-  // haya quedado guardado muy pesado, para que la base de datos vuelva a
-  // ser rápida de descargar. 100% gratis: nada sale de Firebase/Firestore,
-  // no sube nada a ningún servicio de pago.
-  async function optimizarImagenesExistentes(onProgress){
-    let optimizadas = 0, errores = 0;
-    const presupuestosConfig = { banner: 60000, logo: 25000, tickerIcono: 18000 };
+  // Sube a Cloudinary cualquier imagen que todavía esté guardada como
+  // base64 (banner, logo, íconos, fotos de producto) y reemplaza esos datos
+  // pesados por la URL. También junta las piezas que tenían su álbum
+  // guardado aparte (esquema viejo "carga rápida") de vuelta en un solo
+  // arreglo de URLs en el documento principal, y borra el sub-documento que
+  // ya no hace falta. Se puede correr varias veces sin miedo: solo toca lo
+  // que todavía esté en base64 o sin consolidar.
+  async function migrarACloudinary(onProgress){
+    let migradas = 0, errores = 0;
+    // --- Configuración: banner, logo, ícono del ticker, íconos sociales ---
     const cambiosConfig = {};
     for(const campo of ['banner','logo','tickerIcono']){
       const val = config[campo];
-      const presupuesto = presupuestosConfig[campo];
-      if(val && val.startsWith('data:') && val.length > presupuesto){
-        try{ cambiosConfig[campo] = await reComprimirABudget(val, presupuesto); optimizadas++; }
+      if(val && val.startsWith('data:')){
+        try{ cambiosConfig[campo] = await subirDataUrlACloudinary(val); migradas++; }
         catch(e){ errores++; }
       }
     }
     const socialCambios = {};
     for(const key of ['tiktokIcono','facebookIcono','instagramIcono','whatsappIcono','telefonoIcono']){
       const val = config.social && config.social[key];
-      if(val && val.startsWith('data:') && val.length > 18000){
-        try{ socialCambios[key] = await reComprimirABudget(val, 18000); optimizadas++; }
+      if(val && val.startsWith('data:')){
+        try{ socialCambios[key] = await subirDataUrlACloudinary(val); migradas++; }
         catch(e){ errores++; }
       }
     }
@@ -512,63 +530,47 @@ function runApp(){
       if(Object.keys(socialCambios).length) updateData.social = Object.assign({}, config.social, socialCambios);
       try{ await updateDoc(doc(db,'configuracion','admin'), updateData); }catch(e){ errores++; }
     }
-    if(onProgress) onProgress({fase:'config', optimizadas, errores});
+    if(onProgress) onProgress({fase:'config', migradas, errores});
+    // --- Fotos de producto ---
     const snap = await getDocs(collection(db,'productos'));
     const docs = snap.docs;
-    const PRESUPUESTO_FOTO = 35000;
     let revisados = 0;
     for(const docSnap of docs){
       revisados++;
       const data = docSnap.data();
-      const fotos = data.fotos || [];
-      let cambio = false;
+      let fotos = data.fotos || [];
+      let teniaGaleriaAparte = false;
+      // Piezas del esquema viejo: portada aquí + álbum completo en un
+      // sub-documento aparte. Las juntamos de vuelta en un solo arreglo.
+      if(typeof data.totalFotos === 'number' && data.totalFotos > fotos.length){
+        try{
+          const galSnap = await getDoc(doc(db,'productos',docSnap.id,'detalle','galeria'));
+          if(galSnap.exists() && galSnap.data().fotos && galSnap.data().fotos.length){
+            fotos = galSnap.data().fotos;
+            teniaGaleriaAparte = true;
+          }
+        }catch(e){ /* si no se puede leer, seguimos solo con la portada */ }
+      }
+      let cambio = teniaGaleriaAparte;
       const nuevasFotos = [];
       for(const foto of fotos){
-        if(typeof foto === 'string' && foto.startsWith('data:') && foto.length > PRESUPUESTO_FOTO){
-          try{ nuevasFotos.push(await reComprimirABudget(foto, PRESUPUESTO_FOTO)); cambio = true; optimizadas++; }
+        if(typeof foto === 'string' && foto.startsWith('data:')){
+          try{ nuevasFotos.push(await subirDataUrlACloudinary(foto)); cambio = true; migradas++; }
           catch(e){ nuevasFotos.push(foto); errores++; }
         } else {
           nuevasFotos.push(foto);
         }
       }
       if(cambio){
-        try{ await updateDoc(doc(db,'productos',docSnap.id), {fotos:nuevasFotos}); }
-        catch(e){ errores++; }
-      }
-      if(onProgress) onProgress({fase:'productos', revisados, total:docs.length, optimizadas, errores});
-    }
-    return {optimizadas, revisados, errores};
-  }
-
-  // Recorre los productos que se guardaron ANTES de este cambio (todas sus
-  // fotos juntas en un solo documento) y los pasa al esquema nuevo: portada
-  // en el documento principal + álbum completo aparte. Solo toca productos
-  // con más de 1 foto que aún no se hayan migrado (no vuelve a tocar los
-  // que ya están migrados, así que se puede correr varias veces sin miedo).
-  async function migrarGaleriaExistente(onProgress){
-    let migrados = 0, errores = 0;
-    const snap = await getDocs(collection(db,'productos'));
-    const docs = snap.docs;
-    let revisados = 0;
-    for(const docSnap of docs){
-      revisados++;
-      const data = docSnap.data();
-      const fotos = data.fotos || [];
-      const yaMigrado = typeof data.totalFotos === 'number';
-      if(!yaMigrado && fotos.length > 1){
         try{
-          await setDoc(doc(db,'productos',docSnap.id,'detalle','galeria'), {fotos});
-          await updateDoc(doc(db,'productos',docSnap.id), {fotos:[fotos[0]], totalFotos:fotos.length});
-          migrados++;
+          await updateDoc(doc(db,'productos',docSnap.id), {fotos:nuevasFotos, totalFotos:nuevasFotos.length});
+          if(teniaGaleriaAparte) await deleteDoc(doc(db,'productos',docSnap.id,'detalle','galeria'));
         }catch(e){ errores++; }
-      } else if(!yaMigrado){
-        // 0 o 1 foto: no hace falta álbum aparte, solo marcamos como al día.
-        try{ await updateDoc(doc(db,'productos',docSnap.id), {totalFotos:fotos.length}); }
-        catch(e){ errores++; }
       }
-      if(onProgress) onProgress({revisados, total:docs.length, migrados, errores});
+      if(onProgress) onProgress({fase:'productos', revisados, total:docs.length, migradas, errores});
     }
-    return {migrados, revisados, errores};
+    galeriaCache.clear();
+    return {migradas, revisados, errores};
   }
 
   const VEHICULOS = ['Coche','Camioneta','Camión'];
@@ -724,6 +726,12 @@ function runApp(){
     if(p.foto) return [p.foto];
     return [];
   }
+  // Pide la versión chica (para tarjetas del grid) o grande (para el visor
+  // ampliado) de cada foto. Si la foto es de Cloudinary, se genera al vuelo
+  // con parámetros en la URL; si es una foto vieja en base64 (piezas que aún
+  // no se han migrado), se deja tal cual porque ya está guardada a su tamaño.
+  function fotosParaGrid(fotos){ return fotos.map(f=>esUrlCloudinary(f) ? cloudinaryResize(f,480) : f); }
+  function fotosParaLightbox(fotos){ return fotos.map(f=>esUrlCloudinary(f) ? cloudinaryResize(f,1400) : f); }
 
   // Cuando un producto tiene su álbum guardado aparte (para que el catálogo
   // cargue rápido), esta función va por las fotos que faltan SOLO cuando de
@@ -1146,7 +1154,7 @@ function runApp(){
 
   function createCard(piece, prioritaria, posEnLote){
     const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
-    const fotos = piecePhotos(piece);
+    const fotos = fotosParaGrid(piecePhotos(piece));
     const card = document.createElement('div');
     card.className = 'prod-card';
     // Las primeras tarjetas (las que se ven sin hacer scroll) se piden con
@@ -1225,6 +1233,7 @@ function runApp(){
           const espera = 250 + Math.min(posEnLote||0, 10)*130;
           setTimeout(()=>{
             asegurarGaleriaCompleta(piece).then(fotosCompletas=>{
+              fotosCompletas = fotosParaGrid(fotosCompletas);
               if(fotosCompletas.length>1) startCardSlideshow(card, piece, fotosCompletas);
             });
           }, espera);
@@ -1447,7 +1456,7 @@ function runApp(){
   async function openLightbox(piece){
     const miToken = ++lightboxRequestToken;
     const piezaOriginal = piece;
-    const fotosCompletas = await asegurarGaleriaCompleta(piece);
+    const fotosCompletas = fotosParaLightbox(await asegurarGaleriaCompleta(piece));
     if(miToken !== lightboxRequestToken) return; // el usuario ya abrió otra pieza mientras esperábamos
     const fotosIncompletas = (piece.totalFotos||0) > fotosCompletas.length;
     piece = Object.assign({}, piece, {fotos: fotosCompletas});
@@ -1777,7 +1786,13 @@ function runApp(){
     });
   }
 
-  function compressFile(file, maxDim, quality){
+  // Redimensiona la foto en el navegador antes de subirla (para que la
+  // subida sea rápida y no se suban fotos de 8MB directo de la cámara del
+  // celular). Ya no hace falta exprimirla a un "presupuesto" de bytes tan
+  // agresivo como antes: Cloudinary se encarga de optimizar/comprimir de
+  // verdad al momento de servirla (parámetros q_auto,f_auto), así que aquí
+  // solo evitamos subir algo innecesariamente grande.
+  function compressFileToBlob(file, maxDim, quality){
     return new Promise((resolve, reject)=>{
       const reader = new FileReader();
       reader.onload = ()=>{
@@ -1789,7 +1804,9 @@ function runApp(){
           const canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
+          canvas.toBlob(blob=>{
+            if(blob) resolve(blob); else reject(new Error('No se pudo generar la imagen.'));
+          }, 'image/jpeg', quality);
         };
         img.onerror = reject;
         img.src = reader.result;
@@ -1797,19 +1814,6 @@ function runApp(){
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-  }
-
-  async function compressToBudget(file, budgetBytes){
-    let maxDim = 900, quality = 0.8;
-    let dataUrl = await compressFile(file, maxDim, quality);
-    let guard = 0;
-    while(dataUrl.length > budgetBytes && guard < 9){
-      if(quality > 0.4){ quality -= 0.12; }
-      else{ maxDim = Math.max(300, maxDim - 150); }
-      dataUrl = await compressFile(file, maxDim, quality);
-      guard++;
-    }
-    return dataUrl;
   }
 
   // Igual que compressFile, pero exporta PNG para conservar transparencia
@@ -1848,7 +1852,10 @@ function runApp(){
     }
     ctx.putImageData(imgData,0,0);
   }
-  function compressFilePNG(file, maxDim){
+  // Genera la miniatura del ícono (con el fondo sólido ya "pelado" a
+  // transparente) como Blob, para subirla a Cloudinary en vez de guardarla
+  // como dataURL pesado en Firestore.
+  function compressFilePNGToBlob(file, maxDim){
     return new Promise((resolve, reject)=>{
       const reader = new FileReader();
       reader.onload = ()=>{
@@ -1861,7 +1868,9 @@ function runApp(){
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           stripSolidBackground(canvas);
-          resolve(canvas.toDataURL('image/png'));
+          canvas.toBlob(blob=>{
+            if(blob) resolve(blob); else reject(new Error('No se pudo generar la imagen.'));
+          }, 'image/png');
         };
         img.onerror = reject;
         img.src = reader.result;
@@ -1869,17 +1878,6 @@ function runApp(){
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-  }
-  async function compressToBudgetPNG(file, budgetBytes){
-    let maxDim = 500;
-    let dataUrl = await compressFilePNG(file, maxDim);
-    let guard = 0;
-    while(dataUrl.length > budgetBytes && guard < 8){
-      maxDim = Math.max(80, maxDim - 60);
-      dataUrl = await compressFilePNG(file, maxDim);
-      guard++;
-    }
-    return dataUrl;
   }
 
   function renderPhotoThumbs(container){
@@ -1952,22 +1950,29 @@ function runApp(){
     document.getElementById('fPhotoFiles').addEventListener('change', async (e)=>{
       let files = Array.from(e.target.files);
       const espacioDisponible = MAX_FOTOS - pendingPhotos.length;
+      const photoMsgEl = document.getElementById('photoMsg');
       if(files.length > espacioDisponible){
-        document.getElementById('photoMsg').textContent = `Solo se agregarán ${espacioDisponible} (límite ${MAX_FOTOS} fotos).`;
+        photoMsgEl.textContent = `Solo se agregarán ${espacioDisponible} (límite ${MAX_FOTOS} fotos).`;
         files = files.slice(0, espacioDisponible);
-      } else {
-        document.getElementById('photoMsg').textContent = 'Procesando imágenes...';
       }
-      const totalTrasAgregar = pendingPhotos.length + files.length;
-      const budget = Math.min(35000, Math.max(15000, Math.floor(240000/Math.max(totalTrasAgregar,1))));
+      let subidas = 0, fallidas = 0;
       for(const file of files){
+        photoMsgEl.textContent = `Subiendo foto ${subidas+fallidas+1} de ${files.length}...`;
         try{
-          const dataUrl = await compressToBudget(file, budget);
-          pendingPhotos.push(dataUrl);
-        }catch(err){ /* ignora archivo con error */ }
+          const blob = await compressFileToBlob(file, 1600, 0.85);
+          const url = await subirBlobACloudinary(blob, file.name);
+          pendingPhotos.push(url);
+          subidas++;
+          renderPhotoThumbs(document.getElementById('photoThumbs'));
+        }catch(err){
+          fallidas++;
+          console.error('No se pudo subir una foto:', err);
+        }
       }
       renderPhotoThumbs(document.getElementById('photoThumbs'));
-      document.getElementById('photoMsg').textContent = `${pendingPhotos.length} foto(s) lista(s).`;
+      photoMsgEl.textContent = fallidas
+        ? `${pendingPhotos.length} foto(s) lista(s). ${fallidas} no se pudieron subir (revisa tu conexión e inténtalo de nuevo).`
+        : `${pendingPhotos.length} foto(s) lista(s).`;
       e.target.value = '';
     });
     document.getElementById('fSave').onclick = async ()=>{
@@ -1985,30 +1990,20 @@ function runApp(){
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      // Solo guardamos la primera foto en el documento principal (lo que
-      // trae el catálogo para pintar las tarjetas); el álbum completo se
-      // guarda aparte y se pide solo cuando alguien abre esta pieza.
+      // Las fotos ahora son URLs de Cloudinary (texto cortito), así que ya
+      // caben todas directo en el documento principal — ya no hace falta
+      // guardar el álbum aparte en un sub-documento ni pedirlo después.
       const data = {
         nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, marca, motor, precio, notas,
-        fotos: pendingPhotos.length ? [pendingPhotos[0]] : [],
+        fotos: pendingPhotos.slice(),
         totalFotos: pendingPhotos.length
       };
       try{
         let productId = editing ? editing.id : null;
         if(!productId){
           data.creado = Date.now();
-          const ref = await addDoc(collection(db,'productos'), data);
-          productId = ref.id;
-        }
-        // En una pieza nueva hace falta crear primero el documento principal
-        // para obtener su id; en una pieza que ya existe, en cambio,
-        // guardamos primero el álbum completo y actualizamos al final —así,
-        // si algo falla a mitad de camino, la pieza ya guardada no queda a
-        // medias con datos incompletos.
-        if(pendingPhotos.length > 1){
-          await setDoc(doc(db,'productos',productId,'detalle','galeria'), {fotos: pendingPhotos});
-        }
-        if(editing){
+          await addDoc(collection(db,'productos'), data);
+        } else {
           await updateDoc(doc(db,'productos',productId), data);
         }
         galeriaCache.delete(productId);
@@ -2169,10 +2164,12 @@ function runApp(){
     renderList();
     document.getElementById('tickerIconFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudgetPNG(file, 18000);
-      pendingTickerIcon = dataUrl;
-      document.getElementById('tickerIconPreview').src = pendingTickerIcon;
-      document.getElementById('tickerIconPreviewWrap').style.display = 'flex';
+      try{
+        const blob = await compressFilePNGToBlob(file, 300);
+        pendingTickerIcon = await subirBlobACloudinary(blob, file.name);
+        document.getElementById('tickerIconPreview').src = pendingTickerIcon;
+        document.getElementById('tickerIconPreviewWrap').style.display = 'flex';
+      }catch(err){ alert('No se pudo subir el ícono: '+err.message); }
     });
     document.getElementById('tickerIconRemove').onclick = ()=>{
       pendingTickerIcon = null;
@@ -2329,17 +2326,10 @@ function runApp(){
         </div>
 
         <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
-          <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">🚀 Optimizar velocidad del catálogo</div>
-          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Achica las fotos que quedaron guardadas muy "pesadas" en la base de datos, para que el catálogo vuelva a cargar rápido. Todo pasa aquí en tu navegador — no sube nada a ningún servicio externo ni de pago, no necesita tarjeta ni cuenta nueva. Es seguro correrlo, y puedes ejecutarlo varias veces sin problema.</div>
-          <button class="btn btn-primary btn-small" id="btnOptimizarImagenes">Optimizar ahora</button>
+          <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">🚀 Mover fotos a Cloudinary (carga rápida)</div>
+          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Sube a Cloudinary cualquier foto, logo, banner o ícono que todavía esté guardado "pesado" dentro de la base de datos, y deja solo la URL — así el catálogo carga mucho más rápido, en celular y PC. Es seguro correrlo varias veces: solo mueve lo que falte. Puede tardar varios minutos si tienes muchas piezas; no cierres esta pantalla mientras corre.</div>
+          <button class="btn btn-primary btn-small" id="btnMigrarCloudinary">Migrar ahora</button>
           <div class="status-msg" id="migrarMsg" style="margin-top:8px;"></div>
-        </div>
-
-        <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
-          <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">⚡ Carga instantánea del catálogo</div>
-          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Separa la foto de portada (lo que ve el catálogo) del álbum completo de cada pieza (lo que se ve al abrirla), para que la primera carga pese mucho menos. No borra ninguna foto ni sube nada a servicios externos ni de pago. Es seguro correrlo varias veces — solo migra lo que falte.</div>
-          <button class="btn btn-primary btn-small" id="btnMigrarGaleria">Activar carga rápida</button>
-          <div class="status-msg" id="migrarGaleriaMsg" style="margin-top:8px;"></div>
         </div>
 
         <label>Logo (junto al título)</label>
@@ -2546,10 +2536,16 @@ function runApp(){
     function wireIconUpload(key, fileId, previewWrapId, previewId, removeId){
       document.getElementById(fileId).addEventListener('change', async (e)=>{
         const file = e.target.files[0]; if(!file) return;
-        const dataUrl = await compressToBudget(file, 18000);
-        pendingIcons[key] = dataUrl;
-        document.getElementById(previewId).src = pendingIcons[key];
-        document.getElementById(previewWrapId).style.display = 'flex';
+        const prevSrc = document.getElementById(previewId).src;
+        try{
+          const blob = await compressFileToBlob(file, 300, 0.85);
+          pendingIcons[key] = await subirBlobACloudinary(blob, file.name);
+          document.getElementById(previewId).src = pendingIcons[key];
+          document.getElementById(previewWrapId).style.display = 'flex';
+        }catch(err){
+          document.getElementById(previewId).src = prevSrc;
+          alert('No se pudo subir el ícono: '+err.message);
+        }
       });
       document.getElementById(removeId).onclick = ()=>{
         pendingIcons[key] = null;
@@ -2561,64 +2557,43 @@ function runApp(){
     wireIconUpload('instagramIcono','sInstagramIcon','sInstagramIconPreviewWrap','sInstagramIconPreview','sInstagramIconRemove');
     wireIconUpload('whatsappIcono','sWhatsappIcon','sWhatsappIconPreviewWrap','sWhatsappIconPreview','sWhatsappIconRemove');
     wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
-    const btnMigrar = document.getElementById('btnOptimizarImagenes');
+    const btnMigrar = document.getElementById('btnMigrarCloudinary');
     if(btnMigrar){
       btnMigrar.onclick = async ()=>{
         btnMigrar.disabled = true;
-        btnMigrar.textContent = 'Optimizando…';
+        btnMigrar.textContent = 'Migrando…';
         const msgEl = document.getElementById('migrarMsg');
         msgEl.className = 'status-msg';
         try{
-          const resultado = await optimizarImagenesExistentes((p)=>{
+          const resultado = await migrarACloudinary((p)=>{
             if(p.fase==='productos'){
-              msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (optimizadas: ${p.optimizadas})`;
+              msgEl.textContent = `Subiendo fotos… ${p.revisados}/${p.total} productos revisados (migradas: ${p.migradas})`;
             } else {
-              msgEl.textContent = 'Optimizando logo, banner e íconos…';
+              msgEl.textContent = 'Subiendo logo, banner e íconos…';
             }
           });
           msgEl.className = 'status-msg ok';
-          msgEl.textContent = resultado.optimizadas
-            ? `Listo. Se optimizaron ${resultado.optimizadas} imagen(es). Refresca la página para notar el cambio.`
-            : 'Todo tu catálogo ya estaba optimizado. No había nada pendiente.';
+          msgEl.textContent = resultado.migradas
+            ? `Listo. Se migraron ${resultado.migradas} imagen(es) a Cloudinary. Refresca la página para notar el cambio.`
+            : 'Todo tu catálogo ya estaba migrado. No había nada pendiente.';
+          if(resultado.errores) msgEl.textContent += ` (${resultado.errores} no se pudieron migrar — puedes volver a correrlo, solo reintenta lo que falte.)`;
         }catch(e){
           msgEl.className = 'status-msg err';
-          msgEl.textContent = 'Error al optimizar: '+e.message;
+          msgEl.textContent = 'Error al migrar: '+e.message;
         }
         btnMigrar.disabled = false;
-        btnMigrar.textContent = 'Optimizar ahora';
-      };
-    }
-    const btnMigrarGaleria = document.getElementById('btnMigrarGaleria');
-    if(btnMigrarGaleria){
-      btnMigrarGaleria.onclick = async ()=>{
-        btnMigrarGaleria.disabled = true;
-        btnMigrarGaleria.textContent = 'Activando…';
-        const msgEl = document.getElementById('migrarGaleriaMsg');
-        msgEl.className = 'status-msg';
-        try{
-          const resultado = await migrarGaleriaExistente((p)=>{
-            msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (migrados: ${p.migrados})`;
-          });
-          msgEl.className = 'status-msg ok';
-          msgEl.textContent = resultado.migrados
-            ? `Listo. Se activó carga rápida en ${resultado.migrados} pieza(s). Refresca la página para notar el cambio.`
-            : 'Todo tu catálogo ya estaba al día. No había nada pendiente.';
-          galeriaCache.clear();
-        }catch(e){
-          msgEl.className = 'status-msg err';
-          msgEl.textContent = 'Error al activar: '+e.message;
-        }
-        btnMigrarGaleria.disabled = false;
-        btnMigrarGaleria.textContent = 'Activar carga rápida';
+        btnMigrar.textContent = 'Migrar ahora';
       };
     }
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudget(file, 25000);
-      pendingLogo = dataUrl;
-      const prev = document.getElementById('sLogoPreview');
-      prev.src = pendingLogo; prev.style.display='block';
-      document.getElementById('sLogoRemove').style.display='inline-block';
+      try{
+        const blob = await compressFileToBlob(file, 500, 0.9);
+        pendingLogo = await subirBlobACloudinary(blob, file.name);
+        const prev = document.getElementById('sLogoPreview');
+        prev.src = pendingLogo; prev.style.display='block';
+        document.getElementById('sLogoRemove').style.display='inline-block';
+      }catch(err){ alert('No se pudo subir el logo: '+err.message); }
     });
     document.getElementById('sLogoRemove').onclick = ()=>{
       pendingLogo = null;
@@ -2627,11 +2602,13 @@ function runApp(){
     };
     document.getElementById('sBannerFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudget(file, 60000);
-      pendingBanner = dataUrl;
-      const prev = document.getElementById('sBannerPreview');
-      prev.src = pendingBanner; prev.style.display='block';
-      document.getElementById('sBannerRemove').style.display='inline-block';
+      try{
+        const blob = await compressFileToBlob(file, 1600, 0.85);
+        pendingBanner = await subirBlobACloudinary(blob, file.name);
+        const prev = document.getElementById('sBannerPreview');
+        prev.src = pendingBanner; prev.style.display='block';
+        document.getElementById('sBannerRemove').style.display='inline-block';
+      }catch(err){ alert('No se pudo subir el banner: '+err.message); }
     });
     document.getElementById('sBannerRemove').onclick = ()=>{
       pendingBanner = null;
