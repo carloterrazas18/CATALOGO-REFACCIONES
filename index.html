@@ -235,15 +235,15 @@
 
   .ticker-bar{background:linear-gradient(90deg, var(--ticker-bg1), var(--ticker-bg2));overflow:hidden;white-space:nowrap;position:relative;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.12);}
   .ticker-bar.hide{display:none;}
-  .ticker-track{display:inline-flex;align-items:center;padding:9px 0;animation:tickerScroll 24s linear infinite;will-change:transform;}
+  .ticker-track{display:inline-flex;align-items:center;padding:7px 0;animation:tickerScroll 24s linear infinite;will-change:transform;}
   .ticker-bar:hover .ticker-track{animation-play-state:paused;}
-  .ticker-item{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:0.02em;color:#fff;display:inline-flex;align-items:center;white-space:nowrap;padding:0 26px;}
-  .ticker-item .ticker-dot{opacity:1;margin-right:26px;font-size:23px;line-height:1;display:inline-block;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5));}
-  .ticker-item .ticker-dot-img{width:40px;height:40px;object-fit:contain;opacity:1;margin-right:26px;flex:none;filter:drop-shadow(0 0 2px rgba(0,0,0,0.65)) drop-shadow(0 0 1px rgba(0,0,0,0.65)) contrast(1.2) saturate(1.25);}
+  .ticker-item{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:0.02em;color:#fff;display:inline-flex;align-items:center;white-space:nowrap;padding:0 18px;}
+  .ticker-item .ticker-dot{opacity:1;margin-right:10px;font-size:16px;line-height:1;display:inline-block;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5));}
+  .ticker-item .ticker-dot-img{width:23px;height:23px;object-fit:contain;opacity:1;margin-right:10px;flex:none;filter:drop-shadow(0 0 2px rgba(0,0,0,0.65)) drop-shadow(0 0 1px rgba(0,0,0,0.65)) contrast(1.2) saturate(1.25);transform:scale(1.35);transform-origin:center;}
   .lightbox-ticker{grid-column:1/-1;border-radius:18px 18px 0 0;}
   @keyframes tickerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none;} }
-  @media (max-width:720px){ .ticker-item{font-size:12px;padding:0 18px;} .ticker-item .ticker-dot{margin-right:18px;font-size:19px;} .ticker-item .ticker-dot-img{width:30px;height:30px;margin-right:18px;} }
+  @media (max-width:720px){ .ticker-item{font-size:12px;padding:0 13px;} .ticker-item .ticker-dot{margin-right:8px;font-size:14px;} .ticker-item .ticker-dot-img{width:18px;height:18px;margin-right:8px;transform:scale(1.3);} }
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
   .about-section.search-hidden{display:none !important;}
@@ -404,7 +404,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy
+  onSnapshot, query, orderBy, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence
@@ -447,6 +447,44 @@ function runApp(){
   const MAX_FOTOS = 20;
   let pieces = [];
   let productosCargados = false;
+  // --- Carga por lotes del catálogo ---
+  // En vez de bajar TODOS los productos (con todas sus fotos) de golpe,
+  // pedimos solo el primer lote para que la página abra rápido, y el resto
+  // se trae en segundo plano (o al buscar/filtrar, para no perder resultados).
+  const FS_PAGE_SIZE = 24;
+  let liveBase = [];
+  let piecesExtra = [];
+  let lastDocSnap = null;
+  let hayMasEnServidor = false;
+  let cargandoMas = false;
+  let catalogoCompletoCargado = false;
+  let fondoProgramado = false;
+  function recomputePieces(){
+    const ids = new Set(liveBase.map(p=>p.id));
+    pieces = liveBase.concat(piecesExtra.filter(p=>!ids.has(p.id)));
+  }
+  async function cargarRestoDelCatalogo(){
+    if(catalogoCompletoCargado || cargandoMas || !hayMasEnServidor) return;
+    cargandoMas = true;
+    try{
+      let cursor = lastDocSnap;
+      // eslint-disable-next-line no-constant-condition
+      while(true){
+        const q2 = query(collection(db,'productos'), orderBy('creado','desc'), startAfter(cursor), limit(FS_PAGE_SIZE));
+        const snap2 = await getDocs(q2);
+        if(snap2.empty) break;
+        piecesExtra = piecesExtra.concat(snap2.docs.map(d=>Object.assign({id:d.id}, d.data())));
+        cursor = snap2.docs[snap2.docs.length-1];
+        if(snap2.docs.length < FS_PAGE_SIZE) break;
+      }
+      lastDocSnap = cursor;
+      catalogoCompletoCargado = true;
+      hayMasEnServidor = false;
+      recomputePieces();
+      renderGrid();
+    }catch(e){ console.error('cargar resto del catálogo', e); }
+    cargandoMas = false;
+  }
   let config = {
     titulo:'Refacciones Puebla',
     eslogan:'Encuentra la pieza correcta.',
@@ -703,19 +741,42 @@ function runApp(){
     }
   }, (err)=>{ console.error('config', err); connErrorEl.style.display = 'block'; });
 
-  const productosQuery = query(collection(db,'productos'), orderBy('creado','desc'));
+  const productosQuery = query(collection(db,'productos'), orderBy('creado','desc'), limit(FS_PAGE_SIZE));
   let deepLinkChecked = false;
   onSnapshot(productosQuery, (snap)=>{
     connErrorEl.style.display = 'none';
     productosCargados = true;
-    pieces = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    liveBase = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
+    lastDocSnap = snap.docs[snap.docs.length-1] || null;
+    const yaEstabaCompleto = catalogoCompletoCargado;
+    if(yaEstabaCompleto){
+      // El primer lote cambió (ej. se agregó un producto nuevo) después de
+      // haber bajado ya todo el catálogo: refrescamos el resto para que
+      // ninguna pieza quede "atrapada" fuera de la vista.
+      piecesExtra = [];
+      catalogoCompletoCargado = false;
+    }
+    hayMasEnServidor = snap.docs.length === FS_PAGE_SIZE;
+    recomputePieces();
     renderGrid();
+    if(!fondoProgramado){
+      fondoProgramado = true;
+      // Dejamos que la primera pantalla termine de pintarse y respire la red
+      // antes de bajar el resto del catálogo calladamente.
+      setTimeout(cargarRestoDelCatalogo, 1200);
+    }else if(yaEstabaCompleto && hayMasEnServidor){
+      cargarRestoDelCatalogo();
+    }
     if(!deepLinkChecked && pieces.length>0){
       deepLinkChecked = true;
       const pid = new URLSearchParams(window.location.search).get('pieza');
       if(pid){
         const piece = pieces.find(p=>p.id===pid);
         if(piece) openLightbox(piece);
+        else if(hayMasEnServidor) cargarRestoDelCatalogo().then(()=>{
+          const p2 = pieces.find(p=>p.id===pid);
+          if(p2) openLightbox(p2);
+        });
       }
     }
   }, (err)=>{ console.error('productos', err); connErrorEl.style.display = 'block'; });
@@ -727,7 +788,7 @@ function runApp(){
     chipsEl.innerHTML = '';
     if(stickyChipsEl) stickyChipsEl.innerHTML = '';
     cats.forEach(cat=>{
-      const onClick = ()=>{ activeCat = cat; renderChips(); renderGrid(); };
+      const onClick = ()=>{ activeCat = cat; if(cat!=='Todas') cargarRestoDelCatalogo(); renderChips(); renderGrid(); };
       const chip = document.createElement('div');
       chip.className = 'chip' + (activeCat===cat ? ' active' : '');
       chip.textContent = cat;
@@ -749,7 +810,7 @@ function runApp(){
       const chip = document.createElement('div');
       chip.className = 'chip' + (activeVeh===v ? ' active' : '');
       chip.textContent = v;
-      chip.onclick = ()=>{ activeVeh = v; renderVehChips(); renderGrid(); };
+      chip.onclick = ()=>{ activeVeh = v; if(v!=='Todas') cargarRestoDelCatalogo(); renderVehChips(); renderGrid(); };
       vehChipsEl.appendChild(chip);
     });
   }
@@ -1287,6 +1348,7 @@ function runApp(){
   function applySearchTerm(val){
     searchTerm = val;
     aboutSectionEl.classList.toggle('search-hidden', !!searchTerm.trim());
+    if(val.trim()) cargarRestoDelCatalogo();
     renderGrid();
   }
   let searchDebounceTimer = null;
@@ -1310,8 +1372,8 @@ function runApp(){
     });
     stickySearchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ clearTimeout(searchDebounceTimer); applySearchTerm(stickySearchEl.value); } });
   }
-  document.getElementById('minPriceInput').addEventListener('input', (e)=>{ minPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
-  document.getElementById('maxPriceInput').addEventListener('input', (e)=>{ maxPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
+  document.getElementById('minPriceInput').addEventListener('input', (e)=>{ minPrice = e.target.value===''?null:Number(e.target.value); cargarRestoDelCatalogo(); renderGrid(); });
+  document.getElementById('maxPriceInput').addEventListener('input', (e)=>{ maxPrice = e.target.value===''?null:Number(e.target.value); cargarRestoDelCatalogo(); renderGrid(); });
   document.getElementById('sortSelect').addEventListener('change', (e)=>{ sortBy = e.target.value; renderGrid(); });
 
   if(stickyFilterBar){
@@ -1431,8 +1493,13 @@ function runApp(){
   }
 
   function renderAdminList(body){
+    if(!catalogoCompletoCargado){
+      // El admin necesita ver y respaldar SIEMPRE el catálogo completo,
+      // no solo el primer lote que se carga para que la tienda abra rápido.
+      cargarRestoDelCatalogo().then(()=>{ if(document.body.contains(body)) renderAdminList(body); });
+    }
     const backupBtnHtml = `<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-      <div style="font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);">📦 <b style="color:var(--title-color);">${pieces.length}</b> pieza${pieces.length===1?'':'s'} registrada${pieces.length===1?'':'s'} en total</div>
+      <div style="font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);">📦 <b style="color:var(--title-color);">${pieces.length}</b> pieza${pieces.length===1?'':'s'} registrada${pieces.length===1?'':'s'} en total${!catalogoCompletoCargado?' (cargando el resto…)':''}</div>
       <button class="btn btn-ghost" id="btnRespaldo">⬇️ Respaldar catálogo (descargar)</button>
     </div>`;
     if(pieces.length===0){ body.innerHTML = backupBtnHtml + '<div class="status-msg">Sin piezas registradas todavía.</div>'; document.getElementById('btnRespaldo').onclick = descargarRespaldoCatalogo; return; }
@@ -1677,6 +1744,7 @@ function runApp(){
   }
 
   function renderCatManager(body){
+    if(!catalogoCompletoCargado) cargarRestoDelCatalogo();
     body.innerHTML = `
       <div id="catList"></div>
       <label>Agregar categoría</label>
