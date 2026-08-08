@@ -24,6 +24,7 @@
     --search-label-bg:#ff6a3d; --search-label-color:#ffffff;
     --wa-btn-bg:#25d366; --wa-btn-color:#ffffff;
     --share-btn-bg:#15181b; --share-btn-color:#8b9096;
+    --ticker-bg1:#ff6a3d; --ticker-bg2:#ff8a5c; --ticker-text-shadow:#000000;
     --htb-bg:#1c1410; --htb-border:#ff6a3d; --htb-title-color:#ff6a3d;
     --policies-btn-bg:#241a15; --policies-btn-border:#ff6a3d; --policies-btn-text:#ff6a3d;
     --policies-modal-bg:#15181b;
@@ -85,6 +86,23 @@
 
   .filters-row{position:relative;z-index:1;margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:10px;}
   .filters-row > div{display:flex;flex-direction:column;align-items:center;gap:6px;}
+
+  .sticky-filter-bar{position:fixed;top:0;left:0;right:0;z-index:30;background:rgba(12,14,16,0.97);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.08);border-top:2px solid var(--accent);padding:10px 14px;display:flex;align-items:center;gap:12px;transform:translateY(-110%);transition:transform .25s ease;box-shadow:0 6px 18px rgba(0,0,0,0.3);}
+  .sticky-filter-bar.show{transform:translateY(0);}
+  .sticky-brand{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--title-color);white-space:nowrap;flex:none;letter-spacing:-0.01em;}
+  .sticky-filter-bar .chip-row{flex-wrap:nowrap;overflow-x:auto;gap:6px;justify-content:flex-start;scrollbar-width:none;flex:1;min-width:0;}
+  .sticky-filter-bar .chip-row::-webkit-scrollbar{display:none;}
+  .sticky-filter-bar .chip{white-space:nowrap;flex:none;padding:6px 13px;font-size:11px;}
+  .sticky-search-wrap{flex:none;width:190px;}
+  .sticky-search{width:100%;padding:7px 12px;background:rgba(255,255,255,0.06);border:1px solid var(--panel-border);border-radius:999px;color:var(--input-text);font-family:var(--font-body);font-size:12px;outline:none;transition:border-color .15s;}
+  .sticky-search:focus{border-color:var(--accent);}
+  .sticky-search::placeholder{color:var(--subtitle-color);}
+
+  .wa-float-btn{position:fixed;bottom:22px;left:22px;width:52px;height:52px;border-radius:50%;background:var(--wa-btn-bg);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);z-index:20;transition:transform .15s;animation:waPulse 2.4s ease-in-out infinite;}
+  .wa-float-btn:hover{transform:scale(1.08);}
+  .wa-float-btn svg{width:26px;height:26px;fill:currentColor;}
+  @keyframes waPulse{0%,100%{box-shadow:0 6px 20px rgba(0,0,0,0.4), 0 0 0 0 rgba(37,211,102,0.5);}50%{box-shadow:0 6px 20px rgba(0,0,0,0.4), 0 0 0 8px rgba(37,211,102,0);}}
+  @media (prefers-reduced-motion: reduce){ .wa-float-btn{animation:none;} }
   .chip-row-label{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--chip-label-color);background:var(--chip-label-bg);padding:5px 16px;border-radius:999px;display:inline-block;}
   .chip-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .chip{font-family:var(--font-body);font-weight:500;font-size:12px;padding:7px 14px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--subtitle-color);cursor:pointer;user-select:none;transition:all .15s;}
@@ -102,9 +120,13 @@
   .cat-grid{padding:30px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
   .empty-state{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
 
-  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;}
+  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;animation:cardIn .45s ease both;}
   .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
+  @keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion: reduce){ .prod-card{animation:none;} }
   .prod-photo-wrap{position:relative;width:100%;aspect-ratio:1/1;background:#ececec;}
+  .prod-photo-wrap.skeleton{background:linear-gradient(100deg,#e6e6e4 30%,#f4f4f2 50%,#e6e6e4 70%);background-size:250% 100%;animation:skeletonShine 1.3s ease-in-out infinite;}
+  @keyframes skeletonShine{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
   .prod-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .35s ease;}
   .prod-photo.active{opacity:1;}
   .prod-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#ececec;color:#a0a4a8;font-size:12px;font-family:var(--font-body);}
@@ -176,8 +198,11 @@
 
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;overscroll-behavior:contain;touch-action:pan-y;}
   .lightbox{background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;}
-  .lightbox-media{position:relative;background:#111;aspect-ratio:1/1;min-width:0;}
-  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;}
+  .lightbox-media{position:relative;background:#111;min-height:420px;min-width:0;overflow:hidden;}
+  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;}
+  .lightbox-media.zoomed img{cursor:grab;}
+  .lightbox-zoom-hint{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.6);color:#fff;font-family:var(--font-body);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 10px;border-radius:999px;pointer-events:none;opacity:1;transition:opacity .6s ease;border:1px solid rgba(255,255,255,0.15);}
+  .lightbox-zoom-hint.hide{opacity:0;}
   .lightbox-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .lightbox-arrow.left{left:10px;} .lightbox-arrow.right{right:10px;}
   .lightbox-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;}
@@ -200,6 +225,18 @@
   .how-to-buy .htb-text{font-size:12px;line-height:1.55;color:var(--card-text-muted);white-space:pre-line;}
   .lightbox-actions .wa-buy-btn{background:var(--wa-btn-bg);color:var(--wa-btn-color);border:none;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;cursor:pointer;}
   .lightbox-actions .share-btn-custom{background:var(--share-btn-bg);color:var(--share-btn-color);border:1px solid var(--panel-border);border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;cursor:pointer;}
+
+  .ticker-bar{background:linear-gradient(90deg, var(--ticker-bg1), var(--ticker-bg2));overflow:hidden;white-space:nowrap;position:relative;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.12);}
+  .ticker-bar.hide{display:none;}
+  .ticker-track{display:inline-flex;align-items:center;padding:9px 0;animation:tickerScroll 24s linear infinite;will-change:transform;}
+  .ticker-bar:hover .ticker-track{animation-play-state:paused;}
+  .ticker-item{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:0.02em;color:#fff;display:inline-flex;align-items:center;white-space:nowrap;padding:0 26px;}
+  .ticker-item .ticker-dot{opacity:1;margin-right:26px;font-size:23px;line-height:1;display:inline-block;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5));}
+  .ticker-item .ticker-dot-img{width:40px;height:40px;object-fit:contain;opacity:1;margin-right:26px;flex:none;filter:drop-shadow(0 0 2px rgba(0,0,0,0.65)) drop-shadow(0 0 1px rgba(0,0,0,0.65)) contrast(1.2) saturate(1.25);}
+  .lightbox-ticker{grid-column:1/-1;border-radius:18px 18px 0 0;}
+  @keyframes tickerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none;} }
+  @media (max-width:720px){ .ticker-item{font-size:12px;padding:0 18px;} .ticker-item .ticker-dot{margin-right:18px;font-size:19px;} .ticker-item .ticker-dot-img{width:30px;height:30px;margin-right:18px;} }
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
   .about-section.search-hidden{display:none !important;}
@@ -241,8 +278,15 @@
     .header-social{grid-column:1;justify-content:center;margin-top:12px;order:2;}
     .header-search-wrap{grid-column:1;justify-content:center;margin-top:12px;order:3;}
     .cat-search{max-width:100%;}
+    .wa-float-btn{width:46px;height:46px;bottom:16px;left:16px;}
+    .wa-float-btn svg{width:22px;height:22px;}
+    .admin-fab{width:46px;height:46px;bottom:16px;right:16px;}
+    .sticky-filter-bar{padding:8px 12px;gap:8px;}
+    .sticky-brand{font-size:12px;}
+    .sticky-search-wrap{width:88px;}
+    .sticky-search{padding:6px 10px;font-size:11px;}
     .lightbox{grid-template-columns:1fr;max-width:480px;}
-    .lightbox-media{aspect-ratio:4/3;}
+    .lightbox-media{aspect-ratio:4/3;min-height:0;}
     .cat-grid{padding:22px 14px;gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));}
     .cat-header{padding:22px 16px 18px;}
   }
@@ -266,6 +310,13 @@
 </div>
 
 <div class="cat-root" id="catRoot" style="display:none;">
+  <div class="sticky-filter-bar" id="stickyFilterBar">
+    <span class="sticky-brand" id="stickyBrand"></span>
+    <div class="chip-row" id="stickyCatChips"></div>
+    <div class="sticky-search-wrap">
+      <input class="sticky-search" id="stickySearch" placeholder="Buscar...">
+    </div>
+  </div>
   <div class="cat-header" id="catHeader">
     <div class="header-top">
       <div class="header-social" id="headerSocial"></div>
@@ -315,6 +366,9 @@
       </div>
     </div>
   </div>
+  <div class="ticker-bar hide" id="tickerBar">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
   <div class="about-section" id="aboutSection" style="display:none;">
     <div id="aboutTrack"></div>
   </div>
@@ -328,6 +382,9 @@
 </div>
 
 <button class="admin-fab" id="adminFab" title="Panel de administración" style="display:none;">&#9881;</button>
+<a class="wa-float-btn" id="waFloatBtn" href="#" target="_blank" rel="noopener" style="display:none;" aria-label="Contactar por WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8.9-.2.2-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4c-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.6 1.1 2.8.1.2 1.9 2.9 4.6 4 .6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z"/></svg>
+</a>
 <div id="modalRoot"></div>
 <div id="lightboxRoot"></div>
 
@@ -384,6 +441,8 @@ function runApp(){
     banner:null,
     politicasTitulo:'📄 Políticas de Compra',
     aboutTarjetas:[],
+    avisos:[],
+    tickerIcono:null,
     quienesSomos:'En Refaccionaria ARCO nos especializamos en la venta de refacciones usadas para automóviles, camionetas y camiones de diversas marcas. Ofrecemos atención personalizada, fotografías reales de cada pieza, precios competitivos y envíos a todo México para que puedas comprar con mayor confianza.\n\nAdemás de nuestro inventario disponible, también te ayudamos a conseguir algunas refacciones bajo pedido cuando es posible, brindándote una solución más completa.\n\nRealizamos envíos a todo México y entregas personales en Puebla.',
     politicasCompra:'En Refaccionaria ARCO nos esforzamos por brindar información clara y transparente sobre cada una de nuestras refacciones. Antes de realizar cualquier compra, te pedimos leer detenidamente las siguientes políticas.\n\nAl concretar una compra, realizar un pago o confirmar un pedido por cualquier medio (WhatsApp, llamada telefónica, Facebook, Instagram u otro canal de comunicación), el comprador manifiesta haber leído, comprendido y aceptado las presentes Políticas de Compra.\n\n1. Sobre nuestras refacciones\n\n• Todas las refacciones comercializadas por Refaccionaria ARCO son usadas, salvo que expresamente se indique lo contrario.\n• Al tratarse de piezas usadas, es normal que presenten desgaste, rayones, suciedad, decoloración, marcas de uso u otros detalles estéticos propios de su condición.\n• Dichas características forman parte de la naturaleza del producto y no constituyen un defecto.\n\n2. Compatibilidad\n\n• Es responsabilidad exclusiva del comprador verificar que la refacción sea compatible con su vehículo.\n• Recomendamos verificar año, versión, motor, transmisión, número de parte, serie (VIN), medidas y cualquier otra especificación técnica antes de realizar la compra.\n• Refaccionaria ARCO puede brindar orientación basada en la información proporcionada por el comprador; sin embargo, dicha orientación no sustituye la verificación técnica que corresponde al cliente.\n• No aceptamos reclamaciones por incompatibilidad cuando ésta pudo verificarse antes de la compra.\n\n3. Fotografías\n\n• Todas las fotografías publicadas corresponden a la refacción disponible, salvo que expresamente se indique lo contrario.\n• Las imágenes forman parte de la descripción del producto.\n• Si el comprador requiere fotografías adicionales, videos, medidas o información complementaria, deberá solicitarlos antes de efectuar el pago.\n\n4. Estado de la refacción\n\n• Todas las refacciones se venden en el estado físico y funcional en que se encuentran al momento de la venta.\n• Es responsabilidad exclusiva del comprador solicitar, antes de realizar cualquier pago, toda la información que considere necesaria respecto al estado, funcionamiento, desgaste, detalles estéticos, medidas, números de parte o cualquier otra característica de la refacción.\n• Una vez realizado el pago, se entenderá que el comprador recibió la información que consideró suficiente para tomar su decisión y acepta el estado de la pieza adquirida.\n• La falta de preguntas o de solicitudes de información antes de la compra no genera responsabilidad para Refaccionaria ARCO.\n\n5. Pagos\n\n• Toda compra deberá liquidarse en su totalidad antes de ser enviada o entregada, salvo acuerdo distinto.\n• Una pieza únicamente se considerará apartada una vez confirmado el pago.\n• Los precios están sujetos a cambio sin previo aviso mientras la compra no haya sido confirmada.\n\n6. Envíos\n\n• Realizamos envíos a toda la República Mexicana.\n• El costo del envío corre por cuenta del comprador, salvo acuerdo distinto.\n• Los tiempos de entrega dependen exclusivamente de la empresa de paquetería.\n• Una vez entregado el paquete a la empresa transportista, se proporcionará la guía de rastreo correspondiente.\n• Refaccionaria ARCO no es responsable por retrasos ocasionados por la empresa de paquetería, condiciones climatológicas, bloqueos, desastres naturales o cualquier circunstancia ajena a nuestro control.\n\n7. Entregas personales\n\n• Las entregas personales se realizan únicamente en Puebla, previo acuerdo entre ambas partes.\n• El comprador deberá presentarse en el lugar y horario acordados.\n• En caso de no asistir, la entrega deberá ser reprogramada.\n\n8. Cambios, devoluciones y reembolsos\n\n• Todas las ventas realizadas por Refaccionaria ARCO son consideradas finales.\n• No realizamos cambios, devoluciones ni reembolsos por incompatibilidad, error del comprador, diagnóstico incorrecto, instalación incorrecta, cambio de opinión, falta de conocimientos técnicos o por no haber solicitado la información necesaria antes de efectuar la compra.\n• Antes de realizar cualquier pago, el comprador es responsable de verificar que la refacción corresponda exactamente a sus necesidades y resolver todas sus dudas.\n• Al concretar la compra, el comprador reconoce que revisó las fotografías, tuvo la oportunidad de solicitar información adicional y acepta las condiciones de venta de la refacción adquirida.\n• Lo anterior se entiende sin perjuicio de los derechos que, en su caso, otorgue la legislación mexicana aplicable.\n\n9. Instalación\n\n• Recomendamos que todas las refacciones sean instaladas por personal técnico calificado.\n• Refaccionaria ARCO no será responsable por daños derivados de instalaciones incorrectas, adaptaciones, modificaciones, diagnósticos erróneos, uso inadecuado o manipulación posterior a la entrega de la pieza.\n• Los gastos de instalación, desmontaje, mano de obra, diagnósticos, grúas o cualquier otro gasto relacionado son responsabilidad exclusiva del comprador.\n\n10. Responsabilidad del comprador\n\nEl comprador reconoce y acepta que es su responsabilidad:\n\n• Verificar la compatibilidad de la refacción con su vehículo.\n• Revisar cuidadosamente las fotografías publicadas.\n• Solicitar información adicional antes de efectuar el pago.\n• Verificar números de parte, medidas, versiones, motor, transmisión, serie (VIN) y demás especificaciones técnicas.\n• Resolver cualquier duda antes de concretar la compra.\n\nLa omisión de cualquiera de estas verificaciones no genera responsabilidad para Refaccionaria ARCO.\n\n11. Disponibilidad\n\n• Todo el inventario se encuentra sujeto a disponibilidad.\n• Una refacción puede venderse por otro medio antes de que el pago sea confirmado.\n• La publicación de una pieza en el catálogo no constituye una reserva de la misma.\n\n12. Aceptación de las políticas\n\nAl realizar una compra con Refaccionaria ARCO por cualquier medio de comunicación, el comprador declara que:\n\n• Leyó las presentes Políticas de Compra.\n• Comprendió el contenido de las mismas.\n• Tuvo oportunidad de resolver todas sus dudas antes de realizar el pago.\n• Acepta voluntariamente las condiciones aquí establecidas como parte de la operación comercial.',
     colores:{
@@ -400,7 +459,8 @@ function runApp(){
       policiesBtnBg:'#241a15', policiesBtnBorder:'#ff6a3d', policiesBtnText:'#ff6a3d',
       policiesModalBg:'#15181b',
       policiesContentBg:'#15181b', policiesContentBorder:'#25292d', policiesContentText:'#eceeef',
-      policiesTitleColor:'#ff6a3d'
+      policiesTitleColor:'#ff6a3d',
+      tickerBg1:'#ff6a3d', tickerBg2:'#ff8a5c', tickerTextShadow:'#000000'
     },
     howToBuy:{ titulo:'¿Cómo comprar?', texto:'' },
     social:{
@@ -460,10 +520,16 @@ function runApp(){
   const searchEl = document.getElementById('catSearch');
   const aboutSectionEl = document.getElementById('aboutSection');
   const aboutTrackEl = document.getElementById('aboutTrack');
+  const tickerBarEl = document.getElementById('tickerBar');
+  const tickerTrackEl = document.getElementById('tickerTrack');
   const policiesBarEl = document.getElementById('policiesBar');
   const headerSocialEl = document.getElementById('headerSocial');
   const modalRoot = document.getElementById('modalRoot');
   const lightboxRoot = document.getElementById('lightboxRoot');
+  const stickyFilterBar = document.getElementById('stickyFilterBar');
+  const stickyChipsEl = document.getElementById('stickyCatChips');
+  const stickyBrandEl = document.getElementById('stickyBrand');
+  const waFloatBtn = document.getElementById('waFloatBtn');
 
   function piecePhotos(p){
     if(p.fotos && p.fotos.length) return p.fotos;
@@ -516,6 +582,9 @@ function runApp(){
     root.setProperty('--policies-content-border', c.policiesContentBorder || '#25292d');
     root.setProperty('--policies-content-text', c.policiesContentText || '#eceeef');
     root.setProperty('--policies-title-color', c.policiesTitleColor || '#ff6a3d');
+    root.setProperty('--ticker-bg1', c.tickerBg1 || '#ff6a3d');
+    root.setProperty('--ticker-bg2', c.tickerBg2 || '#ff8a5c');
+    root.setProperty('--ticker-text-shadow', c.tickerTextShadow || '#000000');
     if(config.banner){
       headerEl.style.backgroundImage = `url(${config.banner})`;
       headerEl.classList.add('has-banner');
@@ -564,6 +633,15 @@ function runApp(){
     const msgHtml = (msg && items.length) ? `<span class="comprar-msg">${escapeHtml(msg)}</span>` : '';
     const iconsRowHtml = items.length ? `<div class="social-icons-row">${iconsHtml}</div>` : '';
     headerSocialEl.innerHTML = msgHtml + iconsRowHtml;
+    if(waFloatBtn){
+      if(s.whatsappNumero){
+        const num = s.whatsappNumero.replace(/\D/g,'');
+        waFloatBtn.href = 'https://wa.me/'+num+'?text='+encodeURIComponent('Hola, tengo una duda sobre una pieza del catálogo.');
+        waFloatBtn.style.display = 'flex';
+      }else{
+        waFloatBtn.style.display = 'none';
+      }
+    }
   }
 
   const connErrorEl = document.getElementById('connError');
@@ -585,6 +663,7 @@ function runApp(){
     applyTheme();
     titleEl.textContent = config.titulo;
     sloganEl.textContent = config.eslogan || '';
+    if(stickyBrandEl) stickyBrandEl.textContent = config.titulo || '';
     if((!config.aboutTarjetas || !config.aboutTarjetas.length) && (config.quienesSomos||'').trim()){
       config.aboutTarjetas = [{
         id:'legacy',
@@ -595,6 +674,7 @@ function runApp(){
       }];
     }
     renderAbout();
+    renderTicker();
     if((config.politicasCompra||'').trim()){
       policiesBarEl.style.display = 'flex';
     }else{
@@ -627,12 +707,21 @@ function runApp(){
   function renderChips(){
     const cats = ['Todas', ...config.categorias.map(c=>c.label)];
     chipsEl.innerHTML = '';
+    if(stickyChipsEl) stickyChipsEl.innerHTML = '';
     cats.forEach(cat=>{
+      const onClick = ()=>{ activeCat = cat; renderChips(); renderGrid(); };
       const chip = document.createElement('div');
       chip.className = 'chip' + (activeCat===cat ? ' active' : '');
       chip.textContent = cat;
-      chip.onclick = ()=>{ activeCat = cat; renderChips(); renderGrid(); };
+      chip.onclick = onClick;
       chipsEl.appendChild(chip);
+      if(stickyChipsEl){
+        const chip2 = document.createElement('div');
+        chip2.className = chip.className;
+        chip2.textContent = cat;
+        chip2.onclick = onClick;
+        stickyChipsEl.appendChild(chip2);
+      }
     });
   }
   function renderVehChips(){
@@ -662,6 +751,41 @@ function runApp(){
   function clearSlideTimers(){
     slideTimers.forEach(t=>clearInterval(t));
     slideTimers.clear();
+  }
+
+  function tickerData(){
+    const items = (config.avisos||[]).filter(a=>(a.texto||'').trim());
+    if(!items.length) return null;
+    const dotHtml = config.tickerIcono
+      ? `<img class="ticker-dot-img" src="${escapeAttr(config.tickerIcono)}" alt="">`
+      : `<span class="ticker-dot">✦</span>`;
+    const inner = items.map(a=>{
+      const color = a.color || '#ffffff';
+      const sombra = a.sombra || '#000000';
+      const ts = `-1px -1px 0 ${sombra},1px -1px 0 ${sombra},-1px 1px 0 ${sombra},1px 1px 0 ${sombra}`;
+      return `<span class="ticker-item" style="color:${escapeAttr(color)};text-shadow:${ts};">${dotHtml}${escapeHtml((a.texto||'').trim())}</span>`;
+    }).join('');
+    const totalLen = items.map(a=>(a.texto||'').trim()).join(' ').length;
+    const dur = Math.max(14, totalLen * 0.4);
+    return { inner, dur };
+  }
+  function renderTicker(){
+    if(!tickerBarEl || !tickerTrackEl) return;
+    const data = tickerData();
+    if(!data){
+      tickerBarEl.classList.add('hide');
+      tickerTrackEl.innerHTML = '';
+      return;
+    }
+    tickerBarEl.classList.remove('hide');
+    // Duplicamos el contenido para lograr un scroll infinito sin cortes.
+    tickerTrackEl.innerHTML = data.inner + data.inner;
+    tickerTrackEl.style.animationDuration = data.dur + 's';
+  }
+  function lightboxTickerHtml(){
+    const data = tickerData();
+    if(!data) return '';
+    return `<div class="ticker-bar lightbox-ticker"><div class="ticker-track" style="animation-duration:${data.dur}s;">${data.inner + data.inner}</div></div>`;
   }
 
   function renderAbout(){
@@ -752,6 +876,17 @@ function runApp(){
       </div>
     `;
     card.addEventListener('click', ()=>openLightbox(piece));
+    const photoWrap = card.querySelector('.prod-photo-wrap');
+    if(fotos.length && photoWrap){
+      photoWrap.classList.add('skeleton');
+      const firstImg = card.querySelector('.prod-photo-a');
+      const clearSkeleton = ()=> photoWrap.classList.remove('skeleton');
+      if(firstImg.complete && firstImg.naturalWidth>0) clearSkeleton();
+      else{
+        firstImg.addEventListener('load', clearSkeleton, {once:true});
+        firstImg.addEventListener('error', clearSkeleton, {once:true});
+      }
+    }
     if(fotos.length>1){
       const front0 = card.querySelector('.prod-photo-a');
       const back0 = card.querySelector('.prod-photo-b');
@@ -811,7 +946,11 @@ function runApp(){
     const existingSentinel = document.getElementById('gridSentinel');
     if(existingSentinel) existingSentinel.remove();
     const frag = document.createDocumentFragment();
-    slice.forEach(piece=> frag.appendChild(createCard(piece)));
+    slice.forEach((piece,i)=>{
+      const card = createCard(piece);
+      card.style.animationDelay = (Math.min(i,7)*0.04)+'s';
+      frag.appendChild(card);
+    });
     grid.appendChild(frag);
     renderedCount += slice.length;
     if(renderedCount < currentList.length){
@@ -898,6 +1037,56 @@ function runApp(){
     window.scrollTo(0, lbScrollY);
   }
 
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  function attachPinchZoom(mediaEl, imgEl){
+    let scale = 1, panX = 0, panY = 0;
+    let startDist = 0, startScale = 1, startPanX = 0, startPanY = 0;
+    let lastTap = 0;
+    function dist(t){ const dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY; return Math.hypot(dx,dy); }
+    function apply(withTransition){
+      imgEl.style.transition = withTransition ? 'transform .25s ease' : '';
+      imgEl.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      mediaEl.classList.toggle('zoomed', scale > 1.02);
+      if(withTransition) setTimeout(()=>{ imgEl.style.transition=''; }, 250);
+    }
+    function reset(withTransition){ scale=1; panX=0; panY=0; apply(withTransition); }
+    imgEl.addEventListener('touchstart', (e)=>{
+      if(e.touches.length===2){
+        startDist = dist(e.touches);
+        startScale = scale;
+        e.preventDefault();
+      }else if(e.touches.length===1 && scale>1){
+        startPanX = e.touches[0].clientX - panX;
+        startPanY = e.touches[0].clientY - panY;
+      }else if(e.touches.length===1){
+        const now = Date.now();
+        if(now - lastTap < 300){
+          if(scale>1) reset(true);
+          else{ scale=2; apply(true); }
+        }
+        lastTap = now;
+      }
+    }, {passive:false});
+    imgEl.addEventListener('touchmove', (e)=>{
+      if(e.touches.length===2){
+        const d = dist(e.touches);
+        scale = Math.min(3, Math.max(1, startScale * (d/Math.max(startDist,1))));
+        apply(false);
+        e.preventDefault();
+      }else if(e.touches.length===1 && scale>1){
+        panX = e.touches[0].clientX - startPanX;
+        panY = e.touches[0].clientY - startPanY;
+        apply(false);
+        e.preventDefault();
+      }
+    }, {passive:false});
+    imgEl.addEventListener('touchend', (e)=>{
+      if(e.touches.length===0 && scale<1.02) reset(true);
+    });
+    return { reset };
+  }
+
   function closeLightbox(){
     lightboxRoot.innerHTML = '';
     unlockBodyScroll();
@@ -922,74 +1111,96 @@ function runApp(){
     const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
     const fotos = piecePhotos(piece);
     let idx = 0;
-    function draw(){
-      const compatHtml = (piece.compatibilidad||[]).map(c=>`<span class="compat-pill">${escapeHtml(c)}</span>`).join('');
-      const estado = config.estados[piece.estado] || config.estados.disponible;
-      const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
-      const waNum = (config.social?.whatsappNumero||'').replace(/\D/g,'');
-      const waMsg = encodeURIComponent(`Hola, me interesa esta pieza: ${piece.nombre} ($${piece.precio} MXN)`);
-      const waLink = waNum ? `https://wa.me/${waNum}?text=${waMsg}` : null;
-      lightboxRoot.innerHTML = `
-        <div class="lightbox-overlay" id="lbOv">
-          <div class="lightbox">
-            <button class="lightbox-close" id="lbClose">&times;</button>
-            <div class="lightbox-media">
-              ${fotos.length ? `<img src="${escapeAttr(fotos[idx])}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
-              ${fotos.length>1 ? `
-                <button class="lightbox-arrow left" id="lbPrev">&#8249;</button>
-                <button class="lightbox-arrow right" id="lbNext">&#8250;</button>
-                <div class="lightbox-dots">${fotos.map((f,i)=>`<span class="${i===idx?'on':''}" data-i="${i}"></span>`).join('')}</div>
-              ` : ''}
+    let zoomApi = null;
+    // La tarjeta completa (lightbox-info incluida) se construye UNA sola vez.
+    // Cambiar de foto solo llama a updatePhoto(), que actualiza la imagen y
+    // los puntos sin volver a crear el contenedor con scroll — así no se
+    // pierde la posición del scroll ni "salta" la tarjeta cada vez.
+    const compatHtml = (piece.compatibilidad||[]).map(c=>`<span class="compat-pill">${escapeHtml(c)}</span>`).join('');
+    const estado = config.estados[piece.estado] || config.estados.disponible;
+    const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
+    const waNum = (config.social?.whatsappNumero||'').replace(/\D/g,'');
+    const waMsg = encodeURIComponent(`Hola, me interesa esta pieza: ${piece.nombre} ($${piece.precio} MXN)`);
+    const waLink = waNum ? `https://wa.me/${waNum}?text=${waMsg}` : null;
+    lightboxRoot.innerHTML = `
+      <div class="lightbox-overlay" id="lbOv">
+        <div class="lightbox">
+          <button class="lightbox-close" id="lbClose">&times;</button>
+          ${lightboxTickerHtml()}
+          <div class="lightbox-media">
+            ${fotos.length ? `<img src="${escapeAttr(fotos[idx])}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
+            ${(fotos.length && isTouchDevice) ? `<div class="lightbox-zoom-hint" id="lbZoomHint">🔍 Doble toque o pellizca</div>` : ''}
+            ${fotos.length>1 ? `
+              <button class="lightbox-arrow left" id="lbPrev">&#8249;</button>
+              <button class="lightbox-arrow right" id="lbNext">&#8250;</button>
+              <div class="lightbox-dots">${fotos.map((f,i)=>`<span class="${i===idx?'on':''}" data-i="${i}"></span>`).join('')}</div>
+            ` : ''}
+          </div>
+          <div class="lightbox-info">
+            <div class="prod-cat-pill" style="position:static;display:inline-flex;width:fit-content;"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
+            ${estadoHtml}
+            <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
+            <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
+            ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
+            ${((piece.marca||'').trim() || anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
+              ${(piece.marca||'').trim() ? `<div><div class="lightbox-compat-label">Marca</div><div class="lightbox-year-value">${escapeHtml(piece.marca.trim())}</div></div>` : ''}
+              ${anioLabel(piece) ? `<div><div class="lightbox-compat-label">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div></div>` : ''}
+              ${(piece.motor||'').trim() ? `<div><div class="lightbox-compat-label">Motor</div><div class="lightbox-year-value">${escapeHtml(piece.motor.trim())}</div></div>` : ''}
+            </div>` : ''}
+            ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
+            ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
+            <div class="lightbox-actions">
+              ${waLink ? `<a class="wa-buy-btn" href="${waLink}" target="_blank" rel="noopener">💬 Comprar por WhatsApp</a>` : ''}
+              <button type="button" class="share-btn-custom" id="lbShare">🔗 Compartir</button>
             </div>
-            <div class="lightbox-info">
-              <div class="prod-cat-pill" style="position:static;display:inline-flex;width:fit-content;"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
-              ${estadoHtml}
-              <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
-              <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
-              ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
-              ${((piece.marca||'').trim() || anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
-                ${(piece.marca||'').trim() ? `<div><div class="lightbox-compat-label">Marca</div><div class="lightbox-year-value">${escapeHtml(piece.marca.trim())}</div></div>` : ''}
-                ${anioLabel(piece) ? `<div><div class="lightbox-compat-label">Modelos</div><div class="lightbox-year-value">${escapeHtml(anioLabel(piece))}</div></div>` : ''}
-                ${(piece.motor||'').trim() ? `<div><div class="lightbox-compat-label">Motor</div><div class="lightbox-year-value">${escapeHtml(piece.motor.trim())}</div></div>` : ''}
-              </div>` : ''}
-              ${compatHtml ? `<div class="lightbox-compat-label">Compatible con</div><div class="lightbox-compat-list">${compatHtml}</div>` : ''}
-              ${piece.notas ? `<div class="lightbox-compat-label" style="margin-top:10px;">Notas</div><div class="lightbox-notes">${escapeHtml(piece.notas)}</div>` : ''}
-              <div class="lightbox-actions">
-                ${waLink ? `<a class="wa-buy-btn" href="${waLink}" target="_blank" rel="noopener">💬 Comprar por WhatsApp</a>` : ''}
-                <button type="button" class="share-btn-custom" id="lbShare">🔗 Compartir</button>
-              </div>
-              ${howToBuyHtml()}
-            </div>
+            ${howToBuyHtml()}
           </div>
         </div>
-      `;
-      document.getElementById('lbClose').onclick = closeLightbox;
-      document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
-      const shareBtn = document.getElementById('lbShare');
-      if(shareBtn){
-        shareBtn.onclick = async ()=>{
-          const shareText = `Mira esta pieza: ${piece.nombre} — $${piece.precio} MXN`;
-          const shareUrl = window.location.href;
-          if(navigator.share){
-            try{ await navigator.share({title:piece.nombre, text:shareText, url:shareUrl}); }catch(e){}
-          }else{
-            try{
-              await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-              shareBtn.textContent = '✅ Copiado';
-              setTimeout(()=>{ shareBtn.textContent = '🔗 Compartir'; }, 1800);
-            }catch(e){}
-          }
-        };
+      </div>
+    `;
+    document.getElementById('lbClose').onclick = closeLightbox;
+    document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
+    const shareBtn = document.getElementById('lbShare');
+    if(shareBtn){
+      shareBtn.onclick = async ()=>{
+        const shareText = `Mira esta pieza: ${piece.nombre} — $${piece.precio} MXN`;
+        const shareUrl = window.location.href;
+        if(navigator.share){
+          try{ await navigator.share({title:piece.nombre, text:shareText, url:shareUrl}); }catch(e){}
+        }else{
+          try{
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            shareBtn.textContent = '✅ Copiado';
+            setTimeout(()=>{ shareBtn.textContent = '🔗 Compartir'; }, 1800);
+          }catch(e){}
+        }
+      };
+    }
+    function updatePhoto(){
+      const mediaEl = lightboxRoot.querySelector('.lightbox-media');
+      const imgEl = mediaEl ? mediaEl.querySelector('img') : null;
+      if(imgEl){
+        if(zoomApi) zoomApi.reset(false);
+        imgEl.src = fotos[idx];
       }
-      const prev = document.getElementById('lbPrev');
-      const next = document.getElementById('lbNext');
-      if(prev) prev.onclick = ()=>{ idx = (idx-1+fotos.length)%fotos.length; draw(); };
-      if(next) next.onclick = ()=>{ idx = (idx+1)%fotos.length; draw(); };
       lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
-        d.onclick = ()=>{ idx = Number(d.dataset.i); draw(); };
+        d.classList.toggle('on', Number(d.dataset.i)===idx);
       });
     }
-    draw();
+    const prev = document.getElementById('lbPrev');
+    const next = document.getElementById('lbNext');
+    if(prev) prev.onclick = ()=>{ idx = (idx-1+fotos.length)%fotos.length; updatePhoto(); };
+    if(next) next.onclick = ()=>{ idx = (idx+1)%fotos.length; updatePhoto(); };
+    lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
+      d.onclick = ()=>{ idx = Number(d.dataset.i); updatePhoto(); };
+    });
+    if(fotos.length && isTouchDevice){
+      const mediaEl = lightboxRoot.querySelector('.lightbox-media');
+      const imgEl = mediaEl ? mediaEl.querySelector('img') : null;
+      if(mediaEl && imgEl) zoomApi = attachPinchZoom(mediaEl, imgEl);
+      const hintEl = document.getElementById('lbZoomHint');
+      if(hintEl) setTimeout(()=>hintEl.classList.add('hide'), 2600);
+    }
   }
 
   function escapeHtml(str){
@@ -1002,18 +1213,41 @@ function runApp(){
     renderGrid();
   }
   let searchDebounceTimer = null;
+  const stickySearchEl = document.getElementById('stickySearch');
   searchEl.addEventListener('input', (e)=>{
     // Esperamos a que la persona deje de teclear (300ms) antes de filtrar,
     // para no redibujar toda la cuadrícula en cada letra.
     const val = e.target.value;
+    if(stickySearchEl) stickySearchEl.value = val;
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(()=>applySearchTerm(val), 300);
   });
   document.getElementById('catSearchBtn').addEventListener('click', ()=>{ clearTimeout(searchDebounceTimer); applySearchTerm(searchEl.value); });
   searchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ clearTimeout(searchDebounceTimer); applySearchTerm(searchEl.value); } });
+  if(stickySearchEl){
+    stickySearchEl.addEventListener('input', (e)=>{
+      const val = e.target.value;
+      searchEl.value = val;
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(()=>applySearchTerm(val), 300);
+    });
+    stickySearchEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ clearTimeout(searchDebounceTimer); applySearchTerm(stickySearchEl.value); } });
+  }
   document.getElementById('minPriceInput').addEventListener('input', (e)=>{ minPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
   document.getElementById('maxPriceInput').addEventListener('input', (e)=>{ maxPrice = e.target.value===''?null:Number(e.target.value); renderGrid(); });
   document.getElementById('sortSelect').addEventListener('change', (e)=>{ sortBy = e.target.value; renderGrid(); });
+
+  if(stickyFilterBar){
+    let stickyTicking = false;
+    function updateStickyBar(){
+      stickyTicking = false;
+      const headerH = headerEl ? headerEl.offsetHeight : 300;
+      stickyFilterBar.classList.toggle('show', window.scrollY > headerH - 40);
+    }
+    window.addEventListener('scroll', ()=>{
+      if(!stickyTicking){ stickyTicking = true; requestAnimationFrame(updateStickyBar); }
+    }, {passive:true});
+  }
   policiesBarEl.addEventListener('click', openPoliciesModal);
 
   function openPoliciesModal(){
@@ -1073,6 +1307,7 @@ function runApp(){
           <div class="tab ${tab==='piezas'?'active':''}" id="tabPiezas">Piezas</div>
           <div class="tab ${tab==='nueva'?'active':''}" id="tabNueva">Agregar</div>
           <div class="tab ${tab==='categorias'?'active':''}" id="tabCats">Categorías</div>
+          <div class="tab ${tab==='avisos'?'active':''}" id="tabAvisos">Avisos</div>
           <div class="tab ${tab==='about'?'active':''}" id="tabAbout">Quiénes Somos</div>
           <div class="tab ${tab==='ajustes'?'active':''}" id="tabAjustes">Diseño</div>
         </div>
@@ -1087,12 +1322,14 @@ function runApp(){
     document.getElementById('tabPiezas').onclick = ()=>openAdminPanel('piezas');
     document.getElementById('tabNueva').onclick = ()=>openAdminPanel('nueva');
     document.getElementById('tabCats').onclick = ()=>openAdminPanel('categorias');
+    document.getElementById('tabAvisos').onclick = ()=>openAdminPanel('avisos');
     document.getElementById('tabAbout').onclick = ()=>openAdminPanel('about');
     document.getElementById('tabAjustes').onclick = ()=>openAdminPanel('ajustes');
     const body = document.getElementById('adminBody');
     if(tab==='piezas') renderAdminList(body);
     else if(tab==='nueva') renderAdminForm(body, null);
     else if(tab==='categorias') renderCatManager(body);
+    else if(tab==='avisos') renderTickerManager(body);
     else if(tab==='about') renderAboutManager(body);
     else renderAdminSettings(body);
   }
@@ -1117,7 +1354,8 @@ function runApp(){
   }
 
   function renderAdminList(body){
-    const backupBtnHtml = `<div style="margin-bottom:12px;">
+    const backupBtnHtml = `<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="font-family:var(--font-body);font-size:12.5px;color:var(--subtitle-color);">📦 <b style="color:var(--title-color);">${pieces.length}</b> pieza${pieces.length===1?'':'s'} registrada${pieces.length===1?'':'s'} en total</div>
       <button class="btn btn-ghost" id="btnRespaldo">⬇️ Respaldar catálogo (descargar)</button>
     </div>`;
     if(pieces.length===0){ body.innerHTML = backupBtnHtml + '<div class="status-msg">Sin piezas registradas todavía.</div>'; document.getElementById('btnRespaldo').onclick = descargarRespaldoCatalogo; return; }
@@ -1178,6 +1416,76 @@ function runApp(){
       if(quality > 0.4){ quality -= 0.12; }
       else{ maxDim = Math.max(300, maxDim - 150); }
       dataUrl = await compressFile(file, maxDim, quality);
+      guard++;
+    }
+    return dataUrl;
+  }
+
+  // Igual que compressFile, pero exporta PNG para conservar transparencia
+  // (JPG rellena de negro las zonas transparentes de un PNG con fondo transparente).
+  // Además, si el PNG no trae transparencia real (fondo sólido negro/blanco/etc.),
+  // se detecta ese color en las 4 esquinas y se vuelve transparente automáticamente.
+  function stripSolidBackground(canvas, tolerance){
+    tolerance = tolerance || 34;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    if(!w || !h) return;
+    let imgData;
+    try{ imgData = ctx.getImageData(0,0,w,h); }catch(e){ return; }
+    const data = imgData.data;
+    function colorAt(x,y){ const i=(y*w+x)*4; return [data[i],data[i+1],data[i+2],data[i+3]]; }
+    function dist(a,b){ return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2); }
+    const corners = [colorAt(0,0), colorAt(w-1,0), colorAt(0,h-1), colorAt(w-1,h-1)];
+    const bg = corners[0];
+    // Solo tocamos la imagen si las 4 esquinas comparten un mismo color de fondo sólido
+    // (si no, probablemente ya es transparente o es una foto sin fondo uniforme).
+    const consistent = corners.every(c=>dist(c,bg) < 28) && bg[3] > 0;
+    if(!consistent) return;
+    const visited = new Uint8Array(w*h);
+    const stack = [[0,0],[w-1,0],[0,h-1],[w-1,h-1]];
+    while(stack.length){
+      const [x,y] = stack.pop();
+      if(x<0||y<0||x>=w||y>=h) continue;
+      const p = y*w+x;
+      if(visited[p]) continue;
+      visited[p] = 1;
+      const i = p*4;
+      const c = [data[i],data[i+1],data[i+2],data[i+3]];
+      if(dist(c,bg) > tolerance) continue;
+      data[i+3] = 0;
+      stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+    }
+    ctx.putImageData(imgData,0,0);
+  }
+  function compressFilePNG(file, maxDim){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let w = img.width, h = img.height;
+          if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+          else{ if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          stripSolidBackground(canvas);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  async function compressToBudgetPNG(file, budgetBytes){
+    let maxDim = 500;
+    let dataUrl = await compressFilePNG(file, maxDim);
+    let guard = 0;
+    while(dataUrl.length > budgetBytes && guard < 8){
+      maxDim = Math.max(80, maxDim - 60);
+      dataUrl = await compressFilePNG(file, maxDim);
       guard++;
     }
     return dataUrl;
@@ -1347,6 +1655,134 @@ function runApp(){
       renderList();
       document.getElementById('catMsg').className='status-msg ok';
       document.getElementById('catMsg').textContent='Categoría agregada.';
+    };
+  }
+
+  function renderTickerManager(body){
+    function renderList(){
+      const items = config.avisos || [];
+      const listEl = document.getElementById('tickerList');
+      if(!items.length){
+        listEl.innerHTML = '<div class="status-msg">Sin avisos todavía. Agrega el primero abajo.</div>';
+        return;
+      }
+      listEl.innerHTML = items.map((a,i)=>`
+        <div class="admin-list-item" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 0;">
+          <label>Mensaje</label>
+          <input type="text" data-text="${i}" value="${escapeAttr(a.texto||'')}" placeholder="Ej. Hoy 5% de descuento en todas tus compras">
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div><label>Color del texto</label><input type="color" data-color="${i}" value="${escapeAttr(a.color||'#ffffff')}" style="width:60px;height:34px;padding:2px;cursor:pointer;"></div>
+            <div><label>Sombra del texto</label><input type="color" data-sombra="${i}" value="${escapeAttr(a.sombra||'#000000')}" style="width:60px;height:34px;padding:2px;cursor:pointer;"></div>
+          </div>
+          <div class="status-msg" id="tickerMsg${i}"></div>
+          <div class="actions" style="justify-content:flex-end;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn" data-up="${i}" ${i===0?'disabled':''}>&uarr; Subir</button>
+            <button class="icon-btn" data-down="${i}" ${i===items.length-1?'disabled':''}>&darr; Bajar</button>
+            <button class="icon-btn" data-del="${i}">Borrar</button>
+            <button class="btn btn-primary btn-small" data-save="${i}">Guardar</button>
+          </div>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('[data-save]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.save);
+          const msgEl = document.getElementById('tickerMsg'+i);
+          items[i].texto = listEl.querySelector(`[data-text="${i}"]`).value.trim();
+          items[i].color = listEl.querySelector(`[data-color="${i}"]`).value;
+          items[i].sombra = listEl.querySelector(`[data-sombra="${i}"]`).value;
+          try{
+            await saveConfig();
+            renderTicker();
+            msgEl.className = 'status-msg ok';
+            msgEl.textContent = 'Aviso guardado.';
+          }catch(e){
+            msgEl.className = 'status-msg err';
+            msgEl.textContent = 'Error al guardar: '+e.message;
+          }
+        };
+      });
+      listEl.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          if(!confirm('¿Borrar este aviso?')) return;
+          items.splice(Number(btn.dataset.del),1);
+          await saveConfig(); renderTicker(); renderList();
+        };
+      });
+      listEl.querySelectorAll('[data-up]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.up);
+          [items[i-1],items[i]] = [items[i],items[i-1]];
+          await saveConfig(); renderTicker(); renderList();
+        };
+      });
+      listEl.querySelectorAll('[data-down]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const i = Number(btn.dataset.down);
+          [items[i+1],items[i]] = [items[i],items[i+1]];
+          await saveConfig(); renderTicker(); renderList();
+        };
+      });
+    }
+    let pendingTickerIcon = config.tickerIcono || null;
+    body.innerHTML = `
+      <div style="font-size:11.5px;color:var(--subtitle-color);margin-bottom:14px;line-height:1.5;">
+        Esta tira se muestra deslizándose justo debajo del encabezado — ideal para avisos de descuentos o promociones. Puedes agregar uno o varios mensajes; si hay varios, se van repitiendo en el ciclo. Bórralos todos para ocultar la tira por completo.
+      </div>
+      <div class="color-grid" style="margin-bottom:14px;">
+        <div><label>Color de fondo 1</label><input type="color" id="tickerBg1" value="${config.colores.tickerBg1||'#ff6a3d'}"></div>
+        <div><label>Color de fondo 2</label><input type="color" id="tickerBg2" value="${config.colores.tickerBg2||'#ff8a5c'}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--subtitle-color);margin:-8px 0 14px;">El color y la sombra de cada texto se editan de forma individual en cada aviso, más abajo.</div>
+      <label>Ícono entre avisos (logo PNG)</label>
+      <input type="file" id="tickerIconFile" accept="image/*" style="margin-top:6px;">
+      <div class="photo-thumbs" id="tickerIconPreviewWrap" style="${pendingTickerIcon?'':'display:none;'}">
+        <div class="photo-thumb"><img id="tickerIconPreview" src="${pendingTickerIcon?escapeAttr(pendingTickerIcon):''}"><button type="button" class="rm" id="tickerIconRemove">×</button></div>
+      </div>
+      <div style="font-size:11px;color:var(--subtitle-color);margin:6px 0 14px;">Si no subes un logo, se usa un ícono ✦ por defecto.</div>
+      <div class="status-msg" id="tickerColorMsg"></div>
+      <div class="modal-actions"><button class="btn btn-primary btn-small" id="saveTickerStyleBtn">Guardar colores e ícono</button></div>
+      <div id="tickerList" style="margin-top:10px;"></div>
+      <div class="modal-actions"><button class="btn btn-primary btn-small" id="addTickerBtn">+ Agregar aviso</button></div>
+      <div class="status-msg" id="tickerAddMsg"></div>
+    `;
+    renderList();
+    document.getElementById('tickerIconFile').addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      pendingTickerIcon = await compressToBudgetPNG(file, 80000);
+      document.getElementById('tickerIconPreview').src = pendingTickerIcon;
+      document.getElementById('tickerIconPreviewWrap').style.display = 'flex';
+    });
+    document.getElementById('tickerIconRemove').onclick = ()=>{
+      pendingTickerIcon = null;
+      document.getElementById('tickerIconPreviewWrap').style.display = 'none';
+    };
+    document.getElementById('saveTickerStyleBtn').onclick = async ()=>{
+      config.colores.tickerBg1 = document.getElementById('tickerBg1').value;
+      config.colores.tickerBg2 = document.getElementById('tickerBg2').value;
+      config.tickerIcono = pendingTickerIcon;
+      const msgEl = document.getElementById('tickerColorMsg');
+      try{
+        await saveConfig();
+        applyTheme();
+        renderTicker();
+        msgEl.className = 'status-msg ok';
+        msgEl.textContent = 'Guardado.';
+      }catch(e){
+        msgEl.className = 'status-msg err';
+        msgEl.textContent = 'Error al guardar: '+e.message;
+      }
+    };
+    document.getElementById('addTickerBtn').onclick = async ()=>{
+      config.avisos = config.avisos || [];
+      config.avisos.push({ id:'tk'+Date.now(), texto:'Recuerda que manejamos descuentos especiales', color:'#ffffff', sombra:'#000000' });
+      try{
+        await saveConfig();
+        renderTicker();
+        renderList();
+      }catch(e){
+        document.getElementById('tickerAddMsg').className = 'status-msg err';
+        document.getElementById('tickerAddMsg').textContent = 'Error al guardar: '+e.message;
+      }
     };
   }
 
@@ -1580,6 +2016,17 @@ function runApp(){
         </details>
 
         <details class="color-section">
+          <summary>🏷️ Barra de avisos<span class="sec-hint">tira deslizable</span></summary>
+          <div class="sec-body">
+            <div class="color-grid">
+              <div><label>Color de fondo 1</label><input type="color" id="cTickerBg1" value="${c.tickerBg1||'#ff6a3d'}"></div>
+              <div><label>Color de fondo 2</label><input type="color" id="cTickerBg2" value="${c.tickerBg2||'#ff8a5c'}"></div>
+            </div>
+            <div style="font-size:11px;color:var(--subtitle-color);margin-top:6px;">El color y la sombra de cada texto, y el logo entre avisos, se editan en la pestaña "Avisos".</div>
+          </div>
+        </details>
+
+        <details class="color-section">
           <summary>🔍 Buscador<span class="sec-hint">subtítulo de búsqueda</span></summary>
           <div class="sec-body">
             <div class="color-grid">
@@ -1763,6 +2210,8 @@ function runApp(){
         policiesContentBorder: document.getElementById('cPolContentBorder').value,
         policiesContentText: document.getElementById('cPolContentText').value,
         policiesTitleColor: document.getElementById('cPolTitleColor').value,
+        tickerBg1: document.getElementById('cTickerBg1').value,
+        tickerBg2: document.getElementById('cTickerBg2').value,
         socialIconColors: {
           tiktok: document.getElementById('cIconTiktok').value,
           facebook: document.getElementById('cIconFacebook').value,
