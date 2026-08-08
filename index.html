@@ -292,8 +292,11 @@
     .sticky-brand{font-size:12px;}
     .sticky-search-wrap{width:88px;}
     .sticky-search{padding:6px 10px;font-size:11px;}
-    .lightbox{grid-template-columns:1fr;max-width:480px;}
+    .lightbox{display:block;max-width:480px;}
     .lightbox-media{aspect-ratio:4/3;min-height:0;max-height:42vh;max-height:42dvh;}
+    .lightbox-info{display:block;}
+    .lightbox-info>*{margin-top:10px;}
+    .lightbox-info>*:first-child{margin-top:0;}
     .lightbox-overlay{padding:12px;align-items:flex-start;}
     .lightbox{margin-top:4vh;}
     .cat-grid{padding:22px 14px;gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));}
@@ -1181,6 +1184,12 @@ function runApp(){
         </div>
       </div>
     `;
+    // Forzamos un recálculo de layout inmediato: en algunos navegadores móviles
+    // (Safari/iOS) el contenido inyectado de golpe con innerHTML dentro de un
+    // contenedor con scroll no se pinta bien (nombre/precio quedan invisibles)
+    // hasta que el navegador vuelve a calcular el layout. Esto lo obliga a hacerlo.
+    void lightboxRoot.offsetHeight;
+    requestAnimationFrame(()=>{ void lightboxRoot.offsetHeight; });
     document.getElementById('lbClose').onclick = closeLightbox;
     document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
     // Nos aseguramos de que el modal siempre abra mostrando su contenido desde
