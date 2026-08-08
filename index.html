@@ -203,7 +203,8 @@
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;overscroll-behavior:contain;touch-action:pan-y;}
   .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;}
   .lightbox-media{position:relative;background:#111;min-height:420px;min-width:0;overflow:hidden;}
-  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;}
+  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;opacity:1;transition:opacity .2s ease;}
+  .lightbox-media img.switching{opacity:0;}
   .lightbox-media.zoomed img{cursor:grab;}
   .lightbox-zoom-hint{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.6);color:#fff;font-family:var(--font-body);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 10px;border-radius:999px;pointer-events:none;opacity:1;transition:opacity .6s ease;border:1px solid rgba(255,255,255,0.15);}
   .lightbox-zoom-hint.hide{opacity:0;}
@@ -212,6 +213,8 @@
   .lightbox-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;}
   .lightbox-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer;}
   .lightbox-dots span.on{background:#fff;}
+  .lightbox-fotos-warning{position:absolute;left:10px;right:10px;top:10px;background:rgba(0,0,0,0.65);color:#fff;font-family:var(--font-body);font-size:11px;padding:7px 10px;border-radius:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .lightbox-fotos-warning button{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer;}
   .lightbox-info{padding:26px;display:flex;flex-direction:column;gap:10px;min-width:0;}
   .lightbox-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.55);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
   .lightbox-name{font-family:var(--font-display);font-weight:700;font-size:22px;overflow-wrap:anywhere;}
@@ -727,10 +730,17 @@ function runApp(){
     try{
       const snap = await getDoc(doc(db,'productos',piece.id,'detalle','galeria'));
       const fotos = (snap.exists() && snap.data().fotos && snap.data().fotos.length) ? snap.data().fotos : actuales;
-      galeriaCache.set(piece.id, fotos);
+      if(fotos.length < piece.totalFotos){
+        // No cacheamos un resultado incompleto: así, si la persona reabre la
+        // pieza (o le damos "Reintentar" en el visor), se vuelve a pedir en
+        // vez de quedarse pegada para siempre con solo la portada.
+        console.warn(`Pieza "${piece.nombre||piece.id}": se esperaban ${piece.totalFotos} fotos y solo llegaron ${fotos.length}. Casi siempre es un permiso de lectura que falta en las Reglas de Firestore para la ruta productos/${piece.id}/detalle/galeria (o la migración "Activar carga rápida" quedó a medias en esta pieza).`);
+      } else {
+        galeriaCache.set(piece.id, fotos);
+      }
       return fotos;
     }catch(e){
-      console.error('galería', e);
+      console.error(`No se pudo cargar el álbum completo de "${piece.nombre||piece.id}". Muy probablemente las Reglas de seguridad de Firestore no dejan leer productos/${piece.id}/detalle/galeria. Detalle:`, e);
       return actuales;
     }
   }
@@ -1063,13 +1073,80 @@ function runApp(){
     aboutSectionEl.onmouseleave = ()=>{ restartAboutTimer(); };
   }
 
-  function createCard(piece){
+  // Arranca (o reinicia) el carrusel de fotos dentro de la tarjeta: va
+  // cruzando las fotos del álbum en fade, una por una. Si la tarjeta se creó
+  // solo con la portada, primero crea los elementos que faltan (imagen de
+  // fondo y puntitos) antes de empezar.
+  function startCardSlideshow(card, piece, fotos){
+    if(!card.isConnected || fotos.length<2 || card.dataset.slideshowOn) return;
+    card.dataset.slideshowOn = '1';
+    const wrap = card.querySelector('.prod-photo-wrap');
+    let front0 = card.querySelector('.prod-photo-a');
+    let back0 = card.querySelector('.prod-photo-b');
+    if(!front0 || !wrap) return;
+    if(!back0){
+      back0 = document.createElement('img');
+      back0.className = 'prod-photo prod-photo-b';
+      back0.decoding = 'async';
+      front0.insertAdjacentElement('afterend', back0);
+    }
+    if(!card.querySelector('.prod-dots')){
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className = 'prod-dots';
+      dotsWrap.innerHTML = fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('');
+      wrap.appendChild(dotsWrap);
+    }
+    const dots = card.querySelectorAll('.prod-dot');
+    // Precargamos solo UNA foto por delante (no todas de golpe), para no
+    // saturar la conexión cuando hay varias tarjetas cargando a la vez.
+    const cache = new Array(fotos.length);
+    function preload(i){
+      if(!cache[i]){ const im = new Image(); im.decoding = 'async'; im.src = fotos[i]; cache[i] = im; }
+      return cache[i];
+    }
+    preload(1);
+    let idx = 0;
+    let front = front0, back = back0;
+    const timer = setInterval(()=>{
+      if(!card.isConnected){ clearInterval(timer); slideTimers.delete(piece.id); return; }
+      const nextIdx = (idx+1)%fotos.length;
+      const nextImg = preload(nextIdx);
+      const swap = ()=>{
+        // La foto que sigue se prepara en la capa de atrás (invisible) y
+        // luego se cruza con la de enfrente: nunca queda un instante sin
+        // foto visible, así se elimina el "flash" del fondo gris.
+        back.src = fotos[nextIdx];
+        back.classList.add('active');
+        front.classList.remove('active');
+        idx = nextIdx;
+        dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+        const tmp = front; front = back; back = tmp;
+        preload((idx+1)%fotos.length);
+      };
+      if(nextImg.complete){
+        swap();
+      }else{
+        // Si aún no terminó de precargar (conexión lenta), esperamos a que
+        // cargue en vez de mostrar un hueco en blanco.
+        nextImg.addEventListener('load', swap, {once:true});
+        nextImg.addEventListener('error', swap, {once:true});
+      }
+    }, 2600);
+    slideTimers.set(piece.id, timer);
+  }
+
+  function createCard(piece, prioritaria){
     const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
     const fotos = piecePhotos(piece);
     const card = document.createElement('div');
     card.className = 'prod-card';
+    // Las primeras tarjetas (las que se ven sin hacer scroll) se piden con
+    // prioridad alta y sin esperar a que el navegador decida ("lazy"), para
+    // que la portada aparezca lo antes posible. El resto sigue en lazy para
+    // no competir por ancho de banda con lo que sí se ve de entrada.
+    const imgAttrs = prioritaria ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
     const photoHtml = fotos.length
-      ? `<img class="prod-photo prod-photo-a active" data-idx="0" src="${escapeAttr(fotos[0])}" loading="lazy" decoding="async">${fotos.length>1 ? `<img class="prod-photo prod-photo-b" decoding="async">` : ''}`
+      ? `<img class="prod-photo prod-photo-a" data-idx="0" src="${escapeAttr(fotos[0])}" ${imgAttrs} decoding="async">${fotos.length>1 ? `<img class="prod-photo prod-photo-b" decoding="async">` : ''}`
       : `<div class="prod-photo-placeholder">Sin foto</div>`;
     const dotsHtml = fotos.length>1
       ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
@@ -1106,52 +1183,36 @@ function runApp(){
     if(fotos.length && photoWrap){
       photoWrap.classList.add('skeleton');
       const firstImg = card.querySelector('.prod-photo-a');
-      const clearSkeleton = ()=> photoWrap.classList.remove('skeleton');
-      if(firstImg.complete && firstImg.naturalWidth>0) clearSkeleton();
+      // El fade de entrada: la foto arranca en opacity:0 (ver .prod-photo en
+      // el CSS) y le agregamos "active" justo cuando termina de cargar, para
+      // que aparezca con una transición suave en vez de aparecer de golpe.
+      const showPhoto = ()=>{ photoWrap.classList.remove('skeleton'); firstImg.classList.add('active'); };
+      if(firstImg.complete && firstImg.naturalWidth>0) showPhoto();
       else{
-        firstImg.addEventListener('load', clearSkeleton, {once:true});
-        firstImg.addEventListener('error', clearSkeleton, {once:true});
+        firstImg.addEventListener('load', showPhoto, {once:true});
+        firstImg.addEventListener('error', showPhoto, {once:true});
       }
     }
     if(fotos.length>1){
-      const front0 = card.querySelector('.prod-photo-a');
-      const back0 = card.querySelector('.prod-photo-b');
-      const dots = card.querySelectorAll('.prod-dot');
-      // Precargamos solo UNA foto por delante (no todas de golpe), para no
-      // saturar la conexión cuando hay varias tarjetas cargando a la vez.
-      const cache = new Array(fotos.length);
-      function preload(i){
-        if(!cache[i]){ const im = new Image(); im.decoding = 'async'; im.src = fotos[i]; cache[i] = im; }
-        return cache[i];
-      }
-      preload(1);
-      let idx = 0;
-      let front = front0, back = back0;
-      const timer = setInterval(()=>{
-        const nextIdx = (idx+1)%fotos.length;
-        const nextImg = preload(nextIdx);
-        const swap = ()=>{
-          // La foto que sigue se prepara en la capa de atrás (invisible) y
-          // luego se cruza con la de enfrente: nunca queda un instante sin
-          // foto visible, así se elimina el "flash" del fondo gris.
-          back.src = fotos[nextIdx];
-          back.classList.add('active');
-          front.classList.remove('active');
-          idx = nextIdx;
-          dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
-          const tmp = front; front = back; back = tmp;
-          preload((idx+1)%fotos.length);
-        };
-        if(nextImg.complete){
-          swap();
-        }else{
-          // Si aún no terminó de precargar (conexión lenta), esperamos a que
-          // cargue en vez de mostrar un hueco en blanco.
-          nextImg.addEventListener('load', swap, {once:true});
-          nextImg.addEventListener('error', swap, {once:true});
-        }
-      }, 2600);
-      slideTimers.set(piece.id, timer);
+      // La pieza ya trae más de una foto de entrada (piezas viejas sin
+      // migrar): arrancamos el carrusel de una vez, sin pedir nada extra.
+      startCardSlideshow(card, piece, fotos);
+    } else if((piece.totalFotos||0) > 1){
+      // Pieza "migrada": el catálogo solo trajo la portada (para abrir
+      // rápido) y el resto del álbum vive aparte. Para recuperar la vista
+      // previa con fade SIN volver a bajar todas las fotos de todas las
+      // tarjetas de una vez, la pedimos solo cuando la tarjeta está a punto
+      // de entrar en pantalla (igual que el resto del scroll infinito).
+      const previewObs = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          if(!entry.isIntersecting) return;
+          previewObs.disconnect();
+          asegurarGaleriaCompleta(piece).then(fotosCompletas=>{
+            if(fotosCompletas.length>1) startCardSlideshow(card, piece, fotosCompletas);
+          });
+        });
+      }, { root:null, rootMargin:'250px 0px', threshold:0 });
+      previewObs.observe(card);
     }
     return card;
   }
@@ -1173,7 +1234,8 @@ function runApp(){
     if(existingSentinel) existingSentinel.remove();
     const frag = document.createDocumentFragment();
     slice.forEach((piece,i)=>{
-      const card = createCard(piece);
+      const globalIdx = renderedCount + i;
+      const card = createCard(piece, globalIdx < 4);
       card.style.animationDelay = (Math.min(i,7)*0.04)+'s';
       frag.appendChild(card);
     });
@@ -1366,8 +1428,10 @@ function runApp(){
   let lightboxRequestToken = 0;
   async function openLightbox(piece){
     const miToken = ++lightboxRequestToken;
+    const piezaOriginal = piece;
     const fotosCompletas = await asegurarGaleriaCompleta(piece);
     if(miToken !== lightboxRequestToken) return; // el usuario ya abrió otra pieza mientras esperábamos
+    const fotosIncompletas = (piece.totalFotos||0) > fotosCompletas.length;
     piece = Object.assign({}, piece, {fotos: fotosCompletas});
     lockBodyScroll();
     lightboxAbiertoId = piece.id;
@@ -1405,6 +1469,7 @@ function runApp(){
               <button class="lightbox-arrow right" id="lbNext">&#8250;</button>
               <div class="lightbox-dots">${fotos.map((f,i)=>`<span class="${i===idx?'on':''}" data-i="${i}"></span>`).join('')}</div>
             ` : ''}
+            ${fotosIncompletas ? `<div class="lightbox-fotos-warning" id="lbFotosWarn">Solo cargaron ${fotos.length} de ${piece.totalFotos} fotos. <button type="button" id="lbRetryFotos">Reintentar</button></div>` : ''}
           </div>
           <div class="lightbox-info">
             <div class="prod-cat-pill" style="position:static;display:inline-flex;width:fit-content;"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
@@ -1436,6 +1501,8 @@ function runApp(){
     requestAnimationFrame(()=>{ void lightboxRoot.offsetHeight; });
     document.getElementById('lbClose').onclick = closeLightbox;
     document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
+    const retryFotosBtn = document.getElementById('lbRetryFotos');
+    if(retryFotosBtn) retryFotosBtn.onclick = ()=> openLightbox(piezaOriginal);
     // Nos aseguramos de que el modal siempre abra mostrando su contenido desde
     // arriba (nombre, precio, etc.), sin importar el tamaño de la foto o el
     // dispositivo. Lo forzamos ahora y otra vez cuando la foto termine de
@@ -1471,7 +1538,17 @@ function runApp(){
       const imgEl = mediaEl ? mediaEl.querySelector('img') : null;
       if(imgEl){
         if(zoomApi) zoomApi.reset(false);
-        imgEl.src = fotos[idx];
+        // Pequeño fade al cambiar de foto: se apaga, se cambia el src, y en
+        // cuanto carga se vuelve a encender — igual que en las tarjetas.
+        imgEl.classList.add('switching');
+        const nueva = fotos[idx];
+        const encender = ()=> imgEl.classList.remove('switching');
+        imgEl.src = nueva;
+        if(imgEl.complete) requestAnimationFrame(encender);
+        else{
+          imgEl.addEventListener('load', encender, {once:true});
+          imgEl.addEventListener('error', encender, {once:true});
+        }
       }
       lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
         d.classList.toggle('on', Number(d.dataset.i)===idx);
