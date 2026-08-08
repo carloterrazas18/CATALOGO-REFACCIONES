@@ -2,9 +2,6 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +14,8 @@
 <meta property="og:type" content="website">
 <meta property="og:image" id="ogImageMeta" content="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
 <link rel="icon" id="faviconLink" type="image/jpeg" href="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
   :root{
     --bg:#0c0e10; --header-bg:#0c0e10;
     --card-bg:#ffffff; --card-text:#15171a; --card-text-muted:#6b7075;
@@ -409,9 +406,6 @@ import {
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getStorage, ref as storageRef, uploadString, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 // ======================================================================
 // PEGA_AQUI_TU_FIREBASE_CONFIG
@@ -439,67 +433,65 @@ function runApp(){
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const storage = getStorage(app);
   setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
-  // Sube una imagen (en formato dataURL, ya comprimida) a Firebase Storage
-  // y devuelve el link público. Esto reemplaza el guardar la imagen como
-  // texto gigante dentro del documento de Firestore, que era la causa de
-  // que el catálogo cargara cada vez más lento: cada visita tenía que
-  // descargar TODAS las fotos como texto antes de poder mostrar la página,
-  // sin poder aprovechar el caché del navegador entre visitas.
-  async function subirImagenAStorage(dataUrl, carpeta){
+  // Vuelve a comprimir (más chica) una imagen que ya está en formato dataURL,
+  // sin depender de ningún servicio externo ni de pagos: todo pasa en el
+  // navegador, con un <canvas>. Respeta si la imagen original era PNG (para
+  // conservar transparencia, como en los íconos) o JPG.
+  function reComprimirDataUrl(dataUrl, maxDim, calidad, mime){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+        else{ if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1,w); canvas.height = Math.max(1,h);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(mime==='image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', calidad));
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+  async function reComprimirABudget(dataUrl, budgetBytes){
     const mime = (dataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/jpeg';
-    const ext = mime.includes('png') ? 'png' : 'jpg';
-    const nombreArchivo = `${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const refImg = storageRef(storage, `${carpeta}/${nombreArchivo}`);
-    await uploadString(refImg, dataUrl, 'data_url');
-    return await getDownloadURL(refImg);
-  }
-
-  // Evita que una sola foto "trabada" (red lenta, foto muy pesada, etc.)
-  // deje congelada toda la optimización: si tarda más de este tiempo, se
-  // cuenta como error y se sigue con las demás en vez de quedarse esperando.
-  function conTimeout(promesa, ms){
-    return Promise.race([
-      promesa,
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('tiempo agotado')), ms))
-    ]);
-  }
-
-  // Ejecuta `worker` sobre cada item de `items`, con hasta `limite` a la vez
-  // en paralelo, en vez de uno por uno — así la optimización es mucho más
-  // rápida cuando hay muchas fotos o muchos productos.
-  async function conLimite(items, limite, worker){
-    let siguiente = 0;
-    async function trabajador(){
-      while(siguiente < items.length){
-        const i = siguiente++;
-        await worker(items[i], i);
-      }
+    let maxDim = mime==='image/png' ? 480 : 700;
+    let calidad = 0.72;
+    let out = await reComprimirDataUrl(dataUrl, maxDim, calidad, mime);
+    let guard = 0;
+    while(out.length > budgetBytes && guard < 9){
+      if(mime==='image/png'){ maxDim = Math.max(200, maxDim - 80); }
+      else if(calidad > 0.35){ calidad -= 0.1; }
+      else{ maxDim = Math.max(240, maxDim - 130); }
+      out = await reComprimirDataUrl(dataUrl, maxDim, calidad, mime);
+      guard++;
     }
-    await Promise.all(Array.from({length:Math.min(limite, items.length)}, trabajador));
+    return out;
   }
 
-  // Migra a Storage cualquier imagen que haya quedado guardada en formato
-  // antiguo (texto base64 dentro de Firestore): logo, banner, ícono de
-  // avisos, íconos de redes y las fotos de cada producto. Es seguro
-  // ejecutarla varias veces: solo toca lo que todavía esté en formato viejo.
-  async function migrarImagenesAStorage(onProgress){
-    let migrados = 0, errores = 0;
+  // Recorre el catálogo y "aligera" (recomprime) cualquier foto/ícono que
+  // haya quedado guardado muy pesado, para que la base de datos vuelva a
+  // ser rápida de descargar. 100% gratis: nada sale de Firebase/Firestore,
+  // no sube nada a ningún servicio de pago.
+  async function optimizarImagenesExistentes(onProgress){
+    let optimizadas = 0, errores = 0;
+    const presupuestosConfig = { banner: 60000, logo: 25000, tickerIcono: 18000 };
     const cambiosConfig = {};
-    for(const campo of ['logo','banner','tickerIcono']){
+    for(const campo of ['banner','logo','tickerIcono']){
       const val = config[campo];
-      if(val && val.startsWith('data:')){
-        try{ cambiosConfig[campo] = await conTimeout(subirImagenAStorage(val, 'config'), 20000); migrados++; }
+      const presupuesto = presupuestosConfig[campo];
+      if(val && val.startsWith('data:') && val.length > presupuesto){
+        try{ cambiosConfig[campo] = await reComprimirABudget(val, presupuesto); optimizadas++; }
         catch(e){ errores++; }
       }
     }
     const socialCambios = {};
     for(const key of ['tiktokIcono','facebookIcono','instagramIcono','whatsappIcono','telefonoIcono']){
       const val = config.social && config.social[key];
-      if(val && val.startsWith('data:')){
-        try{ socialCambios[key] = await conTimeout(subirImagenAStorage(val, 'config'), 20000); migrados++; }
+      if(val && val.startsWith('data:') && val.length > 18000){
+        try{ socialCambios[key] = await reComprimirABudget(val, 18000); optimizadas++; }
         catch(e){ errores++; }
       }
     }
@@ -508,28 +500,32 @@ function runApp(){
       if(Object.keys(socialCambios).length) updateData.social = Object.assign({}, config.social, socialCambios);
       try{ await updateDoc(doc(db,'configuracion','admin'), updateData); }catch(e){ errores++; }
     }
-    if(onProgress) onProgress({fase:'config', migrados, errores});
+    if(onProgress) onProgress({fase:'config', optimizadas, errores});
     const snap = await getDocs(collection(db,'productos'));
     const docs = snap.docs;
+    const PRESUPUESTO_FOTO = 35000;
     let revisados = 0;
-    await conLimite(docs, 4, async (docSnap)=>{
+    for(const docSnap of docs){
+      revisados++;
       const data = docSnap.data();
       const fotos = data.fotos || [];
-      const idxAMigrar = [];
-      fotos.forEach((foto,i)=>{ if(typeof foto === 'string' && foto.startsWith('data:')) idxAMigrar.push(i); });
-      if(idxAMigrar.length){
-        const nuevasFotos = fotos.slice();
-        await conLimite(idxAMigrar, 4, async (i)=>{
-          try{ nuevasFotos[i] = await conTimeout(subirImagenAStorage(fotos[i], 'productos'), 20000); migrados++; }
-          catch(e){ errores++; }
-        });
+      let cambio = false;
+      const nuevasFotos = [];
+      for(const foto of fotos){
+        if(typeof foto === 'string' && foto.startsWith('data:') && foto.length > PRESUPUESTO_FOTO){
+          try{ nuevasFotos.push(await reComprimirABudget(foto, PRESUPUESTO_FOTO)); cambio = true; optimizadas++; }
+          catch(e){ nuevasFotos.push(foto); errores++; }
+        } else {
+          nuevasFotos.push(foto);
+        }
+      }
+      if(cambio){
         try{ await updateDoc(doc(db,'productos',docSnap.id), {fotos:nuevasFotos}); }
         catch(e){ errores++; }
       }
-      revisados++;
-      if(onProgress) onProgress({fase:'productos', revisados, total:docs.length, migrados, errores});
-    });
-    return {migrados, revisados, errores};
+      if(onProgress) onProgress({fase:'productos', revisados, total:docs.length, optimizadas, errores});
+    }
+    return {optimizadas, revisados, errores};
   }
 
   const VEHICULOS = ['Coche','Camioneta','Camión'];
@@ -545,7 +541,7 @@ function runApp(){
   // En vez de bajar TODOS los productos (con todas sus fotos) de golpe,
   // pedimos solo el primer lote para que la página abra rápido, y el resto
   // se trae en segundo plano (o al buscar/filtrar, para no perder resultados).
-  const FS_PAGE_SIZE = 24;
+  const FS_PAGE_SIZE = 8;
   let liveBase = [];
   let piecesExtra = [];
   let lastDocSnap = null;
@@ -1796,12 +1792,11 @@ function runApp(){
         document.getElementById('photoMsg').textContent = 'Procesando imágenes...';
       }
       const totalTrasAgregar = pendingPhotos.length + files.length;
-      const budget = Math.min(170000, Math.max(28000, Math.floor(560000/Math.max(totalTrasAgregar,1))));
+      const budget = Math.min(35000, Math.max(15000, Math.floor(240000/Math.max(totalTrasAgregar,1))));
       for(const file of files){
         try{
           const dataUrl = await compressToBudget(file, budget);
-          const url = await subirImagenAStorage(dataUrl, 'productos');
-          pendingPhotos.push(url);
+          pendingPhotos.push(dataUrl);
         }catch(err){ /* ignora archivo con error */ }
       }
       renderPhotoThumbs(document.getElementById('photoThumbs'));
@@ -1988,8 +1983,8 @@ function runApp(){
     renderList();
     document.getElementById('tickerIconFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudgetPNG(file, 80000);
-      pendingTickerIcon = await subirImagenAStorage(dataUrl, 'config');
+      const dataUrl = await compressToBudgetPNG(file, 18000);
+      pendingTickerIcon = dataUrl;
       document.getElementById('tickerIconPreview').src = pendingTickerIcon;
       document.getElementById('tickerIconPreviewWrap').style.display = 'flex';
     });
@@ -2149,8 +2144,8 @@ function runApp(){
 
         <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
           <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">🚀 Optimizar velocidad del catálogo</div>
-          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Convierte las fotos que quedaron guardadas "pesadas" dentro de la base de datos en archivos ligeros, para que el catálogo vuelva a cargar rápido. Sube varias fotos a la vez y nunca se queda pegado (si una foto tarda demasiado, la salta sola). Es seguro correrlo, y puedes ejecutarlo varias veces sin problema.</div>
-          <button class="btn btn-primary btn-small" id="btnMigrarStorage">Optimizar ahora</button>
+          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Achica las fotos que quedaron guardadas muy "pesadas" en la base de datos, para que el catálogo vuelva a cargar rápido. Todo pasa aquí en tu navegador — no sube nada a ningún servicio externo ni de pago, no necesita tarjeta ni cuenta nueva. Es seguro correrlo, y puedes ejecutarlo varias veces sin problema.</div>
+          <button class="btn btn-primary btn-small" id="btnOptimizarImagenes">Optimizar ahora</button>
           <div class="status-msg" id="migrarMsg" style="margin-top:8px;"></div>
         </div>
 
@@ -2358,8 +2353,8 @@ function runApp(){
     function wireIconUpload(key, fileId, previewWrapId, previewId, removeId){
       document.getElementById(fileId).addEventListener('change', async (e)=>{
         const file = e.target.files[0]; if(!file) return;
-        const dataUrl = await compressToBudget(file, 80000);
-        pendingIcons[key] = await subirImagenAStorage(dataUrl, 'config');
+        const dataUrl = await compressToBudget(file, 18000);
+        pendingIcons[key] = dataUrl;
         document.getElementById(previewId).src = pendingIcons[key];
         document.getElementById(previewWrapId).style.display = 'flex';
       });
@@ -2373,7 +2368,7 @@ function runApp(){
     wireIconUpload('instagramIcono','sInstagramIcon','sInstagramIconPreviewWrap','sInstagramIconPreview','sInstagramIconRemove');
     wireIconUpload('whatsappIcono','sWhatsappIcon','sWhatsappIconPreviewWrap','sWhatsappIconPreview','sWhatsappIconRemove');
     wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
-    const btnMigrar = document.getElementById('btnMigrarStorage');
+    const btnMigrar = document.getElementById('btnOptimizarImagenes');
     if(btnMigrar){
       btnMigrar.onclick = async ()=>{
         btnMigrar.disabled = true;
@@ -2381,16 +2376,16 @@ function runApp(){
         const msgEl = document.getElementById('migrarMsg');
         msgEl.className = 'status-msg';
         try{
-          const resultado = await migrarImagenesAStorage((p)=>{
+          const resultado = await optimizarImagenesExistentes((p)=>{
             if(p.fase==='productos'){
-              msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (optimizadas: ${p.migrados})`;
+              msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (optimizadas: ${p.optimizadas})`;
             } else {
               msgEl.textContent = 'Optimizando logo, banner e íconos…';
             }
           });
           msgEl.className = 'status-msg ok';
-          msgEl.textContent = resultado.migrados
-            ? `Listo. Se optimizaron ${resultado.migrados} imagen(es). Refresca la página para notar el cambio.`
+          msgEl.textContent = resultado.optimizadas
+            ? `Listo. Se optimizaron ${resultado.optimizadas} imagen(es). Refresca la página para notar el cambio.`
             : 'Todo tu catálogo ya estaba optimizado. No había nada pendiente.';
         }catch(e){
           msgEl.className = 'status-msg err';
@@ -2402,8 +2397,8 @@ function runApp(){
     }
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudget(file, 90000);
-      pendingLogo = await subirImagenAStorage(dataUrl, 'config');
+      const dataUrl = await compressToBudget(file, 25000);
+      pendingLogo = dataUrl;
       const prev = document.getElementById('sLogoPreview');
       prev.src = pendingLogo; prev.style.display='block';
       document.getElementById('sLogoRemove').style.display='inline-block';
@@ -2415,8 +2410,8 @@ function runApp(){
     };
     document.getElementById('sBannerFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressToBudget(file, 200000);
-      pendingBanner = await subirImagenAStorage(dataUrl, 'config');
+      const dataUrl = await compressToBudget(file, 60000);
+      pendingBanner = dataUrl;
       const prev = document.getElementById('sBannerPreview');
       prev.src = pendingBanner; prev.style.display='block';
       document.getElementById('sBannerRemove').style.display='inline-block';
