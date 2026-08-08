@@ -7,6 +7,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
 <link rel="preconnect" href="https://firestore.googleapis.com">
+<!-- Adelantamos la descarga del SDK de Firebase desde que el navegador lee el
+     <head>, en vez de esperar a que llegue hasta abajo, donde está el bloque
+     de código principal. En una red con más latencia (datos móviles) esto
+     ahorra varias idas y vueltas antes de poder pedir cualquier dato. No
+     cambia nada de cómo funciona la página, solo cuándo empieza a bajar el
+     código. -->
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
 <title>Catálogo de Refacciones</title>
 <meta name="description" content="Catálogo de refacciones automotrices usadas. Encuentra la pieza correcta para tu vehículo.">
 <meta property="og:title" content="Catálogo de Refacciones">
@@ -1135,7 +1144,7 @@ function runApp(){
     slideTimers.set(piece.id, timer);
   }
 
-  function createCard(piece, prioritaria){
+  function createCard(piece, prioritaria, posEnLote){
     const cat = catById(piece.categoriaId) || {label:'Otro', color:'#7a7a72'};
     const fotos = piecePhotos(piece);
     const card = document.createElement('div');
@@ -1207,9 +1216,18 @@ function runApp(){
         entries.forEach(entry=>{
           if(!entry.isIntersecting) return;
           previewObs.disconnect();
-          asegurarGaleriaCompleta(piece).then(fotosCompletas=>{
-            if(fotosCompletas.length>1) startCardSlideshow(card, piece, fotosCompletas);
-          });
+          // Repartimos en el tiempo (no todas a la vez) las peticiones del
+          // álbum completo de las tarjetas que aparecen juntas de entrada:
+          // así el celular no tiene que bajar y decodificar varias fotos al
+          // mismo tiempo justo cuando la página recién abre. Se ve exactamente
+          // igual, solo que el carrusel de cada tarjeta arranca con una
+          // fracción de segundo de diferencia entre una y otra.
+          const espera = 250 + Math.min(posEnLote||0, 10)*130;
+          setTimeout(()=>{
+            asegurarGaleriaCompleta(piece).then(fotosCompletas=>{
+              if(fotosCompletas.length>1) startCardSlideshow(card, piece, fotosCompletas);
+            });
+          }, espera);
         });
       }, { root:null, rootMargin:'250px 0px', threshold:0 });
       previewObs.observe(card);
@@ -1235,7 +1253,7 @@ function runApp(){
     const frag = document.createDocumentFragment();
     slice.forEach((piece,i)=>{
       const globalIdx = renderedCount + i;
-      const card = createCard(piece, globalIdx < 4);
+      const card = createCard(piece, globalIdx < 4, i);
       card.style.animationDelay = (Math.min(i,7)*0.04)+'s';
       frag.appendChild(card);
     });
