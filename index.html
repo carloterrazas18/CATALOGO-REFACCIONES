@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://firestore.googleapis.com">
 <title>Catálogo de Refacciones</title>
 <meta name="description" content="Catálogo de refacciones automotrices usadas. Encuentra la pieza correcta para tu vehículo.">
 <meta property="og:title" content="Catálogo de Refacciones">
@@ -120,7 +124,7 @@
   .cat-grid{padding:30px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;}
   .empty-state{grid-column:1/-1;padding:70px 20px;text-align:center;color:var(--subtitle-color);font-family:var(--font-body);font-size:14px;}
 
-  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;animation:cardIn .45s ease both;}
+  .prod-card{background:var(--card-bg);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.25);transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;cursor:pointer;min-width:0;animation:cardIn .45s ease both;content-visibility:auto;contain-intrinsic-size:0 340px;}
   .prod-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(0,0,0,0.4), 0 0 0 1px var(--accent);}
   @keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){ .prod-card{animation:none;} }
@@ -434,6 +438,7 @@ function runApp(){
   }
   const MAX_FOTOS = 20;
   let pieces = [];
+  let productosCargados = false;
   let config = {
     titulo:'Refacciones Puebla',
     eslogan:'Encuentra la pieza correcta.',
@@ -690,6 +695,7 @@ function runApp(){
   let deepLinkChecked = false;
   onSnapshot(productosQuery, (snap)=>{
     connErrorEl.style.display = 'none';
+    productosCargados = true;
     pieces = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
     renderGrid();
     if(!deepLinkChecked && pieces.length>0){
@@ -972,9 +978,13 @@ function runApp(){
     grid.innerHTML = '';
     if(list.length===0){
       const hayFiltros = searchTerm || minPrice!==null || maxPrice!==null || activeCat!=='Todas' || activeVeh!=='Todas';
-      grid.innerHTML = hayFiltros
-        ? '<div class="empty-state">No encontramos piezas que coincidan con tu búsqueda o filtros. Intenta con otros términos.</div>'
-        : '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
+      if(!productosCargados && !hayFiltros){
+        grid.innerHTML = '<div class="empty-state">Cargando catálogo…</div>';
+      } else {
+        grid.innerHTML = hayFiltros
+          ? '<div class="empty-state">No encontramos piezas que coincidan con tu búsqueda o filtros. Intenta con otros términos.</div>'
+          : '<div class="empty-state">No hay piezas que mostrar todavía. Usa el botón de abajo para agregar la primera.</div>';
+      }
       return;
     }
     if(!gridObserver){
@@ -1409,7 +1419,7 @@ function runApp(){
   }
 
   async function compressToBudget(file, budgetBytes){
-    let maxDim = 1100, quality = 0.85;
+    let maxDim = 900, quality = 0.8;
     let dataUrl = await compressFile(file, maxDim, quality);
     let guard = 0;
     while(dataUrl.length > budgetBytes && guard < 9){
@@ -1558,7 +1568,7 @@ function runApp(){
         document.getElementById('photoMsg').textContent = 'Procesando imágenes...';
       }
       const totalTrasAgregar = pendingPhotos.length + files.length;
-      const budget = Math.min(300000, Math.max(35000, Math.floor(900000/Math.max(totalTrasAgregar,1))));
+      const budget = Math.min(170000, Math.max(28000, Math.floor(560000/Math.max(totalTrasAgregar,1))));
       for(const file of files){
         try{
           const dataUrl = await compressToBudget(file, budget);
@@ -2126,7 +2136,7 @@ function runApp(){
     wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      pendingLogo = await compressToBudget(file, 150000);
+      pendingLogo = await compressToBudget(file, 90000);
       const prev = document.getElementById('sLogoPreview');
       prev.src = pendingLogo; prev.style.display='block';
       document.getElementById('sLogoRemove').style.display='inline-block';
@@ -2138,7 +2148,7 @@ function runApp(){
     };
     document.getElementById('sBannerFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      pendingBanner = await compressToBudget(file, 350000);
+      pendingBanner = await compressToBudget(file, 200000);
       const prev = document.getElementById('sBannerPreview');
       prev.src = pendingBanner; prev.style.display='block';
       document.getElementById('sBannerRemove').style.display='inline-block';
