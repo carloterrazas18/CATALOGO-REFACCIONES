@@ -210,9 +210,9 @@
   .design-preview.banner{max-height:90px;object-fit:cover;width:100%;}
 
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;overscroll-behavior:contain;touch-action:pan-y;}
-  .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;}
-  .lightbox-media{position:relative;background:#111;min-height:420px;min-width:0;overflow:hidden;}
-  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;opacity:1;transition:opacity .2s ease;}
+  .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;align-items:start;}
+  .lightbox-media{position:relative;background:#111;aspect-ratio:1/1;min-width:0;overflow:hidden;}
+  .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;opacity:1;transition:opacity .12s ease;}
   .lightbox-media img.switching{opacity:0;}
   .lightbox-media.zoomed img{cursor:grab;}
   .lightbox-zoom-hint{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.6);color:#fff;font-family:var(--font-body);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 10px;border-radius:999px;pointer-events:none;opacity:1;transition:opacity .6s ease;border:1px solid rgba(255,255,255,0.15);}
@@ -932,15 +932,27 @@ function runApp(){
   onSnapshot(productosQuery, (snap)=>{
     connErrorEl.style.display = 'none';
     productosCargados = true;
+    const liveBaseAnterior = liveBase;
     liveBase = snap.docs.map(d=>Object.assign({id:d.id}, d.data()));
     lastDocSnap = snap.docs[snap.docs.length-1] || null;
-    const yaEstabaCompleto = catalogoCompletoCargado;
-    if(yaEstabaCompleto){
-      // El primer lote cambió (ej. se agregó un producto nuevo) después de
-      // haber bajado ya todo el catálogo: refrescamos el resto para que
-      // ninguna pieza quede "atrapada" fuera de la vista.
-      piecesExtra = [];
-      catalogoCompletoCargado = false;
+    // OJO: antes, cada vez que algo cambiaba en esta primera "página" del
+    // catálogo (agregar una pieza, editarla o BORRARLA), se tiraba a la
+    // basura todo lo que ya se había cargado de más (piecesExtra) y se
+    // volvía a pedir TODO el catálogo otra vez a Firestore, tanda por tanda.
+    // En catálogos con hartas piezas eso eran varias idas y vueltas seguidas
+    // a la red, cada una redibujando toda la cuadrícula — y ESO era lo que
+    // se sentía como que la página se congelaba (se notaba sobre todo al
+    // borrar, que es cuando la primera página cambia más seguido).
+    // Ahora, en vez de reiniciar todo, solo nos aseguramos de que ninguna
+    // pieza se pierda: si una pieza que antes estaba en esta primera página
+    // ya no aparece aquí (porque otra la empujó hacia atrás, ej. al agregar
+    // una nueva), la guardamos en piecesExtra si todavía no está ahí — sin
+    // pedirle nada de nuevo al servidor, porque ya la teníamos en memoria.
+    if(catalogoCompletoCargado){
+      const idsNuevos = new Set(liveBase.map(p=>p.id));
+      const idsExtra = new Set(piecesExtra.map(p=>p.id));
+      const caidos = liveBaseAnterior.filter(p=>!idsNuevos.has(p.id) && !idsExtra.has(p.id));
+      if(caidos.length) piecesExtra = piecesExtra.concat(caidos);
     }
     hayMasEnServidor = snap.docs.length === FS_PAGE_SIZE;
     recomputePieces();
@@ -950,8 +962,6 @@ function runApp(){
       // Dejamos que la primera pantalla termine de pintarse y respire la red
       // antes de bajar el resto del catálogo calladamente.
       setTimeout(cargarRestoDelCatalogo, 1200);
-    }else if(yaEstabaCompleto && hayMasEnServidor){
-      cargarRestoDelCatalogo();
     }
     if(!deepLinkChecked && pieces.length>0){
       deepLinkChecked = true;
@@ -1489,6 +1499,20 @@ function runApp(){
     const fotos = piecePhotos(piece);
     let idx = 0;
     let zoomApi = null;
+    // Precargamos la foto de al lado (siguiente y anterior) en cuanto se
+    // abre la tarjeta, igual que ya se hace en el carrusel de las tarjetas
+    // del catálogo. Así, cuando la persona le da a "siguiente", la foto casi
+    // siempre ya está en la caché del navegador y el cruce (fade) es
+    // prácticamente instantáneo — sin la demora de esperar a que baje una
+    // foto grande justo en ese momento. No precargamos TODO el álbum de
+    // golpe, para no gastar datos de más en piezas con muchas fotos.
+    const lbCache = new Array(fotos.length);
+    function lbPreload(i){
+      if(!fotos.length || i<0 || i>=fotos.length) return null;
+      if(!lbCache[i]){ const im = new Image(); im.decoding = 'async'; im.src = fotos[i]; lbCache[i] = im; }
+      return lbCache[i];
+    }
+    if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); }
     // La tarjeta completa (lightbox-info incluida) se construye UNA sola vez.
     // Cambiar de foto solo llama a updatePhoto(), que actualiza la imagen y
     // los puntos sin volver a crear el contenedor con scroll — así no se
@@ -1581,17 +1605,27 @@ function runApp(){
       const imgEl = mediaEl ? mediaEl.querySelector('img') : null;
       if(imgEl){
         if(zoomApi) zoomApi.reset(false);
-        // Pequeño fade al cambiar de foto: se apaga, se cambia el src, y en
-        // cuanto carga se vuelve a encender — igual que en las tarjetas.
-        imgEl.classList.add('switching');
         const nueva = fotos[idx];
+        const pre = lbPreload(idx);
         const encender = ()=> imgEl.classList.remove('switching');
-        imgEl.src = nueva;
-        if(imgEl.complete) requestAnimationFrame(encender);
-        else{
-          imgEl.addEventListener('load', encender, {once:true});
-          imgEl.addEventListener('error', encender, {once:true});
+        if(pre && pre.complete && pre.naturalWidth>0){
+          // Ya estaba precargada (lo normal): se muestra directo, sin
+          // apagar la foto antes — por eso no se nota demora ni fade feo.
+          imgEl.src = nueva;
+          imgEl.classList.remove('switching');
+        }else{
+          // No alcanzó a precargarse (conexión muy lenta): mismo
+          // comportamiento de respaldo de antes, con un fade más corto.
+          imgEl.classList.add('switching');
+          imgEl.src = nueva;
+          if(imgEl.complete) requestAnimationFrame(encender);
+          else{
+            imgEl.addEventListener('load', encender, {once:true});
+            imgEl.addEventListener('error', encender, {once:true});
+          }
         }
+        // Adelantamos la caché para el próximo salto (siguiente/anterior).
+        if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); }
       }
       lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
         d.classList.toggle('on', Number(d.dataset.i)===idx);
