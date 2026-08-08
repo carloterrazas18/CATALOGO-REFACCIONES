@@ -689,6 +689,10 @@ function runApp(){
     renderVehChips();
     renderSocial();
     renderGrid();
+    if(lightboxAbiertoId){
+      const piezaAbierta = pieces.find(p=>p.id===lightboxAbiertoId);
+      if(piezaAbierta) openLightbox(piezaAbierta);
+    }
   }, (err)=>{ console.error('config', err); connErrorEl.style.display = 'block'; });
 
   const productosQuery = query(collection(db,'productos'), orderBy('creado','desc'));
@@ -1097,7 +1101,10 @@ function runApp(){
     return { reset };
   }
 
+  let lightboxAbiertoId = null;
+
   function closeLightbox(){
+    lightboxAbiertoId = null;
     lightboxRoot.innerHTML = '';
     unlockBodyScroll();
     try{
@@ -1111,6 +1118,7 @@ function runApp(){
 
   function openLightbox(piece){
     lockBodyScroll();
+    lightboxAbiertoId = piece.id;
     // Reflejamos el id de la pieza en la URL para que, al compartir el link,
     // la persona que lo abra caiga directo en esta pieza (no en el catálogo general).
     try{
