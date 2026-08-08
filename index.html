@@ -400,7 +400,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
+  getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc,
   onSnapshot, query, orderBy, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
@@ -528,6 +528,37 @@ function runApp(){
     return {optimizadas, revisados, errores};
   }
 
+  // Recorre los productos que se guardaron ANTES de este cambio (todas sus
+  // fotos juntas en un solo documento) y los pasa al esquema nuevo: portada
+  // en el documento principal + álbum completo aparte. Solo toca productos
+  // con más de 1 foto que aún no se hayan migrado (no vuelve a tocar los
+  // que ya están migrados, así que se puede correr varias veces sin miedo).
+  async function migrarGaleriaExistente(onProgress){
+    let migrados = 0, errores = 0;
+    const snap = await getDocs(collection(db,'productos'));
+    const docs = snap.docs;
+    let revisados = 0;
+    for(const docSnap of docs){
+      revisados++;
+      const data = docSnap.data();
+      const fotos = data.fotos || [];
+      const yaMigrado = typeof data.totalFotos === 'number';
+      if(!yaMigrado && fotos.length > 1){
+        try{
+          await setDoc(doc(db,'productos',docSnap.id,'detalle','galeria'), {fotos});
+          await updateDoc(doc(db,'productos',docSnap.id), {fotos:[fotos[0]], totalFotos:fotos.length});
+          migrados++;
+        }catch(e){ errores++; }
+      } else if(!yaMigrado){
+        // 0 o 1 foto: no hace falta álbum aparte, solo marcamos como al día.
+        try{ await updateDoc(doc(db,'productos',docSnap.id), {totalFotos:fotos.length}); }
+        catch(e){ errores++; }
+      }
+      if(onProgress) onProgress({revisados, total:docs.length, migrados, errores});
+    }
+    return {migrados, revisados, errores};
+  }
+
   const VEHICULOS = ['Coche','Camioneta','Camión'];
   function getPieceVehiculos(piece){
     if(piece.vehiculos && piece.vehiculos.length) return piece.vehiculos;
@@ -542,6 +573,7 @@ function runApp(){
   // pedimos solo el primer lote para que la página abra rápido, y el resto
   // se trae en segundo plano (o al buscar/filtrar, para no perder resultados).
   const FS_PAGE_SIZE = 8;
+  const FS_BULK_PAGE_SIZE = 40;
   let liveBase = [];
   let piecesExtra = [];
   let lastDocSnap = null;
@@ -560,18 +592,21 @@ function runApp(){
       let cursor = lastDocSnap;
       // eslint-disable-next-line no-constant-condition
       while(true){
-        const q2 = query(collection(db,'productos'), orderBy('creado','desc'), startAfter(cursor), limit(FS_PAGE_SIZE));
+        const q2 = query(collection(db,'productos'), orderBy('creado','desc'), startAfter(cursor), limit(FS_BULK_PAGE_SIZE));
         const snap2 = await getDocs(q2);
         if(snap2.empty) break;
         piecesExtra = piecesExtra.concat(snap2.docs.map(d=>Object.assign({id:d.id}, d.data())));
         cursor = snap2.docs[snap2.docs.length-1];
-        if(snap2.docs.length < FS_PAGE_SIZE) break;
+        // Cada tanda que llega se pinta de inmediato, en vez de esperar a
+        // tener el catálogo completo: así el usuario ve tarjetas nuevas
+        // aparecer poco a poco en vez de quedarse "pegado" sin nada.
+        lastDocSnap = cursor;
+        recomputePieces();
+        renderGrid();
+        if(snap2.docs.length < FS_BULK_PAGE_SIZE) break;
       }
-      lastDocSnap = cursor;
       catalogoCompletoCargado = true;
       hayMasEnServidor = false;
-      recomputePieces();
-      renderGrid();
     }catch(e){ console.error('cargar resto del catálogo', e); }
     cargandoMas = false;
   }
@@ -676,6 +711,28 @@ function runApp(){
     if(p.fotos && p.fotos.length) return p.fotos;
     if(p.foto) return [p.foto];
     return [];
+  }
+
+  // Cuando un producto tiene su álbum guardado aparte (para que el catálogo
+  // cargue rápido), esta función va por las fotos que faltan SOLO cuando de
+  // verdad se necesitan (al abrir la pieza o al editarla). Guarda el
+  // resultado en memoria para no volver a pedirlo dos veces en la misma
+  // visita. Si el producto es de los "viejos" (todavía no migrado), ya
+  // trae todas sus fotos de una vez y no hace ninguna petición extra.
+  const galeriaCache = new Map();
+  async function asegurarGaleriaCompleta(piece){
+    const actuales = piecePhotos(piece);
+    if(!piece.totalFotos || piece.totalFotos <= actuales.length) return actuales;
+    if(galeriaCache.has(piece.id)) return galeriaCache.get(piece.id);
+    try{
+      const snap = await getDoc(doc(db,'productos',piece.id,'detalle','galeria'));
+      const fotos = (snap.exists() && snap.data().fotos && snap.data().fotos.length) ? snap.data().fotos : actuales;
+      galeriaCache.set(piece.id, fotos);
+      return fotos;
+    }catch(e){
+      console.error('galería', e);
+      return actuales;
+    }
   }
 
   function anioLabel(p){
@@ -1306,7 +1363,12 @@ function runApp(){
     }catch(e){}
   }
 
-  function openLightbox(piece){
+  let lightboxRequestToken = 0;
+  async function openLightbox(piece){
+    const miToken = ++lightboxRequestToken;
+    const fotosCompletas = await asegurarGaleriaCompleta(piece);
+    if(miToken !== lightboxRequestToken) return; // el usuario ya abrió otra pieza mientras esperábamos
+    piece = Object.assign({}, piece, {fotos: fotosCompletas});
     lockBodyScroll();
     lightboxAbiertoId = piece.id;
     // Reflejamos el id de la pieza en la URL para que, al compartir el link,
@@ -1782,6 +1844,16 @@ function runApp(){
       </div>
     `;
     renderPhotoThumbs(document.getElementById('photoThumbs'));
+    // Si esta pieza tiene fotos guardadas aparte (álbum completo), las
+    // traemos ahora en segundo plano para poder editarlas/borrarlas, sin
+    // detener la apertura del formulario.
+    if(editing && editing.totalFotos && editing.totalFotos > pendingPhotos.length){
+      asegurarGaleriaCompleta(editing).then(fotosCompletas=>{
+        pendingPhotos = fotosCompletas.slice();
+        const cont = document.getElementById('photoThumbs');
+        if(cont) renderPhotoThumbs(cont);
+      });
+    }
     document.getElementById('fPhotoFiles').addEventListener('change', async (e)=>{
       let files = Array.from(e.target.files);
       const espacioDisponible = MAX_FOTOS - pendingPhotos.length;
@@ -1818,14 +1890,33 @@ function runApp(){
       const precio = Number(document.getElementById('fPrice').value.trim());
       const notas = document.getElementById('fNotes').value.trim();
       if(!nombre || !precio){ document.getElementById('formMsg').textContent = 'Nombre y precio son obligatorios.'; return; }
-      const data = {nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, marca, motor, precio, fotos:pendingPhotos, notas};
+      // Solo guardamos la primera foto en el documento principal (lo que
+      // trae el catálogo para pintar las tarjetas); el álbum completo se
+      // guarda aparte y se pide solo cuando alguien abre esta pieza.
+      const data = {
+        nombre, categoriaId, vehiculos, estado, compatibilidad, anioDesde, anioHasta, marca, motor, precio, notas,
+        fotos: pendingPhotos.length ? [pendingPhotos[0]] : [],
+        totalFotos: pendingPhotos.length
+      };
       try{
-        if(editing){
-          await updateDoc(doc(db,'productos',editing.id), data);
-        }else{
+        let productId = editing ? editing.id : null;
+        if(!productId){
           data.creado = Date.now();
-          await addDoc(collection(db,'productos'), data);
+          const ref = await addDoc(collection(db,'productos'), data);
+          productId = ref.id;
         }
+        // En una pieza nueva hace falta crear primero el documento principal
+        // para obtener su id; en una pieza que ya existe, en cambio,
+        // guardamos primero el álbum completo y actualizamos al final —así,
+        // si algo falla a mitad de camino, la pieza ya guardada no queda a
+        // medias con datos incompletos.
+        if(pendingPhotos.length > 1){
+          await setDoc(doc(db,'productos',productId,'detalle','galeria'), {fotos: pendingPhotos});
+        }
+        if(editing){
+          await updateDoc(doc(db,'productos',productId), data);
+        }
+        galeriaCache.delete(productId);
         openAdminPanel('piezas');
       }catch(e){
         document.getElementById('formMsg').textContent = 'Error al guardar: '+e.message;
@@ -2149,6 +2240,13 @@ function runApp(){
           <div class="status-msg" id="migrarMsg" style="margin-top:8px;"></div>
         </div>
 
+        <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
+          <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">⚡ Carga instantánea del catálogo</div>
+          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Separa la foto de portada (lo que ve el catálogo) del álbum completo de cada pieza (lo que se ve al abrirla), para que la primera carga pese mucho menos. No borra ninguna foto ni sube nada a servicios externos ni de pago. Es seguro correrlo varias veces — solo migra lo que falte.</div>
+          <button class="btn btn-primary btn-small" id="btnMigrarGaleria">Activar carga rápida</button>
+          <div class="status-msg" id="migrarGaleriaMsg" style="margin-top:8px;"></div>
+        </div>
+
         <label>Logo (junto al título)</label>
         <input type="file" id="sLogoFile" accept="image/*">
         <img id="sLogoPreview" class="design-preview" style="${config.logo?'':'display:none;'}" src="${config.logo?escapeAttr(config.logo):''}">
@@ -2393,6 +2491,30 @@ function runApp(){
         }
         btnMigrar.disabled = false;
         btnMigrar.textContent = 'Optimizar ahora';
+      };
+    }
+    const btnMigrarGaleria = document.getElementById('btnMigrarGaleria');
+    if(btnMigrarGaleria){
+      btnMigrarGaleria.onclick = async ()=>{
+        btnMigrarGaleria.disabled = true;
+        btnMigrarGaleria.textContent = 'Activando…';
+        const msgEl = document.getElementById('migrarGaleriaMsg');
+        msgEl.className = 'status-msg';
+        try{
+          const resultado = await migrarGaleriaExistente((p)=>{
+            msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (migrados: ${p.migrados})`;
+          });
+          msgEl.className = 'status-msg ok';
+          msgEl.textContent = resultado.migrados
+            ? `Listo. Se activó carga rápida en ${resultado.migrados} pieza(s). Refresca la página para notar el cambio.`
+            : 'Todo tu catálogo ya estaba al día. No había nada pendiente.';
+          galeriaCache.clear();
+        }catch(e){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'Error al activar: '+e.message;
+        }
+        btnMigrarGaleria.disabled = false;
+        btnMigrarGaleria.textContent = 'Activar carga rápida';
       };
     }
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
