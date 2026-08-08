@@ -592,37 +592,49 @@ function runApp(){
   let piecesExtra = [];
   let lastDocSnap = null;
   let hayMasEnServidor = false;
-  let cargandoMas = false;
   let catalogoCompletoCargado = false;
   let fondoProgramado = false;
   function recomputePieces(){
     const ids = new Set(liveBase.map(p=>p.id));
     pieces = liveBase.concat(piecesExtra.filter(p=>!ids.has(p.id)));
   }
-  async function cargarRestoDelCatalogo(){
-    if(catalogoCompletoCargado || cargandoMas || !hayMasEnServidor) return;
-    cargandoMas = true;
-    try{
-      let cursor = lastDocSnap;
-      // eslint-disable-next-line no-constant-condition
-      while(true){
-        const q2 = query(collection(db,'productos'), orderBy('creado','desc'), startAfter(cursor), limit(FS_BULK_PAGE_SIZE));
-        const snap2 = await getDocs(q2);
-        if(snap2.empty) break;
-        piecesExtra = piecesExtra.concat(snap2.docs.map(d=>Object.assign({id:d.id}, d.data())));
-        cursor = snap2.docs[snap2.docs.length-1];
-        // Cada tanda que llega se pinta de inmediato, en vez de esperar a
-        // tener el catálogo completo: así el usuario ve tarjetas nuevas
-        // aparecer poco a poco en vez de quedarse "pegado" sin nada.
-        lastDocSnap = cursor;
-        recomputePieces();
-        renderGrid();
-        if(snap2.docs.length < FS_BULK_PAGE_SIZE) break;
-      }
-      catalogoCompletoCargado = true;
-      hayMasEnServidor = false;
-    }catch(e){ console.error('cargar resto del catálogo', e); }
-    cargandoMas = false;
+  // OJO: esta función se puede pedir desde varios lugares casi al mismo
+  // tiempo (ej. al agregar un producto: el listener en tiempo real la pide
+  // Y el panel de admin también la pide). Antes, si ya había una carga en
+  // curso, la función devolvía "ya terminé" de inmediato (sin esperar a la
+  // carga real) y quien la pidió con .then() se enteraba al instante y
+  // volvía a pedirla, una y otra vez, miles de veces por segundo, hasta que
+  // la carga real terminaba. Eso era lo que trababa la página. Ahora, si ya
+  // hay una carga en curso, se devuelve esa MISMA promesa para que todos
+  // esperen juntos a que termine de verdad, en vez de reintentarlo sin parar.
+  let cargaEnCursoPromise = null;
+  function cargarRestoDelCatalogo(){
+    if(catalogoCompletoCargado || !hayMasEnServidor) return Promise.resolve();
+    if(cargaEnCursoPromise) return cargaEnCursoPromise;
+    cargaEnCursoPromise = (async ()=>{
+      try{
+        let cursor = lastDocSnap;
+        // eslint-disable-next-line no-constant-condition
+        while(true){
+          const q2 = query(collection(db,'productos'), orderBy('creado','desc'), startAfter(cursor), limit(FS_BULK_PAGE_SIZE));
+          const snap2 = await getDocs(q2);
+          if(snap2.empty) break;
+          piecesExtra = piecesExtra.concat(snap2.docs.map(d=>Object.assign({id:d.id}, d.data())));
+          cursor = snap2.docs[snap2.docs.length-1];
+          // Cada tanda que llega se pinta de inmediato, en vez de esperar a
+          // tener el catálogo completo: así el usuario ve tarjetas nuevas
+          // aparecer poco a poco en vez de quedarse "pegado" sin nada.
+          lastDocSnap = cursor;
+          recomputePieces();
+          renderGrid();
+          if(snap2.docs.length < FS_BULK_PAGE_SIZE) break;
+        }
+        catalogoCompletoCargado = true;
+        hayMasEnServidor = false;
+      }catch(e){ console.error('cargar resto del catálogo', e); }
+      cargaEnCursoPromise = null;
+    })();
+    return cargaEnCursoPromise;
   }
   let config = {
     titulo:'Refacciones Puebla',
