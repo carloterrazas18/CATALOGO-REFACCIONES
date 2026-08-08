@@ -409,6 +409,9 @@ import {
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getStorage, ref as storageRef, uploadString, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 // ======================================================================
 // PEGA_AQUI_TU_FIREBASE_CONFIG
@@ -436,7 +439,76 @@ function runApp(){
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
+  const storage = getStorage(app);
   setPersistence(auth, browserLocalPersistence).catch(()=>{});
+
+  // Sube una imagen (en formato dataURL, ya comprimida) a Firebase Storage
+  // y devuelve el link público. Esto reemplaza el guardar la imagen como
+  // texto gigante dentro del documento de Firestore, que era la causa de
+  // que el catálogo cargara cada vez más lento: cada visita tenía que
+  // descargar TODAS las fotos como texto antes de poder mostrar la página,
+  // sin poder aprovechar el caché del navegador entre visitas.
+  async function subirImagenAStorage(dataUrl, carpeta){
+    const mime = (dataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/jpeg';
+    const ext = mime.includes('png') ? 'png' : 'jpg';
+    const nombreArchivo = `${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const refImg = storageRef(storage, `${carpeta}/${nombreArchivo}`);
+    await uploadString(refImg, dataUrl, 'data_url');
+    return await getDownloadURL(refImg);
+  }
+
+  // Migra a Storage cualquier imagen que haya quedado guardada en formato
+  // antiguo (texto base64 dentro de Firestore): logo, banner, ícono de
+  // avisos, íconos de redes y las fotos de cada producto. Es seguro
+  // ejecutarla varias veces: solo toca lo que todavía esté en formato viejo.
+  async function migrarImagenesAStorage(onProgress){
+    let migrados = 0, errores = 0;
+    const cambiosConfig = {};
+    for(const campo of ['logo','banner','tickerIcono']){
+      const val = config[campo];
+      if(val && val.startsWith('data:')){
+        try{ cambiosConfig[campo] = await subirImagenAStorage(val, 'config'); migrados++; }
+        catch(e){ errores++; }
+      }
+    }
+    const socialCambios = {};
+    for(const key of ['tiktokIcono','facebookIcono','instagramIcono','whatsappIcono','telefonoIcono']){
+      const val = config.social && config.social[key];
+      if(val && val.startsWith('data:')){
+        try{ socialCambios[key] = await subirImagenAStorage(val, 'config'); migrados++; }
+        catch(e){ errores++; }
+      }
+    }
+    if(Object.keys(cambiosConfig).length || Object.keys(socialCambios).length){
+      const updateData = Object.assign({}, cambiosConfig);
+      if(Object.keys(socialCambios).length) updateData.social = Object.assign({}, config.social, socialCambios);
+      try{ await updateDoc(doc(db,'configuracion','admin'), updateData); }catch(e){ errores++; }
+    }
+    if(onProgress) onProgress({fase:'config', migrados, errores});
+    const snap = await getDocs(collection(db,'productos'));
+    let revisados = 0;
+    for(const docSnap of snap.docs){
+      revisados++;
+      const data = docSnap.data();
+      const fotos = data.fotos || [];
+      let cambio = false;
+      const nuevasFotos = [];
+      for(const foto of fotos){
+        if(typeof foto === 'string' && foto.startsWith('data:')){
+          try{ nuevasFotos.push(await subirImagenAStorage(foto, 'productos')); cambio = true; migrados++; }
+          catch(e){ nuevasFotos.push(foto); errores++; }
+        } else {
+          nuevasFotos.push(foto);
+        }
+      }
+      if(cambio){
+        try{ await updateDoc(doc(db,'productos',docSnap.id), {fotos:nuevasFotos}); }
+        catch(e){ errores++; }
+      }
+      if(onProgress) onProgress({fase:'productos', revisados, total:snap.docs.length, migrados, errores});
+    }
+    return {migrados, revisados, errores};
+  }
 
   const VEHICULOS = ['Coche','Camioneta','Camión'];
   function getPieceVehiculos(piece){
@@ -1706,7 +1778,8 @@ function runApp(){
       for(const file of files){
         try{
           const dataUrl = await compressToBudget(file, budget);
-          pendingPhotos.push(dataUrl);
+          const url = await subirImagenAStorage(dataUrl, 'productos');
+          pendingPhotos.push(url);
         }catch(err){ /* ignora archivo con error */ }
       }
       renderPhotoThumbs(document.getElementById('photoThumbs'));
@@ -1893,7 +1966,8 @@ function runApp(){
     renderList();
     document.getElementById('tickerIconFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      pendingTickerIcon = await compressToBudgetPNG(file, 80000);
+      const dataUrl = await compressToBudgetPNG(file, 80000);
+      pendingTickerIcon = await subirImagenAStorage(dataUrl, 'config');
       document.getElementById('tickerIconPreview').src = pendingTickerIcon;
       document.getElementById('tickerIconPreviewWrap').style.display = 'flex';
     });
@@ -2049,6 +2123,13 @@ function runApp(){
         <textarea id="sPolicies" rows="8">${escapeAttr(config.politicasCompra||'')}</textarea>
         <div style="margin-top:14px;padding:12px 14px;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:10px;font-size:12px;color:var(--input-text);">
           🔒 El acceso admin ahora usa Firebase Authentication (correo y contraseña), no un PIN. Para cambiar la contraseña o agregar otro administrador, hazlo desde <b>console.firebase.google.com</b> → Authentication → Users.
+        </div>
+
+        <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
+          <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">🚀 Optimizar velocidad del catálogo</div>
+          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Convierte las fotos que quedaron guardadas "pesadas" dentro de la base de datos en archivos ligeros, para que el catálogo vuelva a cargar rápido. Es seguro correrlo, y puedes ejecutarlo varias veces. Puede tardar algunos minutos según cuántas piezas tengas — no cierres esta ventana mientras corre.</div>
+          <button class="btn btn-primary btn-small" id="btnMigrarStorage">Optimizar ahora</button>
+          <div class="status-msg" id="migrarMsg" style="margin-top:8px;"></div>
         </div>
 
         <label>Logo (junto al título)</label>
@@ -2255,7 +2336,8 @@ function runApp(){
     function wireIconUpload(key, fileId, previewWrapId, previewId, removeId){
       document.getElementById(fileId).addEventListener('change', async (e)=>{
         const file = e.target.files[0]; if(!file) return;
-        pendingIcons[key] = await compressToBudget(file, 80000);
+        const dataUrl = await compressToBudget(file, 80000);
+        pendingIcons[key] = await subirImagenAStorage(dataUrl, 'config');
         document.getElementById(previewId).src = pendingIcons[key];
         document.getElementById(previewWrapId).style.display = 'flex';
       });
@@ -2269,9 +2351,37 @@ function runApp(){
     wireIconUpload('instagramIcono','sInstagramIcon','sInstagramIconPreviewWrap','sInstagramIconPreview','sInstagramIconRemove');
     wireIconUpload('whatsappIcono','sWhatsappIcon','sWhatsappIconPreviewWrap','sWhatsappIconPreview','sWhatsappIconRemove');
     wireIconUpload('telefonoIcono','sTelefonoIcon','sTelefonoIconPreviewWrap','sTelefonoIconPreview','sTelefonoIconRemove');
+    const btnMigrar = document.getElementById('btnMigrarStorage');
+    if(btnMigrar){
+      btnMigrar.onclick = async ()=>{
+        btnMigrar.disabled = true;
+        btnMigrar.textContent = 'Optimizando…';
+        const msgEl = document.getElementById('migrarMsg');
+        msgEl.className = 'status-msg';
+        try{
+          const resultado = await migrarImagenesAStorage((p)=>{
+            if(p.fase==='productos'){
+              msgEl.textContent = `Revisando productos… ${p.revisados}/${p.total} (optimizadas: ${p.migrados})`;
+            } else {
+              msgEl.textContent = 'Optimizando logo, banner e íconos…';
+            }
+          });
+          msgEl.className = 'status-msg ok';
+          msgEl.textContent = resultado.migrados
+            ? `Listo. Se optimizaron ${resultado.migrados} imagen(es). Refresca la página para notar el cambio.`
+            : 'Todo tu catálogo ya estaba optimizado. No había nada pendiente.';
+        }catch(e){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'Error al optimizar: '+e.message;
+        }
+        btnMigrar.disabled = false;
+        btnMigrar.textContent = 'Optimizar ahora';
+      };
+    }
     document.getElementById('sLogoFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      pendingLogo = await compressToBudget(file, 90000);
+      const dataUrl = await compressToBudget(file, 90000);
+      pendingLogo = await subirImagenAStorage(dataUrl, 'config');
       const prev = document.getElementById('sLogoPreview');
       prev.src = pendingLogo; prev.style.display='block';
       document.getElementById('sLogoRemove').style.display='inline-block';
@@ -2283,7 +2393,8 @@ function runApp(){
     };
     document.getElementById('sBannerFile').addEventListener('change', async (e)=>{
       const file = e.target.files[0]; if(!file) return;
-      pendingBanner = await compressToBudget(file, 200000);
+      const dataUrl = await compressToBudget(file, 200000);
+      pendingBanner = await subirImagenAStorage(dataUrl, 'config');
       const prev = document.getElementById('sBannerPreview');
       prev.src = pendingBanner; prev.style.display='block';
       document.getElementById('sBannerRemove').style.display='inline-block';
