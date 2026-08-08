@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,7 +204,7 @@
   .design-preview.banner{max-height:90px;object-fit:cover;width:100%;}
 
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;overscroll-behavior:contain;touch-action:pan-y;}
-  .lightbox{background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;}
+  .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;}
   .lightbox-media{position:relative;background:#111;min-height:420px;min-width:0;overflow:hidden;}
   .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;}
   .lightbox-media.zoomed img{cursor:grab;}
@@ -290,7 +293,9 @@
     .sticky-search-wrap{width:88px;}
     .sticky-search{padding:6px 10px;font-size:11px;}
     .lightbox{grid-template-columns:1fr;max-width:480px;}
-    .lightbox-media{aspect-ratio:4/3;min-height:0;}
+    .lightbox-media{aspect-ratio:4/3;min-height:0;max-height:42vh;max-height:42dvh;}
+    .lightbox-overlay{padding:12px;align-items:flex-start;}
+    .lightbox{margin-top:4vh;}
     .cat-grid{padding:22px 14px;gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));}
     .cat-header{padding:22px 16px 18px;}
   }
@@ -1178,6 +1183,20 @@ function runApp(){
     `;
     document.getElementById('lbClose').onclick = closeLightbox;
     document.getElementById('lbOv').addEventListener('click', (e)=>{ if(e.target.id==='lbOv') closeLightbox(); });
+    // Nos aseguramos de que el modal siempre abra mostrando su contenido desde
+    // arriba (nombre, precio, etc.), sin importar el tamaño de la foto o el
+    // dispositivo. Lo forzamos ahora y otra vez cuando la foto termine de
+    // cargar, por si su alto real cambia el layout en ese momento.
+    const lbCard = document.querySelector('.lightbox');
+    if(lbCard) lbCard.scrollTop = 0;
+    const firstImg = lightboxRoot.querySelector('.lightbox-media img');
+    if(firstImg){
+      if(firstImg.complete){
+        if(lbCard) lbCard.scrollTop = 0;
+      }else{
+        firstImg.addEventListener('load', ()=>{ if(lbCard) lbCard.scrollTop = 0; }, {once:true});
+      }
+    }
     const shareBtn = document.getElementById('lbShare');
     if(shareBtn){
       shareBtn.onclick = async ()=>{
