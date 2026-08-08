@@ -457,6 +457,30 @@ function runApp(){
     return await getDownloadURL(refImg);
   }
 
+  // Evita que una sola foto "trabada" (red lenta, foto muy pesada, etc.)
+  // deje congelada toda la optimización: si tarda más de este tiempo, se
+  // cuenta como error y se sigue con las demás en vez de quedarse esperando.
+  function conTimeout(promesa, ms){
+    return Promise.race([
+      promesa,
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('tiempo agotado')), ms))
+    ]);
+  }
+
+  // Ejecuta `worker` sobre cada item de `items`, con hasta `limite` a la vez
+  // en paralelo, en vez de uno por uno — así la optimización es mucho más
+  // rápida cuando hay muchas fotos o muchos productos.
+  async function conLimite(items, limite, worker){
+    let siguiente = 0;
+    async function trabajador(){
+      while(siguiente < items.length){
+        const i = siguiente++;
+        await worker(items[i], i);
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(limite, items.length)}, trabajador));
+  }
+
   // Migra a Storage cualquier imagen que haya quedado guardada en formato
   // antiguo (texto base64 dentro de Firestore): logo, banner, ícono de
   // avisos, íconos de redes y las fotos de cada producto. Es seguro
@@ -467,7 +491,7 @@ function runApp(){
     for(const campo of ['logo','banner','tickerIcono']){
       const val = config[campo];
       if(val && val.startsWith('data:')){
-        try{ cambiosConfig[campo] = await subirImagenAStorage(val, 'config'); migrados++; }
+        try{ cambiosConfig[campo] = await conTimeout(subirImagenAStorage(val, 'config'), 20000); migrados++; }
         catch(e){ errores++; }
       }
     }
@@ -475,7 +499,7 @@ function runApp(){
     for(const key of ['tiktokIcono','facebookIcono','instagramIcono','whatsappIcono','telefonoIcono']){
       const val = config.social && config.social[key];
       if(val && val.startsWith('data:')){
-        try{ socialCambios[key] = await subirImagenAStorage(val, 'config'); migrados++; }
+        try{ socialCambios[key] = await conTimeout(subirImagenAStorage(val, 'config'), 20000); migrados++; }
         catch(e){ errores++; }
       }
     }
@@ -486,27 +510,25 @@ function runApp(){
     }
     if(onProgress) onProgress({fase:'config', migrados, errores});
     const snap = await getDocs(collection(db,'productos'));
+    const docs = snap.docs;
     let revisados = 0;
-    for(const docSnap of snap.docs){
-      revisados++;
+    await conLimite(docs, 4, async (docSnap)=>{
       const data = docSnap.data();
       const fotos = data.fotos || [];
-      let cambio = false;
-      const nuevasFotos = [];
-      for(const foto of fotos){
-        if(typeof foto === 'string' && foto.startsWith('data:')){
-          try{ nuevasFotos.push(await subirImagenAStorage(foto, 'productos')); cambio = true; migrados++; }
-          catch(e){ nuevasFotos.push(foto); errores++; }
-        } else {
-          nuevasFotos.push(foto);
-        }
-      }
-      if(cambio){
+      const idxAMigrar = [];
+      fotos.forEach((foto,i)=>{ if(typeof foto === 'string' && foto.startsWith('data:')) idxAMigrar.push(i); });
+      if(idxAMigrar.length){
+        const nuevasFotos = fotos.slice();
+        await conLimite(idxAMigrar, 4, async (i)=>{
+          try{ nuevasFotos[i] = await conTimeout(subirImagenAStorage(fotos[i], 'productos'), 20000); migrados++; }
+          catch(e){ errores++; }
+        });
         try{ await updateDoc(doc(db,'productos',docSnap.id), {fotos:nuevasFotos}); }
         catch(e){ errores++; }
       }
-      if(onProgress) onProgress({fase:'productos', revisados, total:snap.docs.length, migrados, errores});
-    }
+      revisados++;
+      if(onProgress) onProgress({fase:'productos', revisados, total:docs.length, migrados, errores});
+    });
     return {migrados, revisados, errores};
   }
 
@@ -2127,7 +2149,7 @@ function runApp(){
 
         <div style="margin-top:14px;padding:14px;background:var(--panel-bg);border:1px solid var(--accent);border-radius:10px;">
           <div style="font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;margin-bottom:6px;">🚀 Optimizar velocidad del catálogo</div>
-          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Convierte las fotos que quedaron guardadas "pesadas" dentro de la base de datos en archivos ligeros, para que el catálogo vuelva a cargar rápido. Es seguro correrlo, y puedes ejecutarlo varias veces. Puede tardar algunos minutos según cuántas piezas tengas — no cierres esta ventana mientras corre.</div>
+          <div style="font-size:12px;color:var(--subtitle-color);margin-bottom:10px;">Convierte las fotos que quedaron guardadas "pesadas" dentro de la base de datos en archivos ligeros, para que el catálogo vuelva a cargar rápido. Sube varias fotos a la vez y nunca se queda pegado (si una foto tarda demasiado, la salta sola). Es seguro correrlo, y puedes ejecutarlo varias veces sin problema.</div>
           <button class="btn btn-primary btn-small" id="btnMigrarStorage">Optimizar ahora</button>
           <div class="status-msg" id="migrarMsg" style="margin-top:8px;"></div>
         </div>
