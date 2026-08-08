@@ -1224,8 +1224,12 @@ function runApp(){
     }
     if(fotos.length>1){
       // La pieza ya trae más de una foto de entrada (piezas viejas sin
-      // migrar): arrancamos el carrusel de una vez, sin pedir nada extra.
-      startCardSlideshow(card, piece, fotos);
+      // migrar, o piezas nuevas que ya guardan todas sus fotos de una vez).
+      // OJO: en este punto la tarjeta todavía no está pegada a la página
+      // (recién se creó, la va a insertar quien llamó a createCard), así
+      // que arrancar el carrusel AHORA no serviría de nada. Esperamos un
+      // parpadeo (requestAnimationFrame) a que ya esté insertada.
+      requestAnimationFrame(()=>startCardSlideshow(card, piece, fotos));
     } else if((piece.totalFotos||0) > 1){
       // Pieza "migrada": el catálogo solo trajo la portada (para abrir
       // rápido) y el resto del álbum vive aparte. Para recuperar la vista
@@ -1792,7 +1796,21 @@ function runApp(){
     body.querySelectorAll('[data-del]').forEach(btn=>{
       btn.onclick = async ()=>{
         if(!confirm('¿Borrar esta pieza del catálogo?')) return;
-        await deleteDoc(doc(db,'productos',btn.dataset.del));
+        const idBorrado = btn.dataset.del;
+        try{
+          await deleteDoc(doc(db,'productos',idBorrado));
+        }catch(e){
+          alert('No se pudo borrar: '+e.message);
+          return;
+        }
+        // Quitamos la pieza de inmediato de lo que ya tenemos cargado en el
+        // navegador, en vez de pedirle a la página que vuelva a descargar
+        // TODO el catálogo desde cero (eso era lo que causaba que se
+        // trabara, igual que pasaba antes al agregar).
+        liveBase = liveBase.filter(p=>p.id!==idBorrado);
+        piecesExtra = piecesExtra.filter(p=>p.id!==idBorrado);
+        recomputePieces();
+        renderGrid();
         renderAdminList(body);
       };
     });
