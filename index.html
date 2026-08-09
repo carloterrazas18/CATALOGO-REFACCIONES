@@ -16,12 +16,18 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
-<title>Catálogo de Refacciones</title>
-<meta name="description" content="Catálogo de refacciones automotrices usadas. Encuentra la pieza correcta para tu vehículo.">
-<meta property="og:title" content="Catálogo de Refacciones">
-<meta property="og:description" content="Refacciones usadas para autos, camionetas y camiones. Precios competitivos y atención personalizada.">
+<title>Refaccionaria Arco | Refacciones Automotrices Usadas en Puebla</title>
+<meta name="description" content="Refaccionaria Arco: venta de refacciones automotrices usadas en Puebla. Motor, transmisión, dirección, suspensión y carrocería. Piezas de calidad a buen precio, atención personalizada y envíos a toda la república.">
+<meta name="robots" content="index, follow">
+<meta property="og:site_name" content="Refaccionaria Arco">
+<meta property="og:title" content="Refaccionaria Arco | Refacciones Automotrices Usadas">
+<meta property="og:description" content="Refacciones usadas para autos, camionetas y camiones en Puebla. Precios competitivos y atención personalizada.">
 <meta property="og:type" content="website">
 <meta property="og:image" id="ogImageMeta" content="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Refaccionaria Arco | Refacciones Automotrices Usadas">
+<meta name="twitter:description" content="Refacciones usadas para autos, camionetas y camiones en Puebla. Precios competitivos y atención personalizada.">
+<meta name="twitter:image" content="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
 <link rel="icon" id="faviconLink" type="image/jpeg" href="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
@@ -210,7 +216,7 @@
   .design-preview.banner{max-height:90px;object-fit:cover;width:100%;}
 
   .lightbox-overlay{position:fixed;inset:0;background:rgba(6,7,8,0.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;overscroll-behavior:contain;touch-action:pan-y;}
-  .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:920px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;align-items:start;}
+  .lightbox{position:relative;background:var(--card-bg);color:var(--card-text);border-radius:18px;max-width:1200px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:1fr 1fr;align-items:start;}
   .lightbox-media{position:relative;background:#111;aspect-ratio:1/1;min-width:0;overflow:hidden;}
   .lightbox-media img{width:100%;height:100%;object-fit:contain;background:#f4f4f2;touch-action:none;will-change:transform;opacity:1;transition:opacity .12s ease;}
   .lightbox-media img.switching{opacity:0;}
@@ -1463,6 +1469,35 @@ function runApp(){
     return { reset };
   }
 
+  // Zoom con doble click para PC (mouse). En touch se usa attachPinchZoom.
+  function attachDesktopZoom(mediaEl, imgEl){
+    let zoomed = false;
+    function set(z, withTransition, originX, originY){
+      zoomed = z;
+      imgEl.style.transition = withTransition ? 'transform .25s ease' : '';
+      if(zoomed){
+        imgEl.style.transformOrigin = (originX!=null) ? `${originX}% ${originY}%` : 'center';
+        imgEl.style.transform = 'scale(2)';
+      }else{
+        imgEl.style.transform = '';
+      }
+      mediaEl.classList.toggle('zoomed', zoomed);
+      if(withTransition) setTimeout(()=>{ imgEl.style.transition=''; }, 250);
+    }
+    imgEl.addEventListener('dblclick', (e)=>{
+      e.preventDefault();
+      if(!zoomed){
+        const rect = imgEl.getBoundingClientRect();
+        const originX = ((e.clientX - rect.left) / rect.width) * 100;
+        const originY = ((e.clientY - rect.top) / rect.height) * 100;
+        set(true, true, originX, originY);
+      }else{
+        set(false, true);
+      }
+    });
+    return { reset:()=> set(false, false) };
+  }
+
   let lightboxAbiertoId = null;
 
   function closeLightbox(){
@@ -1638,12 +1673,14 @@ function runApp(){
     lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
       d.onclick = ()=>{ idx = Number(d.dataset.i); updatePhoto(); };
     });
-    if(fotos.length && isTouchDevice){
+    if(fotos.length){
       const mediaEl = lightboxRoot.querySelector('.lightbox-media');
       const imgEl = mediaEl ? mediaEl.querySelector('img') : null;
-      if(mediaEl && imgEl) zoomApi = attachPinchZoom(mediaEl, imgEl);
-      const hintEl = document.getElementById('lbZoomHint');
-      if(hintEl) setTimeout(()=>hintEl.classList.add('hide'), 2600);
+      if(mediaEl && imgEl) zoomApi = isTouchDevice ? attachPinchZoom(mediaEl, imgEl) : attachDesktopZoom(mediaEl, imgEl);
+      if(isTouchDevice){
+        const hintEl = document.getElementById('lbZoomHint');
+        if(hintEl) setTimeout(()=>hintEl.classList.add('hide'), 2600);
+      }
     }
   }
 
