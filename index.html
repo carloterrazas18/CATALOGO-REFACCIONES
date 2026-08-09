@@ -1548,7 +1548,7 @@ function runApp(){
       if(!lbCache[i]){ const im = new Image(); im.decoding = 'async'; im.src = fotos[i]; lbCache[i] = im; }
       return lbCache[i];
     }
-    if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); }
+    if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); lbPreload((idx+2)%fotos.length); }
     // La tarjeta completa (lightbox-info incluida) se construye UNA sola vez.
     // Cambiar de foto solo llama a updatePhoto(), que actualiza la imagen y
     // los puntos sin volver a crear el contenedor con scroll — así no se
@@ -1661,7 +1661,7 @@ function runApp(){
           }
         }
         // Adelantamos la caché para el próximo salto (siguiente/anterior).
-        if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); }
+        if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); lbPreload((idx+2)%fotos.length); }
       }
       lightboxRoot.querySelectorAll('.lightbox-dots span').forEach(d=>{
         d.classList.toggle('on', Number(d.dataset.i)===idx);
