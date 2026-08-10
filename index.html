@@ -1659,22 +1659,22 @@ function runApp(){
         if(zoomApi) zoomApi.reset(false);
         const nueva = fotos[idx];
         const pre = lbPreload(idx);
-        const encender = ()=> imgEl.classList.remove('switching');
         if(pre && pre.complete && pre.naturalWidth>0){
           // Ya estaba precargada (lo normal): se muestra directo, sin
           // apagar la foto antes — por eso no se nota demora ni fade feo.
           imgEl.src = nueva;
           imgEl.classList.remove('switching');
         }else{
-          // No alcanzó a precargarse (conexión muy lenta): mismo
-          // comportamiento de respaldo de antes, con un fade más corto.
-          imgEl.classList.add('switching');
-          imgEl.src = nueva;
-          if(imgEl.complete) requestAnimationFrame(encender);
-          else{
-            imgEl.addEventListener('load', encender, {once:true});
-            imgEl.addEventListener('error', encender, {once:true});
-          }
+          // No alcanzó a precargarse (conexión lenta, típico en datos
+          // móviles). Antes se ocultaba la foto actual mientras llegaba la
+          // nueva, y eso dejaba ver por un instante el fondo negro del
+          // visor. Ahora dejamos la foto actual visible tal cual hasta que
+          // la nueva termine de bajar, y ahí sí se cambia — sin hueco ni
+          // parpadeo negro de por medio.
+          imgEl.classList.remove('switching');
+          const onReady = ()=>{ imgEl.src = nueva; };
+          pre.addEventListener('load', onReady, {once:true});
+          pre.addEventListener('error', onReady, {once:true});
         }
         // Adelantamos la caché para el próximo salto (siguiente/anterior).
         if(fotos.length>1){ lbPreload((idx+1)%fotos.length); lbPreload((idx-1+fotos.length)%fotos.length); lbPreload((idx+2)%fotos.length); }
