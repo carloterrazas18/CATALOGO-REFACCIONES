@@ -281,7 +281,7 @@
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
   .about-section.search-hidden{display:none !important;}
-  .about-card{padding:28px 24px;animation:aboutFade .4s ease;max-height:320px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+  .about-card{padding:28px 24px;animation:aboutFade .4s ease;max-height:320px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;touch-action:pan-y;}
   .about-card::-webkit-scrollbar{width:6px;}
   .about-card::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.45);border-radius:999px;}
   .about-card::-webkit-scrollbar-track{background:transparent;}
@@ -806,10 +806,20 @@ function runApp(){
     aboutInteracting = true;
     aboutSwipeStart = {x:e.clientX, y:e.clientY};
     pauseAboutTimer();
+    // Capturamos el puntero para que TODA la tarjeta responda igual al
+    // swipe, sin importar en qué zona exacta empiece el dedo — sin esto,
+    // el navegador a veces le "quita" el gesto a la zona con texto (que
+    // puede hacer scroll) y el swipe solo funcionaba en ciertas partes.
+    if(e.pointerId != null && aboutSectionEl.setPointerCapture){
+      try{ aboutSectionEl.setPointerCapture(e.pointerId); }catch(err){}
+    }
   });
   document.addEventListener('pointerup', (e)=>{
     if(!aboutInteracting) return;
     aboutInteracting = false;
+    if(e.pointerId != null && aboutSectionEl.releasePointerCapture){
+      try{ aboutSectionEl.releasePointerCapture(e.pointerId); }catch(err){}
+    }
     const start = aboutSwipeStart;
     aboutSwipeStart = null;
     // Si fue un swipe horizontal claro (más ancho que alto y con suficiente
@@ -826,8 +836,11 @@ function runApp(){
     }
     setTimeout(maybeResumeAboutTimer, 150);
   });
-  document.addEventListener('pointercancel', ()=>{
+  document.addEventListener('pointercancel', (e)=>{
     aboutInteracting = false;
+    if(e && e.pointerId != null && aboutSectionEl.releasePointerCapture){
+      try{ aboutSectionEl.releasePointerCapture(e.pointerId); }catch(err){}
+    }
     aboutSwipeStart = null;
     setTimeout(maybeResumeAboutTimer, 150);
   });
