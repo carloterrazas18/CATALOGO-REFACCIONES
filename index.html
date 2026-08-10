@@ -1518,7 +1518,8 @@ function runApp(){
   async function openLightbox(piece){
     const miToken = ++lightboxRequestToken;
     const piezaOriginal = piece;
-    const fotosCompletas = fotosParaLightbox(await asegurarGaleriaCompleta(piece));
+    const fotosCompletasRaw = await asegurarGaleriaCompleta(piece);
+    const fotosCompletas = fotosParaLightbox(fotosCompletasRaw);
     if(miToken !== lightboxRequestToken) return; // el usuario ya abrió otra pieza mientras esperábamos
     const fotosIncompletas = (piece.totalFotos||0) > fotosCompletas.length;
     piece = Object.assign({}, piece, {fotos: fotosCompletas});
@@ -1535,6 +1536,12 @@ function runApp(){
     const fotos = piecePhotos(piece);
     let idx = 0;
     let zoomApi = null;
+    // La foto de portada (idx 0) casi siempre ya está en la caché del
+    // navegador en su versión chica (480px), porque es la misma que se ve
+    // en la tarjeta del catálogo. La usamos como primer vistazo instantáneo
+    // mientras baja la versión grande (1400px) de fondo, y la sustituimos
+    // en cuanto termine — así nunca se ve un hueco vacío al abrir la tarjeta.
+    const coverPreview = (fotosCompletasRaw[0] && esUrlCloudinary(fotosCompletasRaw[0])) ? cloudinaryResize(fotosCompletasRaw[0], 480) : null;
     // Precargamos la foto de al lado (siguiente y anterior) en cuanto se
     // abre la tarjeta, igual que ya se hace en el carrusel de las tarjetas
     // del catálogo. Así, cuando la persona le da a "siguiente", la foto casi
@@ -1565,7 +1572,7 @@ function runApp(){
           <button class="lightbox-close" id="lbClose">&times;</button>
           ${lightboxTickerHtml()}
           <div class="lightbox-media">
-            ${fotos.length ? `<img src="${escapeAttr(fotos[idx])}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
+            ${fotos.length ? `<img src="${escapeAttr(coverPreview || fotos[idx])}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
             ${(fotos.length && isTouchDevice) ? `<div class="lightbox-zoom-hint" id="lbZoomHint">🔍 Doble toque o pellizca</div>` : ''}
             ${fotos.length>1 ? `
               <button class="lightbox-arrow left" id="lbPrev">&#8249;</button>
@@ -1618,6 +1625,15 @@ function runApp(){
         if(lbCard) lbCard.scrollTop = 0;
       }else{
         firstImg.addEventListener('load', ()=>{ if(lbCard) lbCard.scrollTop = 0; }, {once:true});
+      }
+      // Si arrancamos con la miniatura chica de portada, cambiamos a la
+      // versión grande y nítida en cuanto esté lista, sin que se note un
+      // "salto" (mismo tamaño de caja, solo se afina el detalle).
+      if(coverPreview && fotos[0]){
+        const full = new Image();
+        full.decoding = 'async';
+        full.onload = ()=>{ if(firstImg.isConnected) firstImg.src = fotos[0]; };
+        full.src = fotos[0];
       }
     }
     const shareBtn = document.getElementById('lbShare');
