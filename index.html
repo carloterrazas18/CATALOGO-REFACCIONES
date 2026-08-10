@@ -292,6 +292,11 @@
   .about-dot{width:8px;height:8px;border-radius:50%;background:#fff;border:1.5px solid #000;opacity:0.55;cursor:pointer;padding:0;transition:opacity .2s,transform .2s;}
   .about-dot.on{opacity:1;transform:scale(1.25);}
   @keyframes aboutFade{from{opacity:0;}to{opacity:1;}}
+  .about-card-wrap{position:relative;}
+  .about-scroll-hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,0.62);color:#fff;font-family:var(--font-body);font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s ease;z-index:2;}
+  .about-scroll-hint.show{opacity:0.94;animation:aboutHintBounce 1.6s ease-in-out infinite;}
+  .about-scroll-hint svg{width:11px;height:11px;flex-shrink:0;}
+  @keyframes aboutHintBounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(4px);}}
   @media (max-width:720px){
     .about-section{margin:20px 14px 0;}
     .about-card{padding:22px 16px;max-height:260px;}
@@ -758,6 +763,8 @@ function runApp(){
   const slideTimers = new Map();
   let aboutTimer = null;
   let aboutIdx = 0;
+  let aboutRestartFn = null;
+  let aboutInteracting = false;
 
   const PAGE_SIZE = 12;
   let currentList = [];
@@ -774,6 +781,39 @@ function runApp(){
   const searchEl = document.getElementById('catSearch');
   const aboutSectionEl = document.getElementById('aboutSection');
   const aboutTrackEl = document.getElementById('aboutTrack');
+
+  // --- Pausa el carrusel de "Quiénes somos" mientras el usuario lo está
+  // leyendo (mouse encima, dedo tocando en celular, o seleccionando texto).
+  // Se reanuda solo cuando deja de interactuar y no hay texto seleccionado.
+  function aboutHasSelection(){
+    const sel = window.getSelection();
+    if(!sel || sel.isCollapsed || sel.rangeCount === 0) return false;
+    let node = sel.getRangeAt(0).commonAncestorContainer;
+    if(node.nodeType !== 1) node = node.parentNode;
+    return !!(node && aboutSectionEl.contains(node));
+  }
+  function pauseAboutTimer(){
+    if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; }
+  }
+  function maybeResumeAboutTimer(){
+    if(aboutInteracting || aboutHasSelection()) return;
+    if(aboutRestartFn) aboutRestartFn();
+  }
+  aboutSectionEl.addEventListener('pointerdown', ()=>{ aboutInteracting = true; pauseAboutTimer(); });
+  document.addEventListener('pointerup', ()=>{
+    if(!aboutInteracting) return;
+    aboutInteracting = false;
+    setTimeout(maybeResumeAboutTimer, 150);
+  });
+  document.addEventListener('pointercancel', ()=>{
+    aboutInteracting = false;
+    setTimeout(maybeResumeAboutTimer, 150);
+  });
+  document.addEventListener('selectionchange', ()=>{
+    if(aboutHasSelection()) pauseAboutTimer();
+    else maybeResumeAboutTimer();
+  });
+
   const tickerBarEl = document.getElementById('tickerBar');
   const tickerTrackEl = document.getElementById('tickerTrack');
   const policiesBarEl = document.getElementById('policiesBar');
@@ -1160,22 +1200,39 @@ function runApp(){
         ? `<div class="about-dots">${cards.map((_,i)=>`<button type="button" class="about-dot ${i===aboutIdx?'on':''}" data-goto="${i}"></button>`).join('')}</div>`
         : '';
       aboutTrackEl.innerHTML = `
-        <div class="about-card" style="background:${bgColor};color:${textColor}">
-          <div class="about-inner">
-            ${t.titulo ? `<h2 class="about-title">${escapeHtml(t.titulo)}</h2>` : ''}
-            ${t.texto ? `<p class="about-text">${escapeHtml(t.texto)}</p>` : ''}
+        <div class="about-card-wrap">
+          <div class="about-card" style="background:${bgColor};color:${textColor}">
+            <div class="about-inner">
+              ${t.titulo ? `<h2 class="about-title">${escapeHtml(t.titulo)}</h2>` : ''}
+              ${t.texto ? `<p class="about-text">${escapeHtml(t.texto)}</p>` : ''}
+            </div>
           </div>
+          <div class="about-scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Desliza para leer más</div>
         </div>
         ${dotsHtml}
       `;
       aboutTrackEl.querySelectorAll('[data-goto]').forEach(dot=>{
         dot.onclick = ()=>{ aboutIdx = Number(dot.dataset.goto); draw(); restartAboutTimer(); };
       });
+      // Solo mostramos el mensajito de "desliza" cuando el texto realmente
+      // sobrepasa el espacio de la tarjeta, y lo ocultamos en cuanto el
+      // usuario llega al final (ya no hay nada más que leer ahí abajo).
+      const cardEl = aboutTrackEl.querySelector('.about-card');
+      const hintEl = aboutTrackEl.querySelector('.about-scroll-hint');
+      if(cardEl && hintEl){
+        const updateHint = ()=>{
+          const overflowing = cardEl.scrollHeight - cardEl.clientHeight > 4;
+          const atBottom = cardEl.scrollHeight - cardEl.scrollTop - cardEl.clientHeight < 4;
+          hintEl.classList.toggle('show', overflowing && !atBottom);
+        };
+        requestAnimationFrame(updateHint);
+        cardEl.addEventListener('scroll', updateHint, {passive:true});
+      }
     }
 
     function restartAboutTimer(){
       if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; }
-      if(cards.length > 1){
+      if(cards.length > 1 && !aboutInteracting && !aboutHasSelection()){
         aboutTimer = setInterval(()=>{
           aboutIdx = (aboutIdx+1) % cards.length;
           draw();
@@ -1183,10 +1240,11 @@ function runApp(){
       }
     }
 
+    aboutRestartFn = restartAboutTimer;
     draw();
     restartAboutTimer();
-    aboutSectionEl.onmouseenter = ()=>{ if(aboutTimer){ clearInterval(aboutTimer); aboutTimer = null; } };
-    aboutSectionEl.onmouseleave = ()=>{ restartAboutTimer(); };
+    aboutSectionEl.onmouseenter = ()=>{ pauseAboutTimer(); };
+    aboutSectionEl.onmouseleave = ()=>{ if(!aboutInteracting && !aboutHasSelection()) restartAboutTimer(); };
   }
 
   // Arranca (o reinicia) el carrusel de fotos dentro de la tarjeta: va
