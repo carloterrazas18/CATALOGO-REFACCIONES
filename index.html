@@ -35,7 +35,7 @@
   :root{
     --bg:#0c0e10; --header-bg:#0c0e10;
     --card-bg:#ffffff; --card-text:#15171a; --card-text-muted:#6b7075;
-    --title-color:#f6f6f2; --subtitle-color:#8b9096; --eslogan-color:#8b9096;
+    --title-color:#f6f6f2; --subtitle-color:#8b9096; --eslogan-color:#8b9096; --comprar-msg-color:#8b9096; --offer-hint-color:#8b9096; --offer-wa-hint-color:#6b7075;
     --accent:#ff6a3d; --price-color:#ff6a3d;
     --input-bg:#15181b; --input-text:#eceeef;
     --panel-bg:#15181b; --panel-border:#25292d;
@@ -83,7 +83,7 @@
     justify-content:center;text-align:left;
   }
   .header-social{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
-  .comprar-msg{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--subtitle-color);text-align:center;text-shadow:-1px -1px 0 var(--outline-color-social),1px -1px 0 var(--outline-color-social),-1px 1px 0 var(--outline-color-social),1px 1px 0 var(--outline-color-social);}
+  .comprar-msg{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--comprar-msg-color);text-align:center;text-shadow:-1px -1px 0 var(--outline-color-social),1px -1px 0 var(--outline-color-social),-1px 1px 0 var(--outline-color-social),1px 1px 0 var(--outline-color-social);}
   .social-icons-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
   .social-link{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;color:var(--title-color);text-decoration:none;transition:background .15s,transform .15s;flex:none;}
   .social-link:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px);}
@@ -253,6 +253,17 @@
   .offer-amount-input:focus{border-color:var(--accent);}
   .offer-btn{flex:none;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 16px;cursor:pointer;white-space:nowrap;}
   .offer-btn:disabled{opacity:0.6;cursor:default;}
+  .offer-hint{font-size:12px;color:var(--offer-hint-color);margin-top:6px;line-height:1.45;}
+  .offer-panel .status-msg{font-size:12.5px;}
+  .offer-wa-wrap{margin-top:10px;}
+  .offer-wa-hint{font-size:12.5px;color:var(--offer-wa-hint-color);margin-bottom:6px;line-height:1.4;}
+  .offer-wa-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;background:var(--wa-btn-bg);color:var(--wa-btn-color);border:none;border-radius:10px;font-family:var(--font-body);font-weight:600;font-size:12.5px;padding:10px 18px;cursor:pointer;}
+  .offer-toggle-btn{width:100%;margin-top:14px;background:transparent;color:var(--accent);border:1.5px dashed var(--accent);border-radius:12px;font-family:var(--font-body);font-weight:600;font-size:13px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s;}
+  .offer-toggle-btn:active{transform:scale(0.98);}
+  .offer-toggle-btn .chev{display:inline-block;font-size:11px;transition:transform .2s;}
+  .offer-toggle-btn[aria-expanded="true"] .chev{transform:rotate(180deg);}
+  .offer-panel{display:none;}
+  .offer-panel.open{display:block;}
   .admin-fab-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#e53935;color:#fff;font-family:var(--font-body);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--bg);}
   .tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e53935;color:#fff;font-size:10px;font-weight:700;margin-left:4px;}
 
@@ -588,6 +599,7 @@ function runApp(){
   }
 
   const VEHICULOS = ['Coche','Camioneta','Camión'];
+  const ESTADOS_MX = ['Aguascalientes','Baja California','Baja California Sur','Campeche','Chiapas','Chihuahua','Ciudad de México','Coahuila','Colima','Durango','Estado de México','Guanajuato','Guerrero','Hidalgo','Jalisco','Michoacán','Morelos','Nayarit','Nuevo León','Oaxaca','Puebla','Querétaro','Quintana Roo','San Luis Potosí','Sinaloa','Sonora','Tabasco','Tamaulipas','Tlaxcala','Veracruz','Yucatán','Zacatecas','Otro / Fuera de México'];
   function getPieceVehiculos(piece){
     if(piece.vehiculos && piece.vehiculos.length) return piece.vehiculos;
     if(piece.vehiculo) return [piece.vehiculo];
@@ -668,6 +680,9 @@ function runApp(){
       chipLabelBg:'#1c2024', chipLabelColor:'#8b9096',
       outlineColor:'#000000', outlineColorEslogan:'#000000', outlineColorSocial:'#000000', searchLabelBg:'#ff6a3d', searchLabelColor:'#ffffff',
       sloganColor:'#8b9096',
+      comprarMsgColor:'#8b9096',
+      offerHintColor:'#8b9096',
+      ofertaWaAvisoColor:'#6b7075',
       socialIconColors:{tiktok:'#000000', facebook:'#1877f2', instagram:'#e1306c', whatsapp:'#25d366', telefono:'#6b7280'},
       waBtnBg:'#25d366', waBtnColor:'#ffffff',
       shareBtnBg:'#15181b', shareBtnColor:'#8b9096',
@@ -679,6 +694,8 @@ function runApp(){
       tickerBg1:'#ff6a3d', tickerBg2:'#ff8a5c', tickerTextShadow:'#000000'
     },
     howToBuy:{ titulo:'¿Cómo comprar?', texto:'' },
+    ofertaAvisoTexto:'⚠️ Entre más baja sea tu oferta respecto al precio, más fácil que se rechace o que otra persona la supere. No eres el único ofertando: si hay varias ofertas por la misma pieza, se vende a la mejor. Dejamos tu teléfono para poder contactarte si tu oferta se acepta.',
+    ofertaWaAvisoTexto:'¿Quieres avisarnos también por WhatsApp? Puede que te respondamos más rápido.',
     social:{
       tiktokUrl:'', tiktokIcono:null,
       facebookUrl:'', facebookIcono:null,
@@ -806,6 +823,28 @@ function runApp(){
     }
   }
 
+  // Bloqueo antispam para el sistema de ofertas: si desde el mismo
+  // navegador se registran demasiadas ofertas en poco tiempo (doble clic,
+  // broma, prueba repetida, etc.), se bloquea temporalmente el envío de
+  // nuevas ofertas. No sustituye una validación de servidor, pero frena
+  // el abuso más común sin complicarle la vida a un comprador real.
+  function registrarIntentoOferta(){
+    const KEY = 'arco_ofertas_envios';
+    const VENTANA_MS = 10*60*1000; // 10 minutos
+    const MAX_EN_VENTANA = 3;
+    const ahora = Date.now();
+    let envios = [];
+    try{ envios = JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ envios = []; }
+    envios = envios.filter(t=> ahora - t < VENTANA_MS);
+    if(envios.length >= MAX_EN_VENTANA){
+      const minutos = Math.max(1, Math.ceil((VENTANA_MS - (ahora - envios[0])) / 60000));
+      return { bloqueado:true, minutos };
+    }
+    envios.push(ahora);
+    try{ localStorage.setItem(KEY, JSON.stringify(envios)); }catch(e){}
+    return { bloqueado:false };
+  }
+
   function anioLabel(p){
     if(p.anioDesde && p.anioHasta){
       return p.anioDesde===p.anioHasta ? String(p.anioDesde) : `${p.anioDesde} - ${p.anioHasta}`;
@@ -834,6 +873,9 @@ function runApp(){
     root.setProperty('--outline-color-eslogan', c.outlineColorEslogan || '#000000');
     root.setProperty('--outline-color-social', c.outlineColorSocial || '#000000');
     root.setProperty('--eslogan-color', c.sloganColor || '#8b9096');
+    root.setProperty('--comprar-msg-color', c.comprarMsgColor || '#8b9096');
+    root.setProperty('--offer-hint-color', c.offerHintColor || '#8b9096');
+    root.setProperty('--offer-wa-hint-color', c.ofertaWaAvisoColor || '#6b7075');
     root.setProperty('--search-label-bg', c.searchLabelBg || '#ff6a3d');
     root.setProperty('--search-label-color', c.searchLabelColor || '#ffffff');
     root.setProperty('--wa-btn-bg', c.waBtnBg || '#25d366');
@@ -1624,11 +1666,28 @@ function runApp(){
               <button type="button" class="share-btn-custom" id="lbShare">🔗 Compartir</button>
             </div>
             ${waNum ? `
-            <div class="offer-row">
-              <input type="number" class="offer-amount-input" id="lbOfferAmount" placeholder="¿Cuánto ofreces? (MXN)" min="1" inputmode="numeric">
-              <button type="button" class="offer-btn" id="lbOfferBtn">💰 Ofertar</button>
+            <button type="button" class="offer-toggle-btn" id="lbOfferToggle" aria-expanded="false">💰 Hacer una oferta <span class="chev">▾</span></button>
+            <div class="offer-panel" id="lbOfferPanel">
+              <div class="offer-row" style="margin-top:14px;">
+                <input type="text" class="offer-amount-input" id="lbOfferName" placeholder="Tu nombre" style="width:100%;">
+              </div>
+              <div class="offer-row" style="margin-top:8px;">
+                <select class="offer-amount-input" id="lbOfferState" style="width:100%;">
+                  <option value="" disabled selected>¿De qué estado eres?</option>
+                  ${ESTADOS_MX.map(e=>`<option value="${escapeAttr(e)}">${escapeHtml(e)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="offer-row" style="margin-top:8px;">
+                <input type="tel" class="offer-amount-input" id="lbOfferPhone" placeholder="Tu número de teléfono (10 dígitos)" inputmode="tel" maxlength="15" style="width:100%;">
+              </div>
+              <div class="offer-row" style="margin-top:8px;">
+                <input type="number" class="offer-amount-input" id="lbOfferAmount" placeholder="¿Cuánto ofreces? (MXN)" min="1" inputmode="numeric">
+                <button type="button" class="offer-btn" id="lbOfferBtn">💰 Ofertar</button>
+              </div>
+              ${(config.ofertaAvisoTexto||'').trim() ? `<div class="offer-hint">${escapeHtml(config.ofertaAvisoTexto.trim())}</div>` : ''}
+              <div class="status-msg" id="lbOfferMsg"></div>
+              <div class="offer-wa-wrap" id="lbOfferWaWrap" style="display:none;"></div>
             </div>
-            <div class="status-msg" id="lbOfferMsg"></div>
             ` : ''}
             ${howToBuyHtml()}
           </div>
@@ -1668,38 +1727,85 @@ function runApp(){
         full.src = fotos[0];
       }
     }
+    const offerToggle = document.getElementById('lbOfferToggle');
+    const offerPanel = document.getElementById('lbOfferPanel');
+    if(offerToggle && offerPanel){
+      offerToggle.onclick = ()=>{
+        const abierto = offerPanel.classList.toggle('open');
+        offerToggle.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+      };
+    }
     const offerBtn = document.getElementById('lbOfferBtn');
     if(offerBtn){
       offerBtn.onclick = async ()=>{
+        const nameInput = document.getElementById('lbOfferName');
+        const stateInput = document.getElementById('lbOfferState');
         const amountInput = document.getElementById('lbOfferAmount');
+        const phoneInput = document.getElementById('lbOfferPhone');
         const msgEl = document.getElementById('lbOfferMsg');
+        const waWrap = document.getElementById('lbOfferWaWrap');
+        const nombre = (nameInput.value||'').trim();
+        const estado = stateInput.value||'';
         const monto = Number(amountInput.value);
+        const telefonoDigits = (phoneInput.value||'').replace(/\D/g,'');
+        if(!nombre){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'Escribe tu nombre.';
+          nameInput.focus();
+          return;
+        }
+        if(!estado){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'Selecciona tu estado.';
+          stateInput.focus();
+          return;
+        }
+        if(!telefonoDigits || telefonoDigits.length < 10){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'Escribe un número de teléfono válido (mínimo 10 dígitos) para que podamos contactarte.';
+          phoneInput.focus();
+          return;
+        }
         if(!monto || monto<=0){
           msgEl.className = 'status-msg err';
           msgEl.textContent = 'Escribe un monto válido.';
           return;
         }
+        const antispam = registrarIntentoOferta();
+        if(antispam.bloqueado){
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = `Has enviado varias ofertas seguidas. Espera ${antispam.minutos} minuto${antispam.minutos===1?'':'s'} antes de enviar otra.`;
+          return;
+        }
         offerBtn.disabled = true;
         // Guardamos la oferta en Firestore para que quede en el historial del
-        // panel de administración (pestaña "Ofertas"), y además abrimos
-        // WhatsApp con el mensaje ya armado para que llegue de inmediato.
-        // Si el guardado en Firestore falla (ej. sin internet un instante),
-        // igual dejamos que el mensaje de WhatsApp se mande, para no perder
-        // la oferta del cliente.
+        // panel de administración (pestaña "Ofertas"). Ya NO abrimos WhatsApp
+        // de forma automática: en vez de eso, dejamos un botón opcional para
+        // que el cliente decida si también quiere avisar por ahí.
         try{
           await addDoc(collection(db,'ofertas'), {
             piezaId: piece.id,
             piezaNombre: piece.nombre,
             precioLista: Number(piece.precio) || 0,
             montoOfrecido: monto,
+            nombreCliente: nombre,
+            estadoCliente: estado,
+            telefonoCliente: telefonoDigits,
             vista: false,
             creado: new Date().toISOString()
           });
         }catch(e){ console.error('No se pudo guardar la oferta en Firestore:', e); }
-        const textoOferta = encodeURIComponent(`Hola, quiero ofertar $${monto} MXN por esta pieza: ${piece.nombre} (precio de lista $${piece.precio} MXN)`);
-        window.open(`https://wa.me/${waNum}?text=${textoOferta}`, '_blank', 'noopener');
         msgEl.className = 'status-msg ok';
         msgEl.textContent = '¡Oferta enviada!';
+        if(waWrap){
+          const textoOferta = encodeURIComponent(`Hola, me llamo ${nombre} (${estado}). Quiero ofertar $${monto} MXN por esta pieza: ${piece.nombre} (precio de lista $${piece.precio} MXN). Mi número de contacto es ${telefonoDigits}.`);
+          const avisoWa = (config.ofertaWaAvisoTexto||'').trim();
+          waWrap.innerHTML = `
+            ${avisoWa ? `<div class="offer-wa-hint">${escapeHtml(avisoWa)}</div>` : ''}
+            <a class="offer-wa-btn" href="https://wa.me/${waNum}?text=${textoOferta}" target="_blank" rel="noopener">💬 Avisar por WhatsApp</a>
+          `;
+          waWrap.style.display = 'block';
+        }
         amountInput.value = '';
         offerBtn.disabled = false;
       };
@@ -2289,6 +2395,8 @@ function runApp(){
               <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">$${escapeHtml(String(o.montoOfrecido||0))} MXN</span>
             </div>
             <div style="font-size:11px;color:var(--subtitle-color);">Precio de lista: $${escapeHtml(String(o.precioLista||0))} MXN · ${fecha}${o.vista?' · Revisada':''}</div>
+            ${(o.nombreCliente || o.estadoCliente) ? `<div style="font-size:11.5px;color:var(--title-color);">🙋 ${escapeHtml(o.nombreCliente||'Sin nombre')}${o.estadoCliente?' · '+escapeHtml(o.estadoCliente):''}</div>` : ''}
+            ${o.telefonoCliente ? `<div style="font-size:11.5px;color:var(--title-color);">📞 <a href="tel:${escapeAttr(o.telefonoCliente)}" style="color:var(--accent);text-decoration:none;">${escapeHtml(o.telefonoCliente)}</a></div>` : ''}
             <div class="actions" style="justify-content:flex-end;">
               ${!o.vista ? `<button class="icon-btn" data-marcar="${d.id}">Marcar como revisada</button>` : ''}
               <button class="icon-btn" data-borrar="${d.id}">Borrar</button>
@@ -2589,6 +2697,14 @@ function runApp(){
         <input id="sHtbTitulo" placeholder="¿Cómo comprar?" value="${escapeAttr(config.howToBuy?.titulo||'')}">
         <label>Texto (opcional, para personalizarlo tú mismo)</label>
         <textarea id="sHtbTexto" rows="4" placeholder="Déjalo vacío para el texto automático">${escapeAttr(config.howToBuy?.texto||'')}</textarea>
+
+        <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Aviso debajo de "Ofertar"</div>
+        <div style="font-size:11px;color:var(--subtitle-color);margin-top:2px;">Se muestra justo debajo del botón de ofertar, en cada pieza. Déjalo vacío para ocultarlo.</div>
+        <textarea id="sOfertaAviso" rows="4" placeholder="⚠️ Entre más baja sea tu oferta...">${escapeAttr(config.ofertaAvisoTexto||'')}</textarea>
+
+        <div style="margin-top:18px;font-family:var(--font-display);font-weight:600;color:var(--title-color);font-size:14px;">Aviso de WhatsApp opcional</div>
+        <div style="font-size:11px;color:var(--subtitle-color);margin-top:2px;">Se muestra junto al botón "Avisar por WhatsApp", después de que el cliente envía su oferta. Déjalo vacío para ocultarlo.</div>
+        <textarea id="sOfertaWaAviso" rows="3" placeholder="¿Quieres avisarnos también por WhatsApp?...">${escapeAttr(config.ofertaWaAvisoTexto||'')}</textarea>
       </div>
 
       <div id="secRedes" style="${subtab==='redes'?'':'display:none;'}">
@@ -2712,6 +2828,9 @@ function runApp(){
               <div><label>Fondo botón "Compartir"</label><input type="color" id="cShareBg" value="${c.shareBtnBg||'#15181b'}"></div>
               <div><label>Texto botón "Compartir"</label><input type="color" id="cShareColor" value="${c.shareBtnColor||'#8b9096'}"></div>
               <div><label>Contorno del mensaje junto a redes</label><input type="color" id="cOutlineSocial" value="${c.outlineColorSocial||'#000000'}"></div>
+              <div><label>Color del mensaje de compra</label><input type="color" id="cComprarMsgColor" value="${c.comprarMsgColor||'#8b9096'}"></div>
+              <div><label>Color del aviso debajo de "Ofertar"</label><input type="color" id="cOfferHintColor" value="${c.offerHintColor||'#8b9096'}"></div>
+              <div><label>Color del aviso de WhatsApp opcional</label><input type="color" id="cOfertaWaAvisoColor" value="${c.ofertaWaAvisoColor||'#6b7075'}"></div>
             </div>
           </div>
         </details>
@@ -2865,6 +2984,8 @@ function runApp(){
         titulo: document.getElementById('sHtbTitulo').value.trim(),
         texto: document.getElementById('sHtbTexto').value.trim()
       };
+      config.ofertaAvisoTexto = document.getElementById('sOfertaAviso').value.trim();
+      config.ofertaWaAvisoTexto = document.getElementById('sOfertaWaAviso').value.trim();
       config.logo = pendingLogo;
       config.banner = pendingBanner;
       config.social = {
@@ -2901,6 +3022,9 @@ function runApp(){
         outlineColorEslogan: document.getElementById('cOutlineEslogan').value,
         outlineColorSocial: document.getElementById('cOutlineSocial').value,
         sloganColor: document.getElementById('cSloganColor').value,
+        comprarMsgColor: document.getElementById('cComprarMsgColor').value,
+        offerHintColor: document.getElementById('cOfferHintColor').value,
+        ofertaWaAvisoColor: document.getElementById('cOfertaWaAvisoColor').value,
         searchLabelBg: document.getElementById('cSearchBg').value,
         searchLabelColor: document.getElementById('cSearchColor').value,
         waBtnBg: document.getElementById('cWaBg').value,
