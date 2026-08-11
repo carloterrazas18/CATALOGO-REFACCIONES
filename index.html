@@ -3,6 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content Security Policy: le dice al navegador exactamente de qué
+     dominios sí puede cargar scripts, estilos, fuentes, imágenes y hacer
+     peticiones (Firebase, Cloudinary, reCAPTCHA/App Check, Google Fonts).
+     Cualquier otro origen que intente inyectarse (un script ajeno, un
+     iframe extraño) queda bloqueado por el propio navegador, aunque
+     lograra meterse en el HTML. 'unsafe-inline' está permitido solo para
+     script/estilo porque todo el código y los estilos de este archivo
+     viven inline (no hay build ni bundler); lo que sí bloquea por completo
+     es cualquier script o recurso que intente cargarse desde un dominio
+     que no esté en esta lista. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.postimg.cc https://res.cloudinary.com; connect-src 'self' https://firestore.googleapis.com https://firebaseappcheck.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.cloudinary.com https://www.google.com; frame-src https://www.google.com; manifest-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
@@ -267,17 +278,17 @@
   .admin-fab-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#e53935;color:#fff;font-family:var(--font-body);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--bg);}
   .tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e53935;color:#fff;font-size:10px;font-weight:700;margin-left:4px;}
 
-  .ticker-bar{background:linear-gradient(90deg, var(--ticker-bg1), var(--ticker-bg2));overflow:hidden;white-space:nowrap;position:relative;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.12);}
+  .ticker-bar{background:linear-gradient(90deg, var(--ticker-bg1), var(--ticker-bg2));overflow:hidden;white-space:nowrap;position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.15);}
   .ticker-bar.hide{display:none;}
-  .ticker-track{display:inline-flex;align-items:center;padding:7px 0;animation:tickerScroll 24s linear infinite;will-change:transform;}
+  .ticker-track{display:inline-flex;align-items:center;padding:6px 0;animation:tickerScroll 24s linear infinite;will-change:transform;}
   .ticker-bar:hover .ticker-track{animation-play-state:paused;}
-  .ticker-item{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:0.02em;color:#fff;display:inline-flex;align-items:center;white-space:nowrap;padding:0 18px;}
+  .ticker-item{font-family:var(--font-display);font-weight:600;font-size:12px;letter-spacing:0.09em;text-transform:uppercase;color:#fff;display:inline-flex;align-items:center;white-space:nowrap;padding:0 18px;}
   .ticker-item .ticker-dot{opacity:1;margin-right:10px;font-size:16px;line-height:1;display:inline-block;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5));}
   .ticker-item .ticker-dot-img{width:23px;height:23px;object-fit:contain;opacity:1;margin-right:10px;flex:none;filter:drop-shadow(0 0 2px rgba(0,0,0,0.65)) drop-shadow(0 0 1px rgba(0,0,0,0.65)) contrast(1.2) saturate(1.25);transform:scale(1.35);transform-origin:center;}
   .lightbox-ticker{grid-column:1/-1;border-radius:18px 18px 0 0;}
   @keyframes tickerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none;} }
-  @media (max-width:720px){ .ticker-item{font-size:12px;padding:0 13px;} .ticker-item .ticker-dot{margin-right:8px;font-size:14px;} .ticker-item .ticker-dot-img{width:18px;height:18px;margin-right:8px;transform:scale(1.3);} }
+  @media (max-width:720px){ .ticker-track{padding:5px 0;} .ticker-item{font-size:11px;letter-spacing:0.07em;padding:0 12px;} .ticker-item .ticker-dot{margin-right:8px;font-size:14px;} .ticker-item .ticker-dot-img{width:18px;height:18px;margin-right:8px;transform:scale(1.3);} }
 
   .about-section{margin:26px 24px 0;border-radius:16px;overflow:hidden;font-family:var(--font-body);}
   .about-section.search-hidden{display:none !important;}
@@ -1450,7 +1461,7 @@ function runApp(){
         ${specsHtml}
         ${compatHtml}
         <div class="prod-price-row">
-          <span><span class="prod-price">$${escapeHtml(String(piece.precio))}</span><span class="prod-currency">MXN</span></span>
+          <span><span class="prod-price">$${formatPrice(piece.precio)}</span><span class="prod-currency">MXN</span></span>
         </div>
       </div>
     `;
@@ -1794,7 +1805,7 @@ function runApp(){
     const estado = config.estados[piece.estado] || config.estados.disponible;
     const estadoHtml = `<div class="estado-pill" style="color:${estado.color}"><span class="estado-dot" style="background:${estado.color}"></span>${escapeHtml(estado.label)}</div>`;
     const waNum = (config.social?.whatsappNumero||'').replace(/\D/g,'');
-    const waMsg = encodeURIComponent(`Hola, me interesa esta pieza: ${piece.nombre} ($${piece.precio} MXN)`);
+    const waMsg = encodeURIComponent(`Hola, me interesa esta pieza: ${piece.nombre} ($${formatPrice(piece.precio)} MXN)`);
     const waLink = waNum ? `https://wa.me/${waNum}?text=${waMsg}` : null;
     lightboxRoot.innerHTML = `
       <div class="lightbox-overlay" id="lbOv">
@@ -1815,7 +1826,7 @@ function runApp(){
             <div class="prod-cat-pill" style="position:static;display:inline-flex;width:fit-content;"><span class="prod-cat-dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}</div>
             ${estadoHtml}
             <div class="lightbox-name">${escapeHtml(piece.nombre)}</div>
-            <div class="lightbox-price">$${escapeHtml(String(piece.precio))} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
+            <div class="lightbox-price">$${formatPrice(piece.precio)} <span style="font-size:13px;font-weight:500;color:var(--card-text-muted);">MXN</span></div>
             ${getPieceVehiculos(piece).length ? `<div class="lightbox-pills">${getPieceVehiculos(piece).map(v=>`<span class="compat-pill">${escapeHtml(v)}</span>`).join('')}</div>` : ''}
             ${((piece.marca||'').trim() || anioLabel(piece) || (piece.motor||'').trim()) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
               ${(piece.marca||'').trim() ? `<div><div class="lightbox-compat-label">Marca</div><div class="lightbox-year-value">${escapeHtml(piece.marca.trim())}</div></div>` : ''}
@@ -1988,7 +1999,7 @@ function runApp(){
     const shareBtn = document.getElementById('lbShare');
     if(shareBtn){
       shareBtn.onclick = async ()=>{
-        const shareText = `Mira esta pieza: ${piece.nombre} — $${piece.precio} MXN`;
+        const shareText = `Mira esta pieza: ${piece.nombre} — $${formatPrice(piece.precio)} MXN`;
         const shareUrl = window.location.href;
         if(navigator.share){
           try{ await navigator.share({title:piece.nombre, text:shareText, url:shareUrl}); }catch(e){}
@@ -2054,6 +2065,13 @@ function runApp(){
     return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
   function escapeAttr(str){ return escapeHtml(str); }
+  // Formatea un precio con separador de miles (ej. 12500 -> "12,500"). Si el
+  // valor no es un número válido, cae de vuelta al texto tal cual (escapado).
+  function formatPrice(n){
+    const num = Number(n);
+    if(!isFinite(num)) return escapeHtml(String(n));
+    return num.toLocaleString('es-MX', {maximumFractionDigits:2});
+  }
 
   // Valida que los 10 dígitos tengan forma de teléfono mexicano real:
   // exactamente 10 dígitos, sin repetir el mismo dígito 10 veces,
@@ -2252,7 +2270,7 @@ function runApp(){
     body.innerHTML = backupBtnHtml + pieces.map(p=>{
       const cat = catById(p.categoriaId);
       return `<div class="admin-list-item">
-        <span class="name">${escapeHtml(p.nombre)} — ${escapeHtml(cat?cat.label:'Otro')} — $${escapeHtml(String(p.precio))}</span>
+        <span class="name">${escapeHtml(p.nombre)} — ${escapeHtml(cat?cat.label:'Otro')} — $${formatPrice(p.precio)}</span>
         <span class="actions">
           <button class="icon-btn" data-edit="${p.id}">Editar</button>
           <button class="icon-btn" data-del="${p.id}">Borrar</button>
@@ -2601,9 +2619,9 @@ function runApp(){
           <div class="admin-list-item" style="flex-direction:column;align-items:stretch;gap:4px;${o.vista?'opacity:0.6;':''}">
             <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">
               <span class="name" style="font-weight:600;">${escapeHtml(o.piezaNombre||'Pieza eliminada')}</span>
-              <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">$${escapeHtml(String(o.montoOfrecido||0))} MXN</span>
+              <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">$${formatPrice(o.montoOfrecido||0)} MXN</span>
             </div>
-            <div style="font-size:11px;color:var(--subtitle-color);">Precio de lista: $${escapeHtml(String(o.precioLista||0))} MXN · ${fecha}${o.vista?' · Revisada':''}</div>
+            <div style="font-size:11px;color:var(--subtitle-color);">Precio de lista: $${formatPrice(o.precioLista||0)} MXN · ${fecha}${o.vista?' · Revisada':''}</div>
             ${(o.nombreCliente || o.estadoCliente) ? `<div style="font-size:11.5px;color:var(--title-color);">🙋 ${escapeHtml(o.nombreCliente||'Sin nombre')}${o.estadoCliente?' · '+escapeHtml(o.estadoCliente):''}</div>` : ''}
             ${o.telefonoCliente ? `<div style="font-size:11.5px;color:var(--title-color);">📞 <a href="tel:${escapeAttr(o.telefonoCliente)}" style="color:var(--accent);text-decoration:none;">${escapeHtml(o.telefonoCliente)}</a></div>` : ''}
             <div class="actions" style="justify-content:flex-end;">
