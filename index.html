@@ -125,7 +125,7 @@
   @media (prefers-reduced-motion: reduce){ .wa-float-btn{animation:none;} }
   .chip-row-label{font-family:var(--font-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--chip-label-color);background:var(--chip-label-bg);padding:5px 16px;border-radius:999px;display:inline-block;}
   .chip-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-  .chip{font-family:var(--font-body);font-weight:500;font-size:12px;padding:7px 14px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--subtitle-color);cursor:pointer;user-select:none;transition:all .15s;}
+  .chip{appearance:none;-webkit-appearance:none;margin:0;line-height:normal;font-family:var(--font-body);font-weight:500;font-size:12px;padding:7px 14px;background:rgba(21,24,27,0.6);border:1px solid var(--panel-border);border-radius:999px;color:var(--subtitle-color);cursor:pointer;user-select:none;transition:all .15s;}
   .chip:hover{border-color:var(--accent);color:var(--title-color);}
   .chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
   .price-range-row{display:flex;align-items:center;gap:6px;}
@@ -345,6 +345,9 @@
     .cat-header{padding:22px 16px 18px;}
   }
 </style>
+<link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlJlZmFjY2lvbmFyaWEgQXJjbyIsCiAgInNob3J0X25hbWUiOiAiUmVmYWMuIEFyY28iLAogICJkZXNjcmlwdGlvbiI6ICJSZWZhY2Npb25lcyBhdXRvbW90cmljZXMgdXNhZGFzIGVuIFB1ZWJsYSIsCiAgInN0YXJ0X3VybCI6ICIuL2luZGV4Lmh0bWwiLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYzBlMTAiLAogICJ0aGVtZV9jb2xvciI6ICIjZmY2YTNkIiwKICAiaWNvbnMiOiBbCiAgICB7ICJzcmMiOiAiaHR0cHM6Ly9pLnBvc3RpbWcuY2MvbnJNU1ZSRzgvTE9HTy1BUkNPLVJFRkFDQ0lPTkFSSUEuanBnIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9qcGVnIiB9LAogICAgeyAic3JjIjogImh0dHBzOi8vaS5wb3N0aW1nLmNjL25yTVNWUkc4L0xPR08tQVJDTy1SRUZBQ0NJT05BUklBLmpwZyIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2UvanBlZyIgfQogIF0KfQo=">
+<meta name="theme-color" content="#ff6a3d">
+<link rel="apple-touch-icon" href="https://i.postimg.cc/nrMSVRG8/LOGO-ARCO-REFACCIONARIA.jpg">
 </head>
 <body>
 
@@ -445,12 +448,35 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc,
+  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, setDoc, addDoc, updateDoc, deleteDoc, getDoc,
   onSnapshot, query, orderBy, limit, startAfter, getDocs, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  initializeAppCheck, ReCaptchaV3Provider
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
+
+// Registra el service worker que guarda copia de index.html/styles.css/app.js
+// en el dispositivo, para que si el cliente pierde señal a medio catálogo la
+// página no se quede en blanco: sigue viendo lo que ya cargó. No toca nada
+// de Firestore ni de Cloudinary, solo los archivos propios del sitio.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// ======================================================================
+// PEGA_AQUI_TU_APP_CHECK_SITE_KEY
+// (Firebase Console → App Check → Apps → Registrar → reCAPTCHA v3 → copia
+// la "Site key" pública, no la secreta). Mientras esto siga con el texto de
+// abajo, App Check simplemente no se activa y el sitio sigue igual que hoy.
+const APP_CHECK_SITE_KEY = "6LfsFYAtAAAAAEv3tgKLL6EMWvR-4qE5ej7qrZvf";
+// ======================================================================
+
 
 // ======================================================================
 // PEGA_AQUI_TU_FIREBASE_CONFIG
@@ -528,7 +554,29 @@ if(!configuradoDeVerdad){
 
 function runApp(){
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+
+  // App Check: si ya pegaste tu site key de reCAPTCHA v3 arriba, esto le
+  // dice a Firebase que las peticiones vienen de tu sitio real y no de un
+  // script raspando el catálogo. Si todavía no la has pegado, no hace nada.
+  if(APP_CHECK_SITE_KEY && APP_CHECK_SITE_KEY !== "PEGA_AQUI_TU_APP_CHECK_SITE_KEY"){
+    try{
+      initializeAppCheck(app, { provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+    }catch(e){ /* si algo falla aquí, el sitio sigue funcionando igual */ }
+  }
+
+  // Guarda en el dispositivo (IndexedDB) lo último que Firestore trajo, para
+  // que si el cliente pierde señal a medio catálogo siga viendo lo que ya
+  // había cargado en vez de una pantalla en blanco. Si el navegador no lo
+  // soporta (algunos modos privados), usamos Firestore normal sin caché.
+  let db;
+  try{
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  }catch(e){
+    db = getFirestore(app);
+  }
+
   const auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
@@ -1136,15 +1184,20 @@ function runApp(){
     chipsEl.innerHTML = '';
     if(stickyChipsEl) stickyChipsEl.innerHTML = '';
     cats.forEach(cat=>{
+      const isActive = activeCat===cat;
       const onClick = ()=>{ activeCat = cat; if(cat!=='Todas') cargarRestoDelCatalogo(); renderChips(); renderGrid(); };
-      const chip = document.createElement('div');
-      chip.className = 'chip' + (activeCat===cat ? ' active' : '');
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (isActive ? ' active' : '');
+      chip.setAttribute('aria-pressed', String(isActive));
       chip.textContent = cat;
       chip.onclick = onClick;
       chipsEl.appendChild(chip);
       if(stickyChipsEl){
-        const chip2 = document.createElement('div');
+        const chip2 = document.createElement('button');
+        chip2.type = 'button';
         chip2.className = chip.className;
+        chip2.setAttribute('aria-pressed', String(isActive));
         chip2.textContent = cat;
         chip2.onclick = onClick;
         stickyChipsEl.appendChild(chip2);
@@ -1155,8 +1208,11 @@ function runApp(){
     const vehs = ['Todas', ...VEHICULOS];
     vehChipsEl.innerHTML = '';
     vehs.forEach(v=>{
-      const chip = document.createElement('div');
-      chip.className = 'chip' + (activeVeh===v ? ' active' : '');
+      const isActive = activeVeh===v;
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (isActive ? ' active' : '');
+      chip.setAttribute('aria-pressed', String(isActive));
       chip.textContent = v;
       chip.onclick = ()=>{ activeVeh = v; if(v!=='Todas') cargarRestoDelCatalogo(); renderVehChips(); renderGrid(); };
       vehChipsEl.appendChild(chip);
@@ -1366,7 +1422,7 @@ function runApp(){
     // no competir por ancho de banda con lo que sí se ve de entrada.
     const imgAttrs = prioritaria ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
     const photoHtml = fotos.length
-      ? `<img class="prod-photo prod-photo-a" data-idx="0" src="${escapeAttr(fotos[0])}" ${imgAttrs} decoding="async">${fotos.length>1 ? `<img class="prod-photo prod-photo-b" decoding="async">` : ''}`
+      ? `<img class="prod-photo prod-photo-a" data-idx="0" src="${escapeAttr(fotos[0])}" alt="${escapeAttr(piece.nombre)}" ${imgAttrs} decoding="async">${fotos.length>1 ? `<img class="prod-photo prod-photo-b" alt="${escapeAttr(piece.nombre)}" decoding="async">` : ''}`
       : `<div class="prod-photo-placeholder">Sin foto</div>`;
     const dotsHtml = fotos.length>1
       ? `<div class="prod-dots">${fotos.map((f,i)=>`<span class="prod-dot ${i===0?'on':''}"></span>`).join('')}</div>` : '';
@@ -1746,7 +1802,7 @@ function runApp(){
           <button class="lightbox-close" id="lbClose">&times;</button>
           ${lightboxTickerHtml()}
           <div class="lightbox-media">
-            ${fotos.length ? `<img src="${escapeAttr(coverPreview || fotos[idx])}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
+            ${fotos.length ? `<img src="${escapeAttr(coverPreview || fotos[idx])}" alt="${escapeAttr(piece.nombre)}">` : `<div class="prod-photo-placeholder" style="height:100%;">Sin foto</div>`}
             ${(fotos.length && isTouchDevice) ? `<div class="lightbox-zoom-hint" id="lbZoomHint">🔍 Doble toque o pellizca</div>` : ''}
             ${fotos.length>1 ? `
               <button class="lightbox-arrow left" id="lbPrev">&#8249;</button>
@@ -1867,9 +1923,9 @@ function runApp(){
           stateInput.focus();
           return;
         }
-        if(!telefonoDigits || telefonoDigits.length < 10){
+        if(!telefonoMexValido(telefonoDigits)){
           msgEl.className = 'status-msg err';
-          msgEl.textContent = 'Escribe un número de teléfono válido (mínimo 10 dígitos) para que podamos contactarte.';
+          msgEl.textContent = 'Escribe un número de teléfono válido a 10 dígitos para que podamos contactarte.';
           phoneInput.focus();
           return;
         }
@@ -1998,6 +2054,40 @@ function runApp(){
     return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
   function escapeAttr(str){ return escapeHtml(str); }
+
+  // Valida que los 10 dígitos tengan forma de teléfono mexicano real:
+  // exactamente 10 dígitos, sin repetir el mismo dígito 10 veces,
+  // sin ser una secuencia obvia (0123456789 / 9876543210) y sin iniciar en 0.
+  function telefonoMexValido(digits){
+    if(!digits || digits.length !== 10) return false;
+    if(/^(\d)\1{9}$/.test(digits)) return false;
+    if(digits === '0123456789' || digits === '9876543210') return false;
+    if(digits.startsWith('0')) return false;
+    return true;
+  }
+
+  // --- Contraste de color (WCAG) para avisar si un color de estado
+  // casi no se ve sobre el fondo de las tarjetas ---
+  function hexARgb(hex){
+    hex = String(hex||'').replace('#','');
+    if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+    const num = parseInt(hex,16) || 0;
+    return {r:(num>>16)&255, g:(num>>8)&255, b:num&255};
+  }
+  function luminanciaRelativa({r,g,b}){
+    const [rs,gs,bs] = [r,g,b].map(v=>{
+      v/=255;
+      return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
+    });
+    return 0.2126*rs + 0.7152*gs + 0.0722*bs;
+  }
+  function contrasteEntre(hex1, hex2){
+    const l1 = luminanciaRelativa(hexARgb(hex1));
+    const l2 = luminanciaRelativa(hexARgb(hex2));
+    const mayor = Math.max(l1,l2), menor = Math.min(l1,l2);
+    return (mayor+0.05)/(menor+0.05);
+  }
+
   function applySearchTerm(val){
     searchTerm = val;
     aboutSectionEl.classList.toggle('search-hidden', !!searchTerm.trim());
@@ -2882,6 +2972,7 @@ function runApp(){
           <input type="color" id="eRevisionColor" value="${config.estados.revision.color}">
           <input type="text" id="eRevisionLabel" value="${escapeAttr(config.estados.revision.label)}">
         </div>
+        <div id="estadoContrastWarn"></div>
       </div>
 
       <div id="secColores" style="${subtab==='colores'?'':'display:none;'}">
@@ -3002,6 +3093,33 @@ function runApp(){
     document.getElementById('subRedes').onclick = ()=>renderAdminSettings(body,'redes');
     document.getElementById('subEstados').onclick = ()=>renderAdminSettings(body,'estados');
     document.getElementById('subColores').onclick = ()=>renderAdminSettings(body,'colores');
+
+    // Avisa si el color de texto de un estado casi no se distingue
+    // sobre el fondo de las tarjetas (mínimo recomendado WCAG AA: 4.5:1).
+    function checkEstadoContraste(){
+      const warnEl = document.getElementById('estadoContrastWarn');
+      const bgEl = document.getElementById('cCardBg');
+      if(!warnEl || !bgEl) return;
+      const bg = bgEl.value;
+      const estadosUI = [
+        {id:'eDisponibleColor', nombre:'Disponible'},
+        {id:'eApartadaColor', nombre:'Apartada'},
+        {id:'eRevisionColor', nombre:'Revisión'}
+      ];
+      const avisos = estadosUI.map(e=>{
+        const el = document.getElementById(e.id);
+        if(!el) return null;
+        const ratio = contrasteEntre(el.value, bg);
+        return ratio < 4.5 ? `⚠️ "${e.nombre}" casi no se ve sobre el fondo de tarjetas (contraste ${ratio.toFixed(1)}:1, mínimo recomendado 4.5:1).` : null;
+      }).filter(Boolean);
+      warnEl.innerHTML = avisos.map(a=>`<div style="color:#e05252;font-size:11px;margin-top:6px;">${a}</div>`).join('');
+    }
+    ['eDisponibleColor','eApartadaColor','eRevisionColor','cCardBg'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', checkEstadoContraste);
+    });
+    checkEstadoContraste();
+
     let pendingLogo = config.logo || null;
     let pendingBanner = config.banner || null;
     const sc = config.social || {};
