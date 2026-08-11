@@ -1889,6 +1889,7 @@ function runApp(){
         // panel de administración (pestaña "Ofertas"). Ya NO abrimos WhatsApp
         // de forma automática: en vez de eso, dejamos un botón opcional para
         // que el cliente decida si también quiere avisar por ahí.
+        const textoOferta = encodeURIComponent(`Hola, me llamo ${nombre} (${estado}). Quiero ofertar $${monto} MXN por esta pieza: ${piece.nombre} (precio de lista $${piece.precio} MXN). Mi número de contacto es ${telefonoDigits}.`);
         try{
           await addDoc(collection(db,'ofertas'), {
             piezaId: piece.id,
@@ -1901,19 +1902,30 @@ function runApp(){
             vista: false,
             creado: new Date().toISOString()
           });
-        }catch(e){ console.error('No se pudo guardar la oferta en Firestore:', e); }
-        msgEl.className = 'status-msg ok';
-        msgEl.textContent = '¡Oferta enviada!';
-        if(waWrap){
-          const textoOferta = encodeURIComponent(`Hola, me llamo ${nombre} (${estado}). Quiero ofertar $${monto} MXN por esta pieza: ${piece.nombre} (precio de lista $${piece.precio} MXN). Mi número de contacto es ${telefonoDigits}.`);
-          const avisoWa = (config.ofertaWaAvisoTexto||'').trim();
-          waWrap.innerHTML = `
-            ${avisoWa ? `<div class="offer-wa-hint">${escapeHtml(avisoWa)}</div>` : ''}
-            <a class="offer-wa-btn" href="https://wa.me/${waNum}?text=${textoOferta}" target="_blank" rel="noopener">💬 Avisar por WhatsApp</a>
-          `;
-          waWrap.style.display = 'block';
+          // Solo decimos "enviada" si de verdad se guardó.
+          msgEl.className = 'status-msg ok';
+          msgEl.textContent = '¡Oferta enviada!';
+          if(waWrap){
+            const avisoWa = (config.ofertaWaAvisoTexto||'').trim();
+            waWrap.innerHTML = `
+              ${avisoWa ? `<div class="offer-wa-hint">${escapeHtml(avisoWa)}</div>` : ''}
+              <a class="offer-wa-btn" href="https://wa.me/${waNum}?text=${textoOferta}" target="_blank" rel="noopener">💬 Avisar por WhatsApp</a>
+            `;
+            waWrap.style.display = 'block';
+          }
+          amountInput.value = '';
+        }catch(e){
+          // Si no se pudo guardar, se lo decimos tal cual al cliente en vez
+          // de fingir que sí se envió — y le dejamos WhatsApp como respaldo
+          // para que su oferta no se pierda sin que nadie se entere.
+          console.error('No se pudo guardar la oferta en Firestore:', e);
+          msgEl.className = 'status-msg err';
+          msgEl.textContent = 'No se pudo enviar tu oferta. Intenta de nuevo o avísanos directo por WhatsApp.';
+          if(waWrap && waNum){
+            waWrap.innerHTML = `<a class="offer-wa-btn" href="https://wa.me/${waNum}?text=${textoOferta}" target="_blank" rel="noopener">💬 Enviar por WhatsApp</a>`;
+            waWrap.style.display = 'block';
+          }
         }
-        amountInput.value = '';
         offerBtn.disabled = false;
       };
     }
